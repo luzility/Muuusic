@@ -20,6 +20,16 @@ An ad-free YouTube Music client for Android.
 - Download songs, albums and playlists for offline listening
 - Played songs are cached
 
+## Download
+
+Get the APK from [Releases](https://github.com/luzility/Muuusic/releases). Betas are marked as pre-releases.
+
+## Translations
+
+Translations are done on [Weblate](https://hosted.weblate.org/engage/muuusic/). Pick your language there, or add a new one.
+
+[![Translation status](https://hosted.weblate.org/widget/muuusic/multi-auto.svg)](https://hosted.weblate.org/engage/muuusic/)
+
 ## Building
 
 Requires JDK 17+ and the Android SDK (API 37).
