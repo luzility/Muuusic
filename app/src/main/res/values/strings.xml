@@ -259,4 +259,9 @@
     <string name="hint_recognition">Listens to music around you and finds it. This is still experimental.</string>
     <string name="settings_tour">Show the welcome tour</string>
     <string name="settings_tour_summary">Also brings back the tips</string>
+    <string name="queue_already_playing">This song is already playing</string>
+    <string name="queue_added_next">Plays next</string>
+    <string name="queue_added_end">Added to queue</string>
+    <string name="queue_moved_next">Already in the queue, moved up to play next</string>
+    <string name="queue_moved_end">Already in the queue, moved to the end</string>
 </resources>

@@ -1,5 +1,9 @@
 package me.luzility.muuusic.ui.components
 
+import android.content.Context
+import android.widget.Toast
+import androidx.compose.ui.platform.LocalContext
+import me.luzility.muuusic.playback.QueueResult
 import androidx.compose.material.icons.rounded.Download
 import androidx.compose.material.icons.rounded.DeleteOutline
 import androidx.compose.foundation.layout.width
@@ -93,6 +97,7 @@ fun SongMenu(song: Song) {
     val player = LocalPlayer.current
     val navigator = LocalNavigator.current
     var open by remember { mutableStateOf(false) }
+    val context = LocalContext.current
     var addingToPlaylist by remember { mutableStateOf(false) }
     val liked by remember(song.id) { player.isLiked(song) }.collectAsState(initial = false)
 
@@ -108,12 +113,12 @@ fun SongMenu(song: Song) {
             DropdownMenuItem(
                 text = { Text(stringResource(R.string.play_next)) },
                 leadingIcon = { Icon(Icons.AutoMirrored.Rounded.QueueMusic, null) },
-                onClick = { player.playNext(song); open = false },
+                onClick = { showQueueResult(context, player.playNext(song), next = true); open = false },
             )
             DropdownMenuItem(
                 text = { Text(stringResource(R.string.add_to_queue)) },
                 leadingIcon = { Icon(Icons.AutoMirrored.Rounded.PlaylistAdd, null) },
-                onClick = { player.addToQueue(song); open = false },
+                onClick = { showQueueResult(context, player.addToQueue(song), next = false); open = false },
             )
             DropdownMenuItem(
                 text = { Text(stringResource(R.string.add_to_playlist)) },
@@ -165,4 +170,13 @@ fun CollectionListItem(collection: MusicCollection, onClick: () -> Unit, modifie
             Artwork(collection.thumbnailUrl, Modifier.size(64.dp), MaterialTheme.shapes.large)
         },
     )
+}
+
+private fun showQueueResult(context: Context, result: QueueResult, next: Boolean) {
+    val message = when (result) {
+        QueueResult.AlreadyPlaying -> R.string.queue_already_playing
+        QueueResult.Moved -> if (next) R.string.queue_moved_next else R.string.queue_moved_end
+        QueueResult.Added -> if (next) R.string.queue_added_next else R.string.queue_added_end
+    }
+    Toast.makeText(context, context.getString(message), Toast.LENGTH_SHORT).show()
 }

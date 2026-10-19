@@ -46,6 +46,8 @@ data class PlayerUiState(
     val repeatMode: Int = Player.REPEAT_MODE_OFF,
 )
 
+enum class QueueResult { Added, Moved, AlreadyPlaying }
+
 class PlayerViewModel(app: Application) : AndroidViewModel(app) {
 
     private val library = app.container.library
@@ -166,16 +168,27 @@ class PlayerViewModel(app: Application) : AndroidViewModel(app) {
 
     fun startRadio(song: Song) = play(listOf(song))
 
-    fun playNext(song: Song) {
-        val c = controller ?: return
-        if (c.mediaItemCount == 0) return play(listOf(song))
-        c.addMediaItem(c.currentMediaItemIndex + 1, song.toMediaItem())
-    }
+    fun playNext(song: Song): QueueResult = enqueue(song) { c -> c.currentMediaItemIndex + 1 }
 
-    fun addToQueue(song: Song) {
-        val c = controller ?: return
-        if (c.mediaItemCount == 0) return play(listOf(song))
-        c.addMediaItem(song.toMediaItem())
+    fun addToQueue(song: Song): QueueResult = enqueue(song) { c -> c.mediaItemCount }
+
+    // A song that is already coming up is moved rather than added twice; the playing one is left alone.
+    private fun enqueue(song: Song, target: (MediaController) -> Int): QueueResult {
+        val c = controller ?: return QueueResult.Added
+        if (c.mediaItemCount == 0) {
+            play(listOf(song))
+            return QueueResult.Added
+        }
+        if (c.currentMediaItem?.mediaId == song.id) return QueueResult.AlreadyPlaying
+        val upcoming = (c.currentMediaItemIndex + 1 until c.mediaItemCount).firstOrNull { c.getMediaItemAt(it).mediaId == song.id }
+        if (upcoming != null) {
+            // Moving removes the item first, so indices past it shift down by one.
+            val to = target(c).let { if (it > upcoming) it - 1 else it }.coerceAtMost(c.mediaItemCount - 1)
+            if (to != upcoming) c.moveMediaItem(upcoming, to)
+            return QueueResult.Moved
+        }
+        c.addMediaItem(target(c), song.toMediaItem())
+        return QueueResult.Added
     }
 
     fun togglePlay() {

@@ -258,4 +258,9 @@
     <string name="hint_recognition">Çevrende çalan müziği dinleyip bulur. Henüz deneysel.</string>
     <string name="settings_tour">Tanıtımı tekrar göster</string>
     <string name="settings_tour_summary">İpuçları da yeniden görünür</string>
+    <string name="queue_already_playing">Bu şarkı zaten çalıyor</string>
+    <string name="queue_added_next">Sıradaki şarkı olarak eklendi</string>
+    <string name="queue_added_end">Sıraya eklendi</string>
+    <string name="queue_moved_next">Zaten sıradaydı, hemen sonraya alındı</string>
+    <string name="queue_moved_end">Zaten sıradaydı, sonuna taşındı</string>
 </resources>
