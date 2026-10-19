@@ -264,4 +264,5 @@
     <string name="queue_added_end">Added to queue</string>
     <string name="queue_moved_next">Already in the queue, moved up to play next</string>
     <string name="queue_moved_end">Already in the queue, moved to the end</string>
+    <string name="share">Share</string>
 </resources>

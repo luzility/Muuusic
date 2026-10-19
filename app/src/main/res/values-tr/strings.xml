@@ -263,4 +263,5 @@
     <string name="queue_added_end">Sıraya eklendi</string>
     <string name="queue_moved_next">Zaten sıradaydı, hemen sonraya alındı</string>
     <string name="queue_moved_end">Zaten sıradaydı, sonuna taşındı</string>
+    <string name="share">Paylaş</string>
 </resources>

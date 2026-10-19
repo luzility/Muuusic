@@ -1,5 +1,6 @@
 package me.luzility.muuusic.ui.player
 
+import me.luzility.muuusic.ui.components.SongMenu
 import me.luzility.muuusic.data.settings.Hint
 import me.luzility.muuusic.ui.components.HintAnchor
 import androidx.compose.ui.graphics.graphicsLayer
@@ -150,6 +151,7 @@ fun NowPlayingScreen(onCollapse: () -> Unit) {
             IconButton(onClick = { showQueue = true }, shapes = IconButtonDefaults.shapes()) {
                 Icon(Icons.AutoMirrored.Rounded.QueueMusic, stringResource(R.string.queue))
             }
+            state.current?.let { SongMenu(it, nowPlaying = true) }
         }
 
         // Artwork, title and like button are moved between the two layouts with animateBounds, not recreated.
