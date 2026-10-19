@@ -66,7 +66,6 @@ import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import me.luzility.muuusic.R
@@ -100,7 +99,6 @@ fun MuuusicRoot(player: PlayerViewModel) {
         CompositionLocalProvider(LocalPlayer provides player) {
             UpdatePrompt()
             val nav = rememberNavController()
-            val backStack by nav.currentBackStackEntryAsState()
             val density = LocalDensity.current
             val scope = rememberCoroutineScope()
             val spring = MaterialTheme.motionScheme.defaultSpatialSpec<Float>()
@@ -146,10 +144,14 @@ fun MuuusicRoot(player: PlayerViewModel) {
                                         modifier = Modifier.testTag("nav_${tab.route}"),
                                         selected = selected,
                                         onClick = {
-                                            nav.navigate(tab.route) {
-                                                popUpTo(nav.graph.findStartDestination().id) { saveState = true }
-                                                launchSingleTop = true
-                                                restoreState = true
+                                            if (selected) {
+                                                nav.popBackStack(tab.route, inclusive = false)
+                                            } else {
+                                                nav.navigate(tab.route) {
+                                                    popUpTo(nav.graph.findStartDestination().id) { saveState = true }
+                                                    launchSingleTop = true
+                                                    restoreState = true
+                                                }
                                             }
                                         },
                                         icon = { Icon(tab.icon, null) },

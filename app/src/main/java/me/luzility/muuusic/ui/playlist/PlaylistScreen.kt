@@ -48,6 +48,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -108,8 +109,8 @@ fun PlaylistScreen(onBack: () -> Unit, vm: PlaylistViewModel = viewModel()) {
     LaunchedEffect(items, dragging) { if (!dragging) items?.let { rows = it } }
 
     var menuOpen by remember { mutableStateOf(false) }
-    var renaming by remember { mutableStateOf(false) }
-    var confirmDelete by remember { mutableStateOf(false) }
+    var renaming by rememberSaveable { mutableStateOf(false) }
+    var confirmDelete by rememberSaveable { mutableStateOf(false) }
 
     val listState = rememberLazyListState()
     val reorderState = rememberReorderableLazyListState(listState) { from, to ->

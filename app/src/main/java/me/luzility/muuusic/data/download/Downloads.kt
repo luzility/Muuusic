@@ -15,6 +15,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -23,6 +24,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import me.luzility.muuusic.data.model.Song
 import me.luzility.muuusic.data.model.SongJson
 import me.luzility.muuusic.playback.MediaItems
@@ -54,6 +56,7 @@ class Downloads(
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
     private var progressJob: Job? = null
+    private val refreshRequests = Channel<Unit>(Channel.CONFLATED)
 
     private val _statuses = MutableStateFlow<Map<String, DownloadStatus>>(emptyMap())
 
@@ -69,6 +72,15 @@ class Downloads(
             override fun onDownloadChanged(downloadManager: DownloadManager, download: Download, finalException: Exception?) = refresh()
             override fun onDownloadRemoved(downloadManager: DownloadManager, download: Download) = refresh()
         })
+        scope.launch {
+            while (true) {
+                refreshRequests.receive()
+                val all = readIndex().toMutableMap()
+                manager.currentDownloads.forEach { d -> d.toStatus()?.let { all[it.song.id] = it } }
+                _statuses.value = all
+                if (manager.currentDownloads.any { it.state == Download.STATE_DOWNLOADING }) pollProgress()
+            }
+        }
         refresh()
     }
 
@@ -93,15 +105,15 @@ class Downloads(
     fun bytesUsed(): Long = dir.walkTopDown().filter { it.isFile }.sumOf { it.length() }
 
     private fun refresh() {
-        scope.launch {
-            val all = mutableMapOf<String, DownloadStatus>()
-            manager.downloadIndex.getDownloads().use { cursor ->
-                while (cursor.moveToNext()) cursor.download.toStatus()?.let { all[it.song.id] = it }
-            }
-            manager.currentDownloads.forEach { d -> d.toStatus()?.let { all[it.song.id] = it } }
-            _statuses.value = all
-            if (manager.currentDownloads.any { it.state == Download.STATE_DOWNLOADING }) pollProgress()
+        refreshRequests.trySend(Unit)
+    }
+
+    private suspend fun readIndex(): Map<String, DownloadStatus> = withContext(Dispatchers.IO) {
+        val all = mutableMapOf<String, DownloadStatus>()
+        manager.downloadIndex.getDownloads().use { cursor ->
+            while (cursor.moveToNext()) cursor.download.toStatus()?.let { all[it.song.id] = it }
         }
+        all
     }
 
     private fun pollProgress() {

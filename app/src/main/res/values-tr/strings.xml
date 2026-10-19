@@ -105,7 +105,10 @@
     <string name="import_from_link">Linkten içe aktar</string>
     <string name="import_link_hint">YouTube veya YouTube Music liste linki</string>
     <string name="import_invalid">Bu bir liste linki değil</string>
-    <string name="imported_playlist">“%1$s” içe aktarıldı (%2$d şarkı)</string>
+    <plurals name="imported_playlist">
+        <item quantity="one">“%1$s” içe aktarıldı (%2$d şarkı)</item>
+        <item quantity="other">“%1$s” içe aktarıldı (%2$d şarkı)</item>
+    </plurals>
     <string name="playlist_name">Ad</string>
     <string name="create">Oluştur</string>
     <string name="save">Kaydet</string>
@@ -273,7 +276,10 @@
     <string name="speed_pitch">Hız ve perde</string>
     <string name="speed">Hız</string>
     <string name="pitch">Perde</string>
-    <string name="pitch_semitones">%1$s yarım ton</string>
+    <plurals name="pitch_semitones">
+        <item quantity="one">%1$s yarım ton</item>
+        <item quantity="other">%1$s yarım ton</item>
+    </plurals>
     <string name="pitch_linked">Perde hıza bağlı. Bunu Ayarlar\'dan değiştirebilirsin.</string>
     <string name="settings_link_pitch">Perdeyi hıza bağla</string>
     <string name="settings_link_pitch_summary">Hızlanınca ses incelir, yavaşlayınca kalınlaşır; plak gibi</string>

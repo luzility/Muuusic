@@ -29,6 +29,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -101,7 +102,7 @@ fun SpeedSheet(onDismiss: () -> Unit) {
                     val semitones = prefs.pitchSemitones.roundToInt()
                     ValueRow(
                         stringResource(R.string.pitch),
-                        if (semitones == 0) "0" else stringResource(R.string.pitch_semitones, if (semitones > 0) "+$semitones" else "$semitones"),
+                        if (semitones == 0) "0" else pluralStringResource(R.plurals.pitch_semitones, abs(semitones), if (semitones > 0) "+$semitones" else "$semitones"),
                     )
                     Slider(
                         value = prefs.pitchSemitones,

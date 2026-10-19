@@ -96,7 +96,12 @@ class PlayerViewModel(app: Application) : AndroidViewModel(app) {
                 emit(UiState.Success(cached.takeUnless(Lyrics::isEmpty)))
             } else {
                 emit(UiState.Loading)
-                val durationSec = song.durationSec.takeIf { it > 0 } ?: (durationMs / 1000)
+                val durationSec = song.durationSec.takeIf { it > 0 }
+                    ?: (durationMs / 1000).takeIf { it > 0 }
+                    ?: withTimeoutOrNull(DURATION_WAIT_MS) {
+                        _state.first { it.current?.id == song.id && it.durationMs > 0 }.durationMs / 1000
+                    }
+                    ?: 0
                 emit(UiState.of { lyricsRepository.lyricsFor(song, durationSec) })
             }
         }
@@ -264,3 +269,7 @@ class PlayerViewModel(app: Application) : AndroidViewModel(app) {
         MediaController.releaseFuture(controllerFuture)
     }
 }
+
+private const val DURATION_WAIT_MS = 3_000L
+
+private data class TranslationRequest(val lyrics: Lyrics?, val on: Boolean, val target: String, val online: Boolean)

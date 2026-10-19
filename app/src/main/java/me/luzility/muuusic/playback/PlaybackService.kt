@@ -60,6 +60,8 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.withContext
 import java.io.File
 
@@ -80,6 +82,8 @@ class PlaybackService : MediaLibraryService() {
     private lateinit var queueStore: QueueStore
     private var saveJob: Job? = null
     private var positionJob: Job? = null
+    private val playbackWanted = MutableStateFlow(false)
+    private var waitingForNetwork = false
     // Restoring the saved queue is not a new play.
     private var restoring = false
 
@@ -125,7 +129,7 @@ class PlaybackService : MediaLibraryService() {
             while (true) {
                 crossfader.tick(container.settings.prefs.value.fadeSeconds, player, gain)
                 skipSegment()
-                delay(FADE_TICK_MS)
+                if (player.playWhenReady) delay(FADE_TICK_MS) else playbackWanted.first { it }
             }
         }
         queueStore = QueueStore(File(filesDir, "queue.json"))
@@ -323,6 +327,8 @@ class PlaybackService : MediaLibraryService() {
         }
 
         override fun onEvents(player: Player, events: Player.Events) {
+            playbackWanted.value = this@PlaybackService.player.playWhenReady
+            if (events.contains(Player.EVENT_MEDIA_ITEM_TRANSITION) || !this@PlaybackService.player.playWhenReady) waitingForNetwork = false
             if (events.containsAny(
                     Player.EVENT_MEDIA_ITEM_TRANSITION,
                     Player.EVENT_PLAY_WHEN_READY_CHANGED,

@@ -48,6 +48,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -127,10 +128,10 @@ fun SettingsScreen(onBack: () -> Unit, onOpenEqualizer: () -> Unit, vm: Settings
     val prefs by vm.prefs.collectAsStateWithLifecycle()
     val cacheUsed by vm.cacheUsed.collectAsStateWithLifecycle()
     val downloadsUsed by vm.downloadsUsed.collectAsStateWithLifecycle()
-    var confirmDownloads by remember { mutableStateOf(false) }
+    var confirmDownloads by rememberSaveable { mutableStateOf(false) }
     val context = LocalContext.current
-    var confirmHistory by remember { mutableStateOf(false) }
-    var showCredits by remember { mutableStateOf(false) }
+    var confirmHistory by rememberSaveable { mutableStateOf(false) }
+    var showCredits by rememberSaveable { mutableStateOf(false) }
     val uriHandler = LocalUriHandler.current
     val updates = updateViewModel()
     val updateCheck by updates.check.collectAsStateWithLifecycle()

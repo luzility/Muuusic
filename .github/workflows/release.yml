@@ -64,7 +64,7 @@ jobs:
               translations=$(git log "$range" --no-merges --committer=hosted@weblate.org --oneline | wc -l)
               if [[ "$translations" -gt 0 ]]; then echo "- Translation updates"; fi
               updates=$(git log "$range" --no-merges --author=renovate --oneline | wc -l)
-              if [[ "$updates" -gt 0 ]]; then echo "- $updates dependency updates"; fi
+              if [[ "$updates" -eq 1 ]]; then echo "- 1 dependency update"; elif [[ "$updates" -gt 1 ]]; then echo "- $updates dependency updates"; fi
             fi
             if [[ -n "$previous" ]]; then
               echo

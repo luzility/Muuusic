@@ -84,7 +84,7 @@ fun ImportPlaylistDialog(onDismiss: () -> Unit, vm: PlaylistsViewModel = viewMod
 
     LaunchedEffect(state) {
         val done = state as? ImportState.Done ?: return@LaunchedEffect
-        Toast.makeText(context, context.getString(R.string.imported_playlist, done.name, done.count), Toast.LENGTH_SHORT).show()
+        Toast.makeText(context, context.resources.getQuantityString(R.plurals.imported_playlist, done.count, done.name, done.count), Toast.LENGTH_SHORT).show()
         vm.resetImport()
         onDismiss()
     }
@@ -129,7 +129,7 @@ fun ImportPlaylistDialog(onDismiss: () -> Unit, vm: PlaylistsViewModel = viewMod
 fun AddToPlaylistSheet(songs: List<Song>, onDismiss: () -> Unit, vm: PlaylistsViewModel = viewModel()) {
     val playlists by vm.playlists.collectAsStateWithLifecycle()
     val context = LocalContext.current
-    var creating by remember { mutableStateOf(false) }
+    var creating by rememberSaveable { mutableStateOf(false) }
 
     fun confirm(name: String) {
         Toast.makeText(context, context.getString(R.string.added_to_playlist, name), Toast.LENGTH_SHORT).show()

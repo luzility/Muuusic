@@ -36,7 +36,7 @@ val shippedLocales: List<String> = run {
     val res = file("src/main/res")
     val base = translatedNames(res.resolve("values/strings.xml"))
     val ratios = res.listFiles().orEmpty()
-        .filter { it.name.startsWith("values-") && it.resolve("strings.xml").exists() }
+        .filter { it.name.matches(Regex("values-[a-z]{2,3}(-r[A-Z]{2})?")) && it.resolve("strings.xml").exists() }
         .associate { it.name.removePrefix("values-") to translatedNames(it.resolve("strings.xml"), base).size.toDouble() / base.size }
     val (kept, dropped) = ratios.entries.sortedBy { it.key }.partition { it.value >= minTranslated }
     logger.lifecycle(

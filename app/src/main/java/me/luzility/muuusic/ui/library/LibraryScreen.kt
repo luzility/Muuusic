@@ -106,8 +106,8 @@ fun LibraryScreen(
     val playlists by playlistsVm.playlists.collectAsStateWithLifecycle()
     val currentId = player.state.collectAsStateWithLifecycle().value.current?.id
     var tab by rememberSaveable { mutableIntStateOf(TabLiked) }
-    var creating by remember { mutableStateOf(false) }
-    var importing by remember { mutableStateOf(false) }
+    var creating by rememberSaveable { mutableStateOf(false) }
+    var importing by rememberSaveable { mutableStateOf(false) }
     val songs = if (tab == TabLiked) liked else history
 
     LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(bottom = 16.dp + LocalMiniPlayerInset.current)) {

@@ -106,7 +106,10 @@
     <string name="import_from_link">Import from link</string>
     <string name="import_link_hint">YouTube or YouTube Music playlist link</string>
     <string name="import_invalid">That isn\'t a playlist link</string>
-    <string name="imported_playlist">Imported “%1$s” (%2$d songs)</string>
+    <plurals name="imported_playlist">
+        <item quantity="one">Imported “%1$s” (%2$d song)</item>
+        <item quantity="other">Imported “%1$s” (%2$d songs)</item>
+    </plurals>
     <string name="playlist_name">Name</string>
     <string name="create">Create</string>
     <string name="save">Save</string>
@@ -274,7 +277,10 @@
     <string name="speed_pitch">Speed and pitch</string>
     <string name="speed">Speed</string>
     <string name="pitch">Pitch</string>
-    <string name="pitch_semitones">%1$s semitones</string>
+    <plurals name="pitch_semitones">
+        <item quantity="one">%1$s semitone</item>
+        <item quantity="other">%1$s semitones</item>
+    </plurals>
     <string name="pitch_linked">Pitch follows the speed. You can change this in Settings.</string>
     <string name="settings_link_pitch">Pitch follows speed</string>
     <string name="settings_link_pitch_summary">Faster sounds higher and slower sounds lower, like a record</string>

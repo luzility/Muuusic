@@ -39,6 +39,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -101,7 +102,7 @@ fun SongMenu(song: Song, nowPlaying: Boolean = false) {
     val navigator = LocalNavigator.current
     var open by remember { mutableStateOf(false) }
     val context = LocalContext.current
-    var addingToPlaylist by remember { mutableStateOf(false) }
+    var addingToPlaylist by rememberSaveable { mutableStateOf(false) }
     val liked by remember(song.id) { player.isLiked(song) }.collectAsState(initial = false)
 
     Box {
