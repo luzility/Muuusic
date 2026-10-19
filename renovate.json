@@ -1,0 +1,52 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:recommended"],
+  "timezone": "Europe/Istanbul",
+  "schedule": ["before 9am on monday"],
+  "prConcurrentLimit": 5,
+  "labels": ["dependencies"],
+  "packageRules": [
+    {
+      "description": "YouTube changes break playback until NewPipe catches up, so its updates come right away.",
+      "matchPackageNames": ["com.github.TeamNewPipe:NewPipeExtractor"],
+      "schedule": ["at any time"],
+      "prPriority": 10
+    },
+    {
+      "groupName": "Kotlin",
+      "matchPackageNames": ["org.jetbrains.kotlin**", "com.google.devtools.ksp**"]
+    },
+    {
+      "groupName": "Android Gradle Plugin",
+      "matchPackageNames": ["com.android.**"]
+    },
+    {
+      "groupName": "Compose",
+      "matchPackageNames": ["androidx.compose**"]
+    },
+    {
+      "groupName": "Media3",
+      "matchPackageNames": ["androidx.media3:**"]
+    },
+    {
+      "groupName": "Room",
+      "matchPackageNames": ["androidx.room:**"]
+    },
+    {
+      "groupName": "Glance",
+      "matchPackageNames": ["androidx.glance:**"]
+    },
+    {
+      "groupName": "Coil",
+      "matchPackageNames": ["io.coil-kt.coil3:**"]
+    },
+    {
+      "groupName": "Baseline profiles",
+      "matchPackageNames": ["androidx.benchmark**", "androidx.baselineprofile**", "androidx.profileinstaller**", "androidx.test**"]
+    },
+    {
+      "groupName": "GitHub Actions",
+      "matchManagers": ["github-actions"]
+    }
+  ]
+}
