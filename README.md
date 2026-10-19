@@ -1,0 +1,34 @@
+# Muuusic
+
+An ad-free YouTube Music client for Android.
+
+## Features
+
+- No ads, no account needed
+- Background playback
+- Synced lyrics from LRCLIB
+- Likes, history and playlists, stored on the device
+- Import YouTube / YouTube Music playlists from a link
+- YouTube Music home feed with moods, and full artist pages
+- Voice search and song recognition (experimental)
+- Volume normalization, fades between songs and an equalizer
+- Sleep timer
+- Picks up where you left off after the app is closed
+- Download songs, albums and playlists for offline listening
+- Played songs are cached
+
+## Building
+
+Requires JDK 17+ and the Android SDK (API 37).
+
+```bash
+./gradlew assembleRelease
+```
+
+## Disclaimer
+
+Muuusic is not affiliated with YouTube or Google. It talks to YouTube's public endpoints through [NewPipeExtractor](https://github.com/TeamNewPipe/NewPipeExtractor).
+
+## License
+
+[GPL-3.0](LICENSE). The bundled Roboto Flex font is under the [SIL Open Font License](licenses/RobotoFlex-OFL.txt).

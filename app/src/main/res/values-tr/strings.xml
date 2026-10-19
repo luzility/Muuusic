@@ -1,0 +1,202 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="nav_home">Ana sayfa</string>
+    <string name="nav_search">Ara</string>
+    <string name="nav_library">Kitaplık</string>
+
+    <string name="greeting_morning">Günaydın</string>
+    <string name="greeting_afternoon">İyi günler</string>
+    <string name="greeting_evening">İyi akşamlar</string>
+    <string name="greeting_night">İyi geceler</string>
+    <string name="home_subtitle">Bugün ne dinliyoruz?</string>
+    <string name="quick_picks">Hızlı seçimler</string>
+    <string name="recently_played">Son çalınanlar</string>
+    <string name="most_played">Tekrar tekrar</string>
+    <string name="discover">Keşfet</string>
+
+    <string name="search_hint">Şarkı, albüm, sanatçı</string>
+    <string name="filter_songs">Şarkılar</string>
+    <string name="filter_videos">Videolar</string>
+    <string name="filter_albums">Albümler</string>
+    <string name="filter_playlists">Çalma listeleri</string>
+    <string name="clear">Temizle</string>
+
+    <string name="liked_songs">Beğenilenler</string>
+    <string name="history">Geçmiş</string>
+    <string name="play_all">Çal</string>
+    <string name="shuffle">Karıştır</string>
+    <string name="play_next">Sıradakine ekle</string>
+    <string name="add_to_queue">Kuyruğa ekle</string>
+    <string name="start_radio">Radyo başlat</string>
+    <string name="like">Beğen</string>
+    <string name="unlike">Beğenilenlerden kaldır</string>
+    <string name="now_playing">Şimdi çalıyor</string>
+    <string name="queue">Sıradakiler</string>
+    <string name="collapse">Küçült</string>
+    <string name="more">Daha fazla</string>
+    <string name="next">Sonraki</string>
+    <string name="previous">Önceki</string>
+    <string name="play">Oynat</string>
+    <string name="pause">Duraklat</string>
+    <string name="repeat">Tekrarla</string>
+    <string name="lyrics">Sözler</string>
+    <string name="lyrics_not_found">Bu şarkının sözleri bulunamadı</string>
+    <string name="lyrics_source">Sözler LRCLIB tarafından sağlandı</string>
+    <string name="lyrics_resync">Senkronize et</string>
+    <string name="lyrics_settings">Söz ayarları</string>
+    <string name="lyrics_timing">Zamanlama</string>
+    <string name="lyrics_timing_hint">Sözler geride kalıyorsa artır, önde gidiyorsa azalt. Bu şarkı için kaydedilir.</string>
+    <string name="lyrics_timing_value">%1$s sn</string>
+    <string name="lyrics_earlier">Sözleri erken göster</string>
+    <string name="lyrics_later">Sözleri geç göster</string>
+    <string name="reset">Sıfırla</string>
+    <string name="lyrics_text_size">Yazı boyutu</string>
+    <string name="size_small">Küçük</string>
+    <string name="size_medium">Orta</string>
+    <string name="size_large">Büyük</string>
+    <string name="lyrics_alignment">Hizalama</string>
+    <string name="align_start">Sola</string>
+    <string name="align_center">Ortaya</string>
+    <string name="lyrics_blur">Uzak satırları bulanıklaştır</string>
+    <string name="lyrics_settings_hint">Söz ayarları için basılı tut</string>
+    <string name="go_to_artist">Sanatçıya git</string>
+    <string name="artist_popular">Popüler</string>
+    <string name="artist_releases">Albümler ve single\'lar</string>
+    <string name="artist_about">Hakkında</string>
+    <string name="artist_subscribers">%1$s abone</string>
+    <string name="show_more">Daha fazla göster</string>
+    <string name="show_less">Daha az göster</string>
+    <string name="settings">Ayarlar</string>
+    <string name="settings_playback">Oynatma</string>
+    <string name="settings_audio_quality">Ses kalitesi</string>
+    <string name="settings_audio_quality_summary">Düşük kalite daha az veri harcar. Önbellekte olmayan şarkılarda geçerli olur.</string>
+    <string name="quality_high">Yüksek</string>
+    <string name="quality_normal">Normal</string>
+    <string name="quality_low">Tasarruf</string>
+    <string name="settings_autoplay">Otomatik oynatma</string>
+    <string name="settings_autoplay_summary">Kuyruk bitince benzer şarkılar çalmaya devam et</string>
+    <string name="settings_appearance">Görünüm</string>
+    <string name="settings_theme">Tema</string>
+    <string name="theme_system">Sistem</string>
+    <string name="theme_light">Açık</string>
+    <string name="theme_dark">Koyu</string>
+    <string name="settings_artwork_colors">Renkleri kapaktan al</string>
+    <string name="settings_artwork_colors_summary">Uygulama, çalan şarkının kapak renklerine bürünsün</string>
+    <string name="settings_pure_black">Saf siyah</string>
+    <string name="settings_pure_black_summary">Koyu temada siyah arka plan, OLED ekranlarda pil dostu</string>
+    <string name="settings_storage">Depolama</string>
+    <string name="settings_cache_size">Şarkı önbelleği</string>
+    <string name="settings_cache_used">Kullanılan: %1$s</string>
+    <string name="settings_cache_restart">Yeni boyut uygulama yeniden başlatılınca geçerli olur.</string>
+    <string name="settings_clear_cache">Şarkı önbelleğini temizle</string>
+    <string name="settings_clear_cache_summary">Önbellekteki şarkılar çalınınca yeniden indirilir</string>
+    <string name="settings_clear_history">Dinleme geçmişini temizle</string>
+    <string name="settings_clear_history_summary">Son çalınanlar, Tekrar tekrar ve Hızlı seçimler sıfırlanır</string>
+    <string name="settings_clear_history_confirm">Dinleme geçmişin silinecek. Beğendiğin şarkılar korunur.</string>
+    <string name="cancel">İptal</string>
+    <string name="settings_about">Hakkında</string>
+    <string name="settings_version">Sürüm %1$s</string>
+    <string name="settings_license">Lisans</string>
+    <string name="settings_credits">Açık kaynak</string>
+    <string name="settings_credits_summary">NewPipeExtractor, AndroidX Media3, LRCLIB, MaterialKolor, Roboto Flex</string>
+    <string name="playlists">Listeler</string>
+    <string name="new_playlist">Yeni liste</string>
+    <string name="import_action">İçe aktar</string>
+    <string name="import_from_link">Linkten içe aktar</string>
+    <string name="import_link_hint">YouTube veya YouTube Music liste linki</string>
+    <string name="import_invalid">Bu bir liste linki değil</string>
+    <string name="imported_playlist">“%1$s” içe aktarıldı (%2$d şarkı)</string>
+    <string name="playlist_name">Ad</string>
+    <string name="create">Oluştur</string>
+    <string name="save">Kaydet</string>
+    <string name="rename">Yeniden adlandır</string>
+    <string name="delete">Sil</string>
+    <string name="delete_playlist">Listeyi sil</string>
+    <string name="delete_playlist_confirm">“%1$s” silinsin mi? Şarkılar kitaplığında kalır.</string>
+    <string name="add_to_playlist">Listeye ekle</string>
+    <string name="added_to_playlist">“%1$s” listesine eklendi</string>
+    <string name="save_to_library">Kitaplığa kaydet</string>
+    <string name="saved_to_library">Listelerine kaydedildi</string>
+    <string name="empty_playlists">Bir liste oluştur ya da linkten içe aktar</string>
+    <string name="empty_playlist">Bu liste boş. Herhangi bir şarkının menüsünden “Listeye ekle” ile şarkı ekleyebilirsin.</string>
+    <string name="downloads">İndirilenler</string>
+    <string name="download">İndir</string>
+    <string name="remove_download">İndirmeyi kaldır</string>
+    <string name="download_all">Tümünü indir</string>
+    <string name="all_downloaded">İndirildi</string>
+    <string name="downloads_count">Bu cihazda %1$s</string>
+    <string name="empty_downloads">İndirdiğin şarkılar internet olmadan da çalar</string>
+    <string name="settings_download_wifi">Yalnızca Wi-Fi ile indir</string>
+    <string name="settings_download_wifi_summary">İndirmeler mobil veri yerine Wi-Fi\'yi bekler</string>
+    <string name="settings_downloads_used">İndirilenler: %1$s</string>
+    <string name="settings_remove_downloads">Tüm indirmeleri sil</string>
+    <string name="settings_remove_downloads_summary">İndirilen şarkılar yeniden internet ister</string>
+    <string name="settings_remove_downloads_confirm">İndirilen tüm şarkılar bu cihazdan silinecek.</string>
+    <string name="sleep_timer">Uyku zamanlayıcısı</string>
+    <string name="sleep_timer_hint">Süre dolunca müzik yavaşça kısılıp durur.</string>
+    <string name="sleep_minutes">%1$d dk</string>
+    <string name="sleep_end_of_song">Şarkı bitince</string>
+    <string name="sleep_cancel">Zamanlayıcıyı kapat</string>
+    <string name="voice_search">Sesle ara</string>
+    <string name="recognize_song">Şarkıyı tanı</string>
+    <string name="voice_unavailable">Bu cihazda sesle arama kullanılamıyor</string>
+    <string name="fill_query">Aramaya ekle</string>
+    <string name="recent_searches">Son aramalar</string>
+    <string name="clear_all">Tümünü temizle</string>
+    <string name="browse">Keşfet</string>
+    <string name="close">Kapat</string>
+    <string name="experimental">Deneysel</string>
+    <string name="recognize_listening">Dinleniyor…</string>
+    <string name="recognize_listening_hint">Telefonu müziğe yaklaştır</string>
+    <string name="recognize_searching">Aranıyor…</string>
+    <string name="recognize_not_found">Bulunamadı</string>
+    <string name="recognize_not_found_hint">Müziğin daha net duyulduğu bir yerde tekrar dene</string>
+    <string name="recognize_failed">Bağlanılamadı</string>
+    <string name="recognize_failed_hint">İnternet bağlantını kontrol et. Tanıma resmî olmayan bir servis kullanır, her zaman çalışmayabilir.</string>
+    <string name="recognize_no_permission">Mikrofon izni gerekli</string>
+    <string name="recognize_no_permission_hint">Çalan şarkıyı duyabilmek için Muuusic\'in mikrofona erişmesi gerekiyor.</string>
+    <string name="recognize_allow">İzin ver</string>
+    <string name="settings_lab">Laboratuvar</string>
+    <string name="settings_song_recognition">Şarkı tanıma</string>
+    <string name="settings_song_recognition_summary">Çalan şarkıyı mikrofonla tanır. Resmî olmayan bir servis kullanır, çalışmayı bırakabilir.</string>
+    <string-array name="search_genres">
+        <item>Pop</item>
+        <item>Türkçe Pop</item>
+        <item>Rap</item>
+        <item>Rock</item>
+        <item>Arabesk</item>
+        <item>Elektronik</item>
+        <item>Lo-fi</item>
+        <item>Caz</item>
+        <item>Akustik</item>
+        <item>Klasik</item>
+        <item>Parti</item>
+        <item>Sakin</item>
+    </string-array>
+    <string name="show_all">Tümünü göster</string>
+    <string name="remove">Kaldır</string>
+
+    <string name="no_results">Sonuç bulunamadı</string>
+    <string name="error_generic">Bir şeyler ters gitti</string>
+    <string name="retry">Tekrar dene</string>
+    <string name="empty_liked">Beğendiğin şarkılar burada görünecek</string>
+    <string name="empty_history">Dinlemeye başla, geçmişin burada oluşsun</string>
+    <plurals name="song_count">
+        <item quantity="one">%d şarkı</item>
+        <item quantity="other">%d şarkı</item>
+    </plurals>
+    <string name="settings_sound">Ses</string>
+    <string name="settings_normalize">Ses seviyesini eşitle</string>
+    <string name="settings_normalize_summary">Her şarkıyı benzer yükseklikte çal</string>
+    <string name="settings_crossfade">Şarkılar arası geçiş</string>
+    <string name="settings_crossfade_summary">Biten şarkı kısılırken sonraki başlasın</string>
+    <string name="off">Kapalı</string>
+    <string name="seconds_short">%1$d sn</string>
+    <string name="equalizer">Ekolayzır</string>
+    <string name="equalizer_summary">Kapalı</string>
+    <string name="equalizer_on">Açık</string>
+    <string name="equalizer_enable">Ekolayzırı kullan</string>
+    <string name="equalizer_bass_boost">Bas güçlendirme</string>
+    <string name="equalizer_reset">Sıfırla</string>
+    <string name="equalizer_unavailable">Bu cihazda ekolayzır yok.</string>
+</resources>
