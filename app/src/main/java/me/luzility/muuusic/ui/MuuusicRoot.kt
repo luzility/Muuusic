@@ -1,5 +1,6 @@
 package me.luzility.muuusic.ui
 
+import me.luzility.muuusic.ui.update.UpdatePrompt
 import me.luzility.muuusic.ui.recognition.RecognitionScreen
 import me.luzility.muuusic.ui.download.DownloadsScreen
 import androidx.compose.ui.semantics.testTagsAsResourceId
@@ -90,6 +91,7 @@ fun MuuusicRoot(player: PlayerViewModel) {
 
     MuuusicTheme(artworkUrl = state.current?.thumbnailUrl, prefs = appPrefs) {
         CompositionLocalProvider(LocalPlayer provides player) {
+            UpdatePrompt()
             val nav = rememberNavController()
             val backStack by nav.currentBackStackEntryAsState()
             val density = LocalDensity.current

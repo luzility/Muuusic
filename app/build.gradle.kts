@@ -5,6 +5,17 @@ plugins {
     alias(libs.plugins.baselineprofile)
 }
 
+// CI passes -PversionName from the git tag (v1.2.0 or v1.2.0-beta.3); local builds use the default.
+val appVersion = (findProperty("versionName") as String?) ?: "0.1.0"
+
+// 1.2.0-beta.3 -> 1020003, 1.2.0 -> 1020099, so a release always sorts after its betas.
+fun versionCodeOf(version: String): Int {
+    val match = Regex("""^(\d+)\.(\d+)\.(\d+)(?:-beta\.(\d+))?$""").matchEntire(version)
+        ?: error("Version must look like 1.2.0 or 1.2.0-beta.3: $version")
+    val (major, minor, patch, beta) = match.destructured
+    return ((major.toInt() * 100 + minor.toInt()) * 100 + patch.toInt()) * 100 + (beta.toIntOrNull() ?: 99)
+}
+
 android {
     namespace = "me.luzility.muuusic"
     compileSdk = 37
@@ -13,8 +24,20 @@ android {
         applicationId = "me.luzility.muuusic"
         minSdk = 26
         targetSdk = 36
-        versionCode = 1
-        versionName = "0.1.0"
+        versionCode = versionCodeOf(appVersion)
+        versionName = appVersion
+    }
+
+    signingConfigs {
+        // Set by the release workflow; without it release builds fall back to the debug key.
+        System.getenv("SIGNING_KEYSTORE")?.let { path ->
+            create("release") {
+                storeFile = file(path)
+                storePassword = System.getenv("SIGNING_STORE_PASSWORD")
+                keyAlias = System.getenv("SIGNING_KEY_ALIAS")
+                keyPassword = System.getenv("SIGNING_KEY_PASSWORD")
+            }
+        }
     }
 
     buildTypes {
@@ -22,8 +45,7 @@ android {
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
-            // Debug key so release builds install; use a real signing config to distribute.
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = signingConfigs.findByName("release") ?: signingConfigs.getByName("debug")
         }
         debug {
             applicationIdSuffix = ".debug"

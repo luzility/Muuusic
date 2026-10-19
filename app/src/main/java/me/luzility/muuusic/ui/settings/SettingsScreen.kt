@@ -1,5 +1,10 @@
 package me.luzility.muuusic.ui.settings
 
+import androidx.compose.ui.platform.LocalUriHandler
+import me.luzility.muuusic.data.update.UpdateChannel
+import me.luzility.muuusic.data.update.Updates
+import me.luzility.muuusic.ui.update.UpdateCheck
+import me.luzility.muuusic.ui.update.updateViewModel
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.rounded.Science
@@ -117,6 +122,10 @@ fun SettingsScreen(onBack: () -> Unit, onOpenEqualizer: () -> Unit, vm: Settings
     var confirmDownloads by remember { mutableStateOf(false) }
     val context = LocalContext.current
     var confirmHistory by remember { mutableStateOf(false) }
+    var showCredits by remember { mutableStateOf(false) }
+    val uriHandler = LocalUriHandler.current
+    val updates = updateViewModel()
+    val updateCheck by updates.check.collectAsStateWithLifecycle()
 
     LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(bottom = 24.dp + LocalMiniPlayerInset.current)) {
         item { Spacer(Modifier.windowInsetsTopHeight(WindowInsets.statusBars)) }
@@ -317,15 +326,85 @@ fun SettingsScreen(onBack: () -> Unit, onOpenEqualizer: () -> Unit, vm: Settings
             )
         }
 
+        item { GroupTitle(stringResource(R.string.settings_updates)) }
+        item {
+            SettingsGroup(
+                {
+                    val check = updateCheck
+                    val available = check as? UpdateCheck.Available
+                    ActionSetting(
+                        title = stringResource(R.string.settings_check_updates),
+                        summary = when (check) {
+                            UpdateCheck.Checking -> stringResource(R.string.update_checking)
+                            UpdateCheck.UpToDate -> stringResource(R.string.update_up_to_date, BuildConfig.VERSION_NAME)
+                            UpdateCheck.Failed -> stringResource(R.string.update_failed)
+                            is UpdateCheck.Available -> stringResource(R.string.update_ready, check.release.version)
+                            UpdateCheck.Idle -> stringResource(R.string.settings_version, BuildConfig.VERSION_NAME)
+                        },
+                        onClick = { available?.let { updates.show(it.release) } ?: updates.checkNow() },
+                    )
+                },
+                {
+                    ChoiceSetting(
+                        title = stringResource(R.string.settings_update_channel),
+                        summary = stringResource(R.string.settings_update_channel_summary),
+                        options = UpdateChannel.entries,
+                        selected = prefs.updateChannel,
+                        label = {
+                            when (it) {
+                                UpdateChannel.Release -> R.string.channel_release
+                                UpdateChannel.Beta -> R.string.channel_beta
+                            }
+                        },
+                        onSelect = { channel -> vm.update { it.copy(updateChannel = channel) } },
+                    )
+                },
+            )
+        }
+
         item { GroupTitle(stringResource(R.string.settings_about)) }
         item {
             SettingsGroup(
-                { InfoSetting(stringResource(R.string.app_name), stringResource(R.string.settings_version, BuildConfig.VERSION_NAME)) },
-                { InfoSetting(stringResource(R.string.settings_license), "GNU GPL-3.0") },
-                { InfoSetting(stringResource(R.string.settings_credits), stringResource(R.string.settings_credits_summary)) },
+                {
+                    ActionSetting(
+                        title = "Luzi",
+                        summary = stringResource(R.string.settings_developer_summary),
+                        onClick = { uriHandler.openUri("https://github.com/luzility") },
+                    )
+                },
+                {
+                    ActionSetting(
+                        title = stringResource(R.string.settings_source),
+                        summary = "github.com/${Updates.REPO}",
+                        onClick = { uriHandler.openUri("https://github.com/${Updates.REPO}") },
+                    )
+                },
+                {
+                    ActionSetting(
+                        title = stringResource(R.string.settings_report),
+                        summary = stringResource(R.string.settings_report_summary),
+                        onClick = { uriHandler.openUri("https://github.com/${Updates.REPO}/issues/new") },
+                    )
+                },
+                {
+                    ActionSetting(
+                        title = stringResource(R.string.settings_license),
+                        summary = stringResource(R.string.settings_license_summary),
+                        onClick = { uriHandler.openUri("https://www.gnu.org/licenses/gpl-3.0.html") },
+                    )
+                },
+                {
+                    ActionSetting(
+                        title = stringResource(R.string.settings_credits),
+                        summary = stringResource(R.string.settings_credits_summary, Credits.size),
+                        onClick = { showCredits = true },
+                    )
+                },
             )
         }
     }
+
+    if (showCredits) CreditsDialog(onDismiss = { showCredits = false })
 
     if (confirmDownloads) {
         AlertDialog(

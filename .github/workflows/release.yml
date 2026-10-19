@@ -1,0 +1,49 @@
+name: Release
+
+# Push a tag like v1.2.0 for a release or v1.2.0-beta.1 for a beta.
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Read version from tag
+        id: version
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          echo "name=$version" >> "$GITHUB_OUTPUT"
+          if [[ "$version" == *-beta.* ]]; then echo "prerelease=true" >> "$GITHUB_OUTPUT"; else echo "prerelease=false" >> "$GITHUB_OUTPUT"; fi
+
+      - name: Build signed APK
+        env:
+          SIGNING_KEYSTORE: ${{ runner.temp }}/release.jks
+          SIGNING_STORE_PASSWORD: ${{ secrets.SIGNING_STORE_PASSWORD }}
+          SIGNING_KEY_ALIAS: ${{ secrets.SIGNING_KEY_ALIAS }}
+          SIGNING_KEY_PASSWORD: ${{ secrets.SIGNING_KEY_PASSWORD }}
+        run: |
+          echo "${{ secrets.SIGNING_KEYSTORE_BASE64 }}" | base64 -d > "$SIGNING_KEYSTORE"
+          ./gradlew :app:assembleRelease -PversionName=${{ steps.version.outputs.name }}
+          cp app/build/outputs/apk/release/app-release.apk "Muuusic-${{ steps.version.outputs.name }}.apk"
+
+      - name: Publish on GitHub Releases
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          flags=(--generate-notes --title "Muuusic ${{ steps.version.outputs.name }}")
+          if [[ "${{ steps.version.outputs.prerelease }}" == "true" ]]; then flags+=(--prerelease); fi
+          gh release create "$GITHUB_REF_NAME" "Muuusic-${{ steps.version.outputs.name }}.apk" "${flags[@]}"
