@@ -1,6 +1,6 @@
-# Muuusic
+<p align="center"><img src=".github/assets/banner.png" alt="Muuusic"></p>
 
-An ad-free YouTube Music client for Android.
+<p align="center">An ad-free YouTube Music client for Android.</p>
 
 ## Features
 
