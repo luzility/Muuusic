@@ -1,5 +1,14 @@
 package me.luzility.muuusic.ui
 
+import androidx.compose.material.icons.rounded.CloudOff
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Column
+import androidx.compose.animation.shrinkVertically
+import androidx.compose.animation.expandVertically
 import androidx.compose.animation.core.AnimationVector1D
 import androidx.lifecycle.Lifecycle
 import androidx.compose.runtime.saveable.Saver
@@ -135,11 +144,13 @@ fun MuuusicRoot(player: PlayerViewModel) {
                 Box(Modifier.fillMaxSize().semantics { testTagsAsResourceId = true }) {
                     Scaffold(
                         bottomBar = {
-                            ShortNavigationBar(
-                                modifier = Modifier.onSizeChanged { navBarHeight = with(density) { it.height.toDp() } },
-                            ) {
+                            Column(Modifier.onSizeChanged { navBarHeight = with(density) { it.height.toDp() } }) {
+                            OfflineStrip()
+                            ShortNavigationBar {
+                                val stack by nav.currentBackStack.collectAsStateWithLifecycle()
+                                val currentTab = stack.lastOrNull { entry -> Tab.entries.any { it.route == entry.destination.route } }?.destination?.route
                                 Tab.entries.forEach { tab ->
-                                    val selected = backStack?.destination?.route == tab.route
+                                    val selected = currentTab == tab.route
                                     ShortNavigationBarItem(
                                         modifier = Modifier.testTag("nav_${tab.route}"),
                                         selected = selected,
@@ -158,6 +169,7 @@ fun MuuusicRoot(player: PlayerViewModel) {
                                         label = { Text(stringResource(tab.label)) },
                                     )
                                 }
+                            }
                             }
                         },
                     ) { padding ->
@@ -278,3 +290,26 @@ private val SheetProgressSaver = Saver<Animatable<Float, AnimationVector1D>, Flo
     save = { if (it.targetValue > 0.5f) 1f else 0f },
     restore = { Animatable(it) },
 )
+
+@Composable
+private fun OfflineStrip() {
+    val online by LocalContext.current.container.connectivity.online.collectAsStateWithLifecycle()
+    val motion = MaterialTheme.motionScheme
+    AnimatedVisibility(
+        visible = !online,
+        enter = expandVertically(motion.defaultSpatialSpec()) + fadeIn(motion.defaultEffectsSpec()),
+        exit = shrinkVertically(motion.defaultSpatialSpec()) + fadeOut(motion.defaultEffectsSpec()),
+    ) {
+        Surface(color = MaterialTheme.colorScheme.inverseSurface, contentColor = MaterialTheme.colorScheme.inverseOnSurface) {
+            Row(
+                Modifier.fillMaxWidth().padding(vertical = 6.dp),
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Icon(Icons.Rounded.CloudOff, null, Modifier.size(16.dp))
+                Spacer(Modifier.width(8.dp))
+                Text(stringResource(R.string.offline_banner), style = MaterialTheme.typography.labelLarge)
+            }
+        }
+    }
+}

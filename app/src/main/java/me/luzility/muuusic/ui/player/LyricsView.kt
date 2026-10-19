@@ -131,7 +131,7 @@ fun LyricsPanel(state: PlayerUiState, lyrics: UiState<Lyrics?>, modifier: Modifi
     Box(modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
         when {
             lyrics is UiState.Loading -> LoadingIndicator(Modifier.size(56.dp))
-            lyrics is UiState.Error -> ErrorState(onRetry = player::retryLyrics)
+            lyrics is UiState.Error -> ErrorState(onRetry = player::retryLyrics, offerDownloads = false)
             lyrics is UiState.Success && lyrics.data == null ->
                 EmptyState(Icons.Rounded.Lyrics, stringResource(R.string.lyrics_not_found))
             lyrics is UiState.Success -> {

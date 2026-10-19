@@ -74,6 +74,8 @@ class AppContainer(context: Context) {
 
     val settings = AppSettings(appContext)
 
+    val connectivity = Connectivity(appContext)
+
     val youtube = YouTubeRepository(audioQuality = { settings.prefs.value.audioQuality })
 
     val lyrics by lazy { LyricsRepository(okHttp) }

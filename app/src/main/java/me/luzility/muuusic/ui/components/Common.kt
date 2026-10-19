@@ -1,5 +1,18 @@
 package me.luzility.muuusic.ui.components
 
+import me.luzility.muuusic.container
+import androidx.compose.material3.FilledTonalButton
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.material.icons.rounded.DownloadDone
+import androidx.compose.material.icons.rounded.CloudOff
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.material3.Surface
 import androidx.compose.material.icons.rounded.Science
 import androidx.compose.foundation.shape.CircleShape
@@ -152,19 +165,43 @@ fun EmptyState(icon: ImageVector, text: String, modifier: Modifier = Modifier) {
 }
 
 @Composable
-fun ErrorState(onRetry: () -> Unit, modifier: Modifier = Modifier) {
+fun ErrorState(onRetry: () -> Unit, modifier: Modifier = Modifier, offerDownloads: Boolean = true) {
+    val online by LocalContext.current.container.connectivity.online.collectAsStateWithLifecycle()
+    val retry by rememberUpdatedState(onRetry)
+    var wasOffline by remember { mutableStateOf(!online) }
+    LaunchedEffect(online) {
+        if (online && wasOffline) retry()
+        wasOffline = !online
+    }
+
     Column(
         modifier = modifier.fillMaxWidth().padding(48.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
+        if (!online) {
+            Icon(Icons.Rounded.CloudOff, null, Modifier.size(48.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
         Text(
-            stringResource(R.string.error_generic),
+            stringResource(if (online) R.string.error_generic else R.string.error_offline),
             style = MaterialTheme.typography.titleMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center,
         )
-        Button(onClick = onRetry, shapes = ButtonDefaults.shapes()) {
-            Text(stringResource(R.string.retry))
+        if (!online && offerDownloads) {
+            val navigator = LocalNavigator.current
+            Button(onClick = navigator.openDownloads, shapes = ButtonDefaults.shapes()) {
+                Icon(Icons.Rounded.DownloadDone, null, Modifier.size(ButtonDefaults.IconSize))
+                Spacer(Modifier.size(ButtonDefaults.IconSpacing))
+                Text(stringResource(R.string.go_to_downloads))
+            }
+            FilledTonalButton(onClick = onRetry, shapes = ButtonDefaults.shapes()) {
+                Text(stringResource(R.string.retry))
+            }
+        } else {
+            Button(onClick = onRetry, shapes = ButtonDefaults.shapes()) {
+                Text(stringResource(R.string.retry))
+            }
         }
     }
 }

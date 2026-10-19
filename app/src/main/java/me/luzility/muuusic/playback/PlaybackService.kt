@@ -1,5 +1,8 @@
 package me.luzility.muuusic.playback
 
+import me.luzility.muuusic.R
+import me.luzility.muuusic.data.download.DownloadStatus
+import android.widget.Toast
 import me.luzility.muuusic.playback.audio.Karaoke
 import me.luzility.muuusic.playback.audio.KaraokeAudioProcessor
 import androidx.media3.exoplayer.source.ShuffleOrder.DefaultShuffleOrder
@@ -123,6 +126,15 @@ class PlaybackService : MediaLibraryService() {
                 normalize(player.currentMediaItem?.mediaId)
                 val current = player.currentMediaItem?.mediaId
                 if (prefs.sponsorBlock && current != null && current != segmentsFor) loadSegments(current)
+            }
+        }
+        scope.launch {
+            container.connectivity.online.collect { online ->
+                if (online && waitingForNetwork) {
+                    waitingForNetwork = false
+                    player.prepare()
+                    player.play()
+                }
             }
         }
         scope.launch {
@@ -362,6 +374,11 @@ class PlaybackService : MediaLibraryService() {
                 .filterIsInstance<HttpDataSource.InvalidResponseCodeException>()
                 .firstOrNull()
 
+            if (!container.connectivity.online.value) {
+                skipToDownloaded()
+                return
+            }
+
             // Stream URLs expire or get rejected now and then; resolve a fresh one a couple of
             // times before giving up on the track.
             if (retryId != id) {
@@ -427,6 +444,21 @@ class PlaybackService : MediaLibraryService() {
             scope.launch(Dispatchers.IO) { container.library.recordPlay(song) }
         }
         extendQueueIfNeeded()
+    }
+
+    private fun skipToDownloaded() {
+        val downloaded = container.downloads.statuses.value
+        val order = playOrder()
+        val next = order.drop(order.indexOf(player.currentMediaItemIndex) + 1)
+            .firstOrNull { downloaded[player.getMediaItemAt(it).mediaId]?.state == DownloadStatus.State.Done }
+        Toast.makeText(this, R.string.offline_playback, Toast.LENGTH_SHORT).show()
+        if (next != null) {
+            player.seekTo(next, 0)
+            player.prepare()
+            player.play()
+        } else {
+            waitingForNetwork = true
+        }
     }
 
     private fun playOrder(): MutableList<Int> {
