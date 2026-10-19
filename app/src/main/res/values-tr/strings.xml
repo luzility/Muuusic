@@ -298,4 +298,21 @@
     <string name="settings_karaoke_summary">Sözlerin yanında vokali kısan bir buton. Ortadaki enstrümanlar da azalabilir.</string>
     <string name="settings_karaoke_strength">Karaoke gücü</string>
     <string name="settings_karaoke_strength_summary">Düşük güç melodiyi daha çok korur, yüksek güç vokali daha çok siler</string>
+    <string name="settings_backup">Yedekleme</string>
+    <string name="settings_backup_create">Yedekle</string>
+    <string name="settings_backup_create_summary">Beğenilenleri, çalma listelerini, geçmişi ve ayarları bir dosyaya kaydet</string>
+    <string name="settings_backup_restore">Geri yükle</string>
+    <string name="settings_backup_restore_summary">Bir yedek dosyasından geri getir</string>
+    <string name="backup_restore_confirm">Beğenilenler, geçmiş ve çalma listeleri mevcut olanlara eklenir. Ayarların yedektekilerle değiştirilir.</string>
+    <string name="backup_saved">Yedek kaydedildi</string>
+    <string name="backup_failed">Yedek kaydedilemedi</string>
+    <string name="backup_restored">Yedek geri yüklendi</string>
+    <string name="backup_restore_failed">Yedek geri yüklenemedi</string>
+    <string name="backup_invalid">Bu bir Muuusic yedeği değil</string>
+    <string name="lyrics_translate">Çeviriyi göster</string>
+    <string name="lyrics_translate_summary">Satırları Google Çeviri ile uygulama diline çevirir</string>
+    <string name="error_offline">İnternet bağlantısı yok</string>
+    <string name="go_to_downloads">İndirilenlere git</string>
+    <string name="offline_banner">Çevrimdışısın</string>
+    <string name="offline_playback">Bağlantı yok. Sadece indirilen şarkılar çalınabilir.</string>
 </resources>

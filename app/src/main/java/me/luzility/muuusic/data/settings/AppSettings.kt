@@ -81,6 +81,10 @@ class AppSettings(context: Context) {
         }
     }
 
+    fun reload() {
+        _prefs.value = read()
+    }
+
     private fun read() = AppPrefs(
         audioQuality = enumOrNull<AudioQuality>(store.getString(KEY_QUALITY, null)) ?: AudioQuality.High,
         autoplay = store.getBoolean(KEY_AUTOPLAY, true),

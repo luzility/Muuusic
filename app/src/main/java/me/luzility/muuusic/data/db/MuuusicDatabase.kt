@@ -69,6 +69,15 @@ interface SongDao {
 
     @Query("UPDATE songs SET liked = :liked, likedAt = :likedAt WHERE id = :id")
     suspend fun setLiked(id: String, liked: Boolean, likedAt: Long?)
+
+    @Query("SELECT * FROM songs")
+    suspend fun all(): List<SongEntity>
+
+    @Query("SELECT * FROM songs WHERE id = :id")
+    suspend fun get(id: String): SongEntity?
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun put(song: SongEntity)
 }
 
 @Entity(tableName = "playlists")
@@ -127,6 +136,9 @@ interface PlaylistDao {
 
     @Query("SELECT * FROM playlist_entries WHERE playlistId = :id ORDER BY position")
     suspend fun entries(id: Long): List<PlaylistEntryEntity>
+
+    @Query("SELECT * FROM playlists ORDER BY createdAt")
+    suspend fun all(): List<PlaylistEntity>
 
     @Insert
     suspend fun insertPlaylist(playlist: PlaylistEntity): Long

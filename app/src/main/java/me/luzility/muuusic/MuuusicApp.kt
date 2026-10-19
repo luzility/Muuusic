@@ -23,6 +23,8 @@ import androidx.media3.datasource.okhttp.OkHttpDataSource
 import androidx.room.Room
 import me.luzility.muuusic.data.LibraryRepository
 import me.luzility.muuusic.data.PlaylistRepository
+import me.luzility.muuusic.data.backup.Backup
+import me.luzility.muuusic.data.network.Connectivity
 import me.luzility.muuusic.data.db.MuuusicDatabase
 import me.luzility.muuusic.data.download.Downloads
 import me.luzility.muuusic.data.innertube.InnerTubeClient
@@ -98,6 +100,8 @@ class AppContainer(context: Context) {
     val library = LibraryRepository(database.songDao())
 
     val playlists = PlaylistRepository(database, database.playlistDao(), database.songDao())
+
+    val backup by lazy { Backup(appContext, database, playlists) }
 
     // One index DB shared by the play cache, download cache and download index.
     private val mediaDatabase by lazy { StandaloneDatabaseProvider(appContext) }

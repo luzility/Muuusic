@@ -26,6 +26,10 @@ class SearchHistory(context: Context) {
 
     fun clear() = save(emptyList())
 
+    fun reload() {
+        _queries.value = read()
+    }
+
     private fun save(queries: List<String>) {
         _queries.value = queries
         store.edit { putString(KEY, JSONArray(queries).toString()) }

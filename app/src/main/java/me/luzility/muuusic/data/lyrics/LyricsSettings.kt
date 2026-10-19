@@ -29,9 +29,7 @@ class LyricsSettings(context: Context) {
     private val _prefs = MutableStateFlow(readPrefs())
     val prefs: StateFlow<LyricsPrefs> = _prefs.asStateFlow()
 
-    private val offsets = MutableStateFlow(
-        offsetStore.all.mapNotNull { (id, value) -> (value as? Long)?.let { id to it } }.toMap()
-    )
+    private val offsets = MutableStateFlow(readOffsets())
 
     // ms added to the playback position; positive shows lyrics earlier.
     fun offsetFor(songId: String): Flow<Long> = offsets.map { it[songId] ?: 0L }.distinctUntilChanged()
@@ -50,6 +48,13 @@ class LyricsSettings(context: Context) {
             putBoolean(KEY_BLUR, next.blur)
         }
     }
+
+    fun reload() {
+        _prefs.value = readPrefs()
+        offsets.value = readOffsets()
+    }
+
+    private fun readOffsets() = offsetStore.all.mapNotNull { (id, value) -> (value as? Long)?.let { id to it } }.toMap()
 
     private fun readPrefs() = LyricsPrefs(
         textSize = prefsStore.getString(KEY_SIZE, null)

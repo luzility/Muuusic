@@ -299,4 +299,21 @@
     <string name="settings_karaoke_summary">A button next to the lyrics that turns vocals down. Instruments in the middle of the mix can drop too.</string>
     <string name="settings_karaoke_strength">Karaoke strength</string>
     <string name="settings_karaoke_strength_summary">Lower keeps more of the melody, higher removes more of the voice</string>
+    <string name="settings_backup">Backup</string>
+    <string name="settings_backup_create">Back up</string>
+    <string name="settings_backup_create_summary">Save liked songs, playlists, history and settings to a file</string>
+    <string name="settings_backup_restore">Restore</string>
+    <string name="settings_backup_restore_summary">Bring them back from a backup file</string>
+    <string name="backup_restore_confirm">Liked songs, history and playlists are added to what you already have. Your settings are replaced with the ones in the backup.</string>
+    <string name="backup_saved">Backup saved</string>
+    <string name="backup_failed">Couldn\'t save the backup</string>
+    <string name="backup_restored">Backup restored</string>
+    <string name="backup_restore_failed">Couldn\'t restore the backup</string>
+    <string name="backup_invalid">This isn\'t a Muuusic backup</string>
+    <string name="lyrics_translate">Show translation</string>
+    <string name="lyrics_translate_summary">Translates lines into the app language with Google Translate</string>
+    <string name="error_offline">No internet connection</string>
+    <string name="go_to_downloads">Go to downloads</string>
+    <string name="offline_banner">You\'re offline</string>
+    <string name="offline_playback">No connection. Only downloaded songs can play.</string>
 </resources>

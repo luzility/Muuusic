@@ -1,5 +1,13 @@
 package me.luzility.muuusic.ui.settings
 
+import java.time.LocalDate
+import me.luzility.muuusic.data.backup.InvalidBackupException
+import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import androidx.compose.runtime.LaunchedEffect
+import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.compose.rememberLauncherForActivityResult
 import me.luzility.muuusic.playback.audio.Karaoke
 import android.app.LocaleManager
 import android.content.Intent
@@ -113,6 +121,41 @@ class SettingsViewModel(app: Application) : AndroidViewModel(app) {
         viewModelScope.launch { container.library.clearHistory() }
     }
 
+    private val _messages = MutableSharedFlow<Int>(extraBufferCapacity = 1)
+    val messages = _messages.asSharedFlow()
+
+    fun backup(uri: Uri) {
+        viewModelScope.launch {
+            val saved = runCatching {
+                withContext(Dispatchers.IO) { resolver.openOutputStream(uri, "wt") }?.use { container.backup.export(it) } ?: error("No stream")
+            }.isSuccess
+            _messages.emit(if (saved) R.string.backup_saved else R.string.backup_failed)
+        }
+    }
+
+    fun restore(uri: Uri) {
+        viewModelScope.launch {
+            val result = runCatching {
+                withContext(Dispatchers.IO) { resolver.openInputStream(uri) }?.use { container.backup.restore(it) } ?: error("No stream")
+            }
+            if (result.isSuccess) {
+                settings.reload()
+                container.lyricsSettings.reload()
+                container.searchHistory.reload()
+                container.downloads.setWifiOnly(settings.prefs.value.downloadWifiOnly)
+            }
+            _messages.emit(
+                when (result.exceptionOrNull()) {
+                    null -> R.string.backup_restored
+                    is InvalidBackupException -> R.string.backup_invalid
+                    else -> R.string.backup_restore_failed
+                }
+            )
+        }
+    }
+
+    private val resolver get() = getApplication<Application>().contentResolver
+
     private fun refreshCacheUsage() {
         viewModelScope.launch {
             _cacheUsed.value = withContext(Dispatchers.IO) { container.cacheBytesUsed() }
@@ -135,6 +178,16 @@ fun SettingsScreen(onBack: () -> Unit, onOpenEqualizer: () -> Unit, vm: Settings
     val uriHandler = LocalUriHandler.current
     val updates = updateViewModel()
     val updateCheck by updates.check.collectAsStateWithLifecycle()
+    var confirmRestore by rememberSaveable { mutableStateOf<Uri?>(null) }
+    val createBackup = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri ->
+        uri?.let(vm::backup)
+    }
+    val pickBackup = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        confirmRestore = uri
+    }
+    LaunchedEffect(vm) {
+        vm.messages.collect { Toast.makeText(context, context.getString(it), Toast.LENGTH_SHORT).show() }
+    }
 
     LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(bottom = 24.dp + LocalMiniPlayerInset.current)) {
         item { Spacer(Modifier.windowInsetsTopHeight(WindowInsets.statusBars)) }
@@ -352,6 +405,26 @@ fun SettingsScreen(onBack: () -> Unit, onOpenEqualizer: () -> Unit, vm: Settings
             )
         }
 
+        item { GroupTitle(stringResource(R.string.settings_backup)) }
+        item {
+            SettingsGroup(
+                {
+                    ActionSetting(
+                        title = stringResource(R.string.settings_backup_create),
+                        summary = stringResource(R.string.settings_backup_create_summary),
+                        onClick = { createBackup.launch("muuusic-${LocalDate.now()}.json") },
+                    )
+                },
+                {
+                    ActionSetting(
+                        title = stringResource(R.string.settings_backup_restore),
+                        summary = stringResource(R.string.settings_backup_restore_summary),
+                        onClick = { pickBackup.launch(arrayOf("application/json", "application/octet-stream", "text/plain")) },
+                    )
+                },
+            )
+        }
+
         item {
             Row(
                 Modifier.padding(start = 28.dp, end = 28.dp, top = 24.dp, bottom = 8.dp),
@@ -495,6 +568,22 @@ fun SettingsScreen(onBack: () -> Unit, onOpenEqualizer: () -> Unit, vm: Settings
             },
             dismissButton = {
                 TextButton(onClick = { confirmDownloads = false }) { Text(stringResource(R.string.cancel)) }
+            },
+        )
+    }
+
+    confirmRestore?.let { uri ->
+        AlertDialog(
+            onDismissRequest = { confirmRestore = null },
+            title = { Text(stringResource(R.string.settings_backup_restore)) },
+            text = { Text(stringResource(R.string.backup_restore_confirm)) },
+            confirmButton = {
+                TextButton(onClick = { vm.restore(uri); confirmRestore = null }) {
+                    Text(stringResource(R.string.settings_backup_restore))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { confirmRestore = null }) { Text(stringResource(R.string.cancel)) }
             },
         )
     }
