@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Splash icon: the cookie turns into place and the note pops in. -->
+<animated-vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt">
+    <aapt:attr name="android:drawable">
+        <vector
+            android:width="108dp"
+            android:height="108dp"
+            android:viewportWidth="108"
+            android:viewportHeight="108">
+            <group
+                android:name="cookie"
+                android:pivotX="54"
+                android:pivotY="54"
+                android:rotation="-60"
+                android:scaleX="0.6"
+                android:scaleY="0.6">
+                <path
+                    android:fillColor="@color/brand_light"
+                    android:pathData="M50.7569,23.7637C52.6257,22.1712 55.3743,22.1712 57.2431,23.7637L62.8709,28.5598C63.6717,29.2422 64.6674,29.6546 65.7163,29.7383L73.0871,30.3265C75.5346,30.5218 77.4782,32.4654 77.6735,34.9129L78.2617,42.2837C78.3454,43.3326 78.7578,44.3283 79.4402,45.1291L84.2363,50.7569C85.8288,52.6257 85.8288,55.3743 84.2363,57.2431L79.4402,62.8709C78.7578,63.6717 78.3454,64.6674 78.2617,65.7163L77.6735,73.0871C77.4782,75.5346 75.5346,77.4782 73.0871,77.6735L65.7163,78.2617C64.6674,78.3454 63.6717,78.7578 62.8709,79.4402L57.2431,84.2363C55.3743,85.8288 52.6257,85.8288 50.7569,84.2363L45.1291,79.4402C44.3283,78.7578 43.3326,78.3454 42.2837,78.2617L34.9129,77.6735C32.4654,77.4782 30.5218,75.5346 30.3265,73.0871L29.7383,65.7163C29.6546,64.6674 29.2422,63.6717 28.5598,62.8709L23.7637,57.2431C22.1712,55.3743 22.1712,52.6257 23.7637,50.7569L28.5598,45.1291C29.2422,44.3283 29.6546,43.3326 29.7383,42.2837L30.3265,34.9129C30.5218,32.4654 32.4654,30.5218 34.9129,30.3265L42.2837,29.7383C43.3326,29.6546 44.3283,29.2422 45.1291,28.5598L50.7569,23.7637Z" />
+            </group>
+            <group
+                android:name="note"
+                android:pivotX="52"
+                android:pivotY="58"
+                android:scaleX="0"
+                android:scaleY="0">
+                <path
+                    android:fillColor="@color/brand"
+                    android:pathData="M41,62.5a8,8 0,1 0,16 0a8,8 0,1 0,-16 0Z" />
+                <path
+                    android:strokeColor="@color/brand"
+                    android:strokeWidth="6"
+                    android:strokeLineCap="round"
+                    android:strokeLineJoin="round"
+                    android:pathData="M54,63L59,37C59.3333,39.3333 63,44.6 67,45" />
+            </group>
+        </vector>
+    </aapt:attr>
+    <target android:name="cookie">
+        <aapt:attr name="android:animation">
+            <set>
+                <objectAnimator
+                    android:duration="600"
+                    android:interpolator="@android:interpolator/fast_out_slow_in"
+                    android:propertyName="rotation"
+                    android:valueFrom="-60"
+                    android:valueTo="0" />
+                <objectAnimator
+                    android:duration="500"
+                    android:interpolator="@android:interpolator/overshoot"
+                    android:propertyName="scaleX"
+                    android:valueFrom="0.6"
+                    android:valueTo="1" />
+                <objectAnimator
+                    android:duration="500"
+                    android:interpolator="@android:interpolator/overshoot"
+                    android:propertyName="scaleY"
+                    android:valueFrom="0.6"
+                    android:valueTo="1" />
+            </set>
+        </aapt:attr>
+    </target>
+    <target android:name="note">
+        <aapt:attr name="android:animation">
+            <set>
+                <objectAnimator
+                    android:duration="400"
+                    android:startOffset="200"
+                    android:interpolator="@android:interpolator/overshoot"
+                    android:propertyName="scaleX"
+                    android:valueFrom="0"
+                    android:valueTo="1" />
+                <objectAnimator
+                    android:duration="400"
+                    android:startOffset="200"
+                    android:interpolator="@android:interpolator/overshoot"
+                    android:propertyName="scaleY"
+                    android:valueFrom="0"
+                    android:valueTo="1" />
+            </set>
+        </aapt:attr>
+    </target>
+</animated-vector>
