@@ -1,5 +1,6 @@
 package me.luzility.muuusic.ui.player
 
+import androidx.compose.runtime.LaunchedEffect
 import me.luzility.muuusic.R
 import me.luzility.muuusic.data.settings.Hint
 import me.luzility.muuusic.ui.components.HintAnchor
@@ -81,6 +82,10 @@ fun PlayerSheet(
 
         // Pulling the collapsed bar down slides it away; far enough, and playback is dismissed.
         val dismissOffset = remember { Animatable(0f) }
+        val songId = state.current?.id
+        LaunchedEffect(songId) {
+            if (songId != null && dismissOffset.value != 0f) dismissOffset.snapTo(0f)
+        }
         val miniHeightPx = with(density) { MiniPlayerHeight.toPx() }
         val offscreenPx = with(density) { (bottomInset + BottomGap + MiniPlayerHeight).toPx() }
 
