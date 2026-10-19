@@ -34,6 +34,10 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import me.luzility.muuusic.data.lyrics.LyricsTranslator
+import java.util.Locale
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.withTimeoutOrNull
 
 @Immutable
 data class PlayerUiState(
@@ -122,6 +126,29 @@ class PlayerViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     fun updateLyricsPrefs(transform: (LyricsPrefs) -> LyricsPrefs) = lyricsSettings.update(transform)
+
+    private val lyricsTranslator = app.container.lyricsTranslator
+    private val translationTarget = MutableStateFlow(LyricsTranslator.targetFor(Locale.getDefault()))
+
+    fun setTranslationTarget(locale: Locale) {
+        translationTarget.value = LyricsTranslator.targetFor(locale)
+    }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val lyricsTranslation: StateFlow<Map<String, String>> = combine(
+        lyrics,
+        lyricsSettings.prefs.map { it.translate }.distinctUntilChanged(),
+        translationTarget,
+        app.container.connectivity.online,
+    ) { lyrics, on, target, online -> TranslationRequest((lyrics as? UiState.Success)?.data, on, target, online) }
+        .distinctUntilChanged()
+        .transformLatest { (data, on, target) ->
+            emit(emptyMap())
+            if (!on || data == null) return@transformLatest
+            val lines = data.synced?.map { it.text } ?: data.plain.orEmpty().lines()
+            runCatching { lyricsTranslator.translate(lines, target) }.getOrNull()?.let { emit(it) }
+        }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyMap())
 
     fun retryLyrics() {
         lyricsRetry.value++

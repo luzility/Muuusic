@@ -29,6 +29,7 @@ import me.luzility.muuusic.data.db.MuuusicDatabase
 import me.luzility.muuusic.data.download.Downloads
 import me.luzility.muuusic.data.innertube.InnerTubeClient
 import me.luzility.muuusic.data.lyrics.LyricsRepository
+import me.luzility.muuusic.data.lyrics.LyricsTranslator
 import me.luzility.muuusic.data.lyrics.LyricsSettings
 import me.luzility.muuusic.data.settings.AppSettings
 import me.luzility.muuusic.data.youtube.NewPipeDownloader
@@ -76,6 +77,8 @@ class AppContainer(context: Context) {
     val youtube = YouTubeRepository(audioQuality = { settings.prefs.value.audioQuality })
 
     val lyrics by lazy { LyricsRepository(okHttp) }
+
+    val lyricsTranslator by lazy { LyricsTranslator(okHttp) }
 
     val songRecognizer by lazy { SongRecognizer(ShazamClient(okHttp)) }
 

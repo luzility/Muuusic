@@ -1,5 +1,7 @@
 package me.luzility.muuusic.ui.player
 
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.ui.platform.testTag
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateDpAsState
@@ -173,6 +175,18 @@ fun LyricsSettingsSheet(onDismiss: () -> Unit) {
             Row(Modifier.padding(top = 8.dp), verticalAlignment = Alignment.CenterVertically) {
                 Text(stringResource(R.string.lyrics_blur), style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(1f))
                 Switch(checked = prefs.blur, onCheckedChange = { blur -> player.updateLyricsPrefs { it.copy(blur = blur) } })
+            }
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.weight(1f)) {
+                    Text(stringResource(R.string.lyrics_translate), style = MaterialTheme.typography.bodyLarge)
+                    Text(
+                        stringResource(R.string.lyrics_translate_summary),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+                Spacer(Modifier.width(16.dp))
+                Switch(checked = prefs.translate, onCheckedChange = { on -> player.updateLyricsPrefs { it.copy(translate = on) } })
             }
         }
     }

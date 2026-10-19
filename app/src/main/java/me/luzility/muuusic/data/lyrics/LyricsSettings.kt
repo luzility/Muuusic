@@ -20,6 +20,7 @@ data class LyricsPrefs(
     val textSize: LyricsTextSize = LyricsTextSize.Medium,
     val align: LyricsAlign = LyricsAlign.Start,
     val blur: Boolean = true,
+    val translate: Boolean = false,
 )
 
 class LyricsSettings(context: Context) {
@@ -46,6 +47,7 @@ class LyricsSettings(context: Context) {
             putString(KEY_SIZE, next.textSize.name)
             putString(KEY_ALIGN, next.align.name)
             putBoolean(KEY_BLUR, next.blur)
+            putBoolean(KEY_TRANSLATE, next.translate)
         }
     }
 
@@ -62,11 +64,13 @@ class LyricsSettings(context: Context) {
         align = prefsStore.getString(KEY_ALIGN, null)
             ?.let { runCatching { LyricsAlign.valueOf(it) }.getOrNull() } ?: LyricsAlign.Start,
         blur = prefsStore.getBoolean(KEY_BLUR, true),
+        translate = prefsStore.getBoolean(KEY_TRANSLATE, false),
     )
 
     private companion object {
         const val KEY_SIZE = "text_size"
         const val KEY_ALIGN = "align"
         const val KEY_BLUR = "blur"
+        const val KEY_TRANSLATE = "translate"
     }
 }

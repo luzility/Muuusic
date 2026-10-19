@@ -22,6 +22,9 @@ import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
+import androidx.compose.animation.shrinkVertically
+import androidx.compose.animation.expandVertically
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
@@ -121,6 +124,9 @@ fun LyricsPanel(state: PlayerUiState, lyrics: UiState<Lyrics?>, modifier: Modifi
     val player = LocalPlayer.current
     val prefs by player.lyricsPrefs.collectAsStateWithLifecycle()
     val offset by player.lyricsOffset.collectAsStateWithLifecycle()
+    val translations by player.lyricsTranslation.collectAsStateWithLifecycle()
+    val locale = LocalConfiguration.current.locales[0]
+    LaunchedEffect(locale) { player.setTranslationTarget(locale) }
     var sharing by remember { mutableStateOf<Pair<List<String>, Int>?>(null) }
     Box(modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
         when {
@@ -132,9 +138,9 @@ fun LyricsPanel(state: PlayerUiState, lyrics: UiState<Lyrics?>, modifier: Modifi
                 val data = lyrics.data!!
                 val synced = data.synced
                 if (synced != null) {
-                    SyncedLyrics(state, synced, prefs, offset, onShare = { lines, index -> sharing = lines to index })
+                    SyncedLyrics(state, synced, prefs, offset, translations, onShare = { lines, index -> sharing = lines to index })
                 } else {
-                    PlainLyrics(data.plain.orEmpty(), prefs, onShare = { lines -> sharing = lines to 0 })
+                    PlainLyrics(data.plain.orEmpty(), prefs, translations, onShare = { lines -> sharing = lines to 0 })
                 }
                 HintAnchor(Hint.LyricsShare, R.string.hint_lyrics_share_title, R.string.hint_lyrics_share, above = false, modifier = Modifier.align(Alignment.TopCenter)) {
                     Box(Modifier.size(1.dp))
@@ -201,6 +207,7 @@ private fun SyncedLyrics(
     source: List<LyricLine>,
     prefs: LyricsPrefs,
     offsetMs: Long,
+    translations: Map<String, String>,
     onShare: (List<String>, Int) -> Unit,
 ) {
     val player = LocalPlayer.current
@@ -271,6 +278,7 @@ private fun SyncedLyrics(
                 } else {
                     LyricLineItem(
                         text = line.text,
+                        translation = translations[line.text.trim()],
                         active = index == current,
                         passed = index < current,
                         distance = if (current < 0) index + 1 else abs(index - current),
@@ -340,6 +348,7 @@ private fun SyncedLyrics(
 @Composable
 private fun LyricLineItem(
     text: String,
+    translation: String?,
     active: Boolean,
     passed: Boolean,
     distance: Int,
@@ -408,11 +417,8 @@ private fun LyricLineItem(
                 text.substring(layout.getLineStart(it), layout.getLineEnd(it)).trim()
             }
         }
-        Text(
-            text = wrapped,
-            style = style,
-            color = color,
-            modifier = Modifier
+        Column(
+            Modifier
                 .fillMaxWidth()
                 .graphicsLayer {
                     scaleX = scale
@@ -422,7 +428,10 @@ private fun LyricLineItem(
                 }
                 // Blur is a no-op before Android 12, which is fine: alpha still carries the focus.
                 .then(if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && blur > 0.dp) Modifier.blur(blur) else Modifier),
-        )
+        ) {
+            Text(text = wrapped, style = style, color = color, modifier = Modifier.fillMaxWidth())
+            TranslationLine(translation, prefs, color)
+        }
     }
 }
 
@@ -472,8 +481,14 @@ private fun Interlude(active: Boolean, align: LyricsAlign, progress: () -> Float
 }
 
 @Composable
-private fun PlainLyrics(text: String, prefs: LyricsPrefs, onShare: (List<String>) -> Unit) {
+private fun PlainLyrics(text: String, prefs: LyricsPrefs, translations: Map<String, String>, onShare: (List<String>) -> Unit) {
     val centered = prefs.align == LyricsAlign.Center
+    val style = lyricsTextStyle(prefs.textSize).copy(
+        fontFamily = FlexFont.family(RestWeight.toInt()),
+        fontWeight = FontWeight(RestWeight.toInt()),
+        textAlign = if (centered) TextAlign.Center else TextAlign.Start,
+    )
+    val color = MaterialTheme.colorScheme.onSurface
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -481,19 +496,52 @@ private fun PlainLyrics(text: String, prefs: LyricsPrefs, onShare: (List<String>
             .verticalScroll(rememberScrollState())
             .padding(vertical = 48.dp, horizontal = 8.dp),
     ) {
-        Text(
-            text = text,
-            style = lyricsTextStyle(prefs.textSize).copy(
-                fontFamily = FlexFont.family(RestWeight.toInt()),
-                fontWeight = FontWeight(RestWeight.toInt()),
-                textAlign = if (centered) TextAlign.Center else TextAlign.Start,
-            ),
-            modifier = Modifier
+        Column(
+            Modifier
                 .fillMaxWidth()
                 .combinedClickable(onClick = {}, onLongClick = { onShare(text.lines().filter { it.isNotBlank() }) }),
-        )
+        ) {
+            if (translations.isEmpty()) {
+                Text(text = text, style = style, color = color, modifier = Modifier.fillMaxWidth())
+            } else {
+                text.lines().forEach { line ->
+                    Text(text = line, style = style, color = color, modifier = Modifier.fillMaxWidth())
+                    TranslationLine(translations[line.trim()], prefs, color)
+                }
+            }
+        }
         ProviderCredit(prefs.align)
     }
+}
+
+@Composable
+private fun TranslationLine(translation: String?, prefs: LyricsPrefs, color: Color) {
+    val motion = MaterialTheme.motionScheme
+    var shown by remember { mutableStateOf(translation) }
+    if (translation != null) shown = translation
+    AnimatedVisibility(
+        visible = translation != null,
+        enter = fadeIn(motion.defaultEffectsSpec()) + expandVertically(motion.defaultSpatialSpec()),
+        exit = fadeOut(motion.fastEffectsSpec()) + shrinkVertically(motion.fastSpatialSpec()),
+    ) {
+        Text(
+            text = shown.orEmpty(),
+            style = translationTextStyle(prefs.textSize).copy(
+                fontFamily = FlexFont.family(RestWeight.toInt()),
+                fontWeight = FontWeight(RestWeight.toInt()),
+                textAlign = if (prefs.align == LyricsAlign.Center) TextAlign.Center else TextAlign.Start,
+            ),
+            color = color.copy(alpha = 0.7f),
+            modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
+        )
+    }
+}
+
+@Composable
+private fun translationTextStyle(size: LyricsTextSize): TextStyle = when (size) {
+    LyricsTextSize.Small -> MaterialTheme.typography.bodyLarge
+    LyricsTextSize.Medium -> MaterialTheme.typography.titleMedium
+    LyricsTextSize.Large -> MaterialTheme.typography.titleLarge
 }
 
 @Composable
