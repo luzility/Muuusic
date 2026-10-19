@@ -266,7 +266,28 @@ private fun SyncedLyrics(state: PlayerUiState, source: List<LyricLine>, prefs: L
                     )
                 }
             }
-            item(key = "provider") { ProviderCredit(prefs.align) }
+            item(key = "provider") {
+                val distance = if (current < 0) lines.size + 1 else lines.size - current
+                val alpha by animateFloatAsState(
+                    targetValue = if (browsing) 0.65f else (0.55f - distance * 0.06f).coerceAtLeast(0.25f),
+                    animationSpec = motion.defaultEffectsSpec(),
+                    label = "creditAlpha",
+                )
+                val blur by animateDpAsState(
+                    targetValue = if (browsing || !prefs.blur) 0.dp else (distance.coerceAtMost(4) * 0.8f).dp,
+                    animationSpec = motion.slowEffectsSpec(),
+                    label = "creditBlur",
+                )
+                ProviderCredit(
+                    prefs.align,
+                    Modifier
+                        .graphicsLayer {
+                            translationY = wave.offsetFor(lines.size)
+                            this.alpha = alpha
+                        }
+                        .blur(blur),
+                )
+            }
         }
 
         AnimatedVisibility(
@@ -448,13 +469,13 @@ private fun PlainLyrics(text: String, prefs: LyricsPrefs) {
 }
 
 @Composable
-private fun ProviderCredit(align: LyricsAlign) {
+private fun ProviderCredit(align: LyricsAlign, modifier: Modifier = Modifier) {
     Text(
         text = stringResource(R.string.lyrics_source),
         style = MaterialTheme.typography.labelLarge,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
         textAlign = if (align == LyricsAlign.Center) TextAlign.Center else TextAlign.Start,
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = 8.dp, vertical = 32.dp),
     )
