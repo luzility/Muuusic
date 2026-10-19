@@ -1,5 +1,7 @@
 package me.luzility.muuusic.ui.player
 
+import me.luzility.muuusic.data.settings.Hint
+import me.luzility.muuusic.ui.components.HintAnchor
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.LookaheadScope
 import androidx.compose.runtime.movableContentOf
@@ -138,11 +140,13 @@ fun NowPlayingScreen(onCollapse: () -> Unit) {
             }
             Spacer(Modifier.weight(1f))
             SleepTimerButton(onClick = { showSleepTimer = true })
-            LyricsButton(
-                checked = showLyrics,
-                onClick = { player.toggleLyrics() },
-                onLongClick = { showLyricsSettings = true },
-            )
+            HintAnchor(Hint.Lyrics, R.string.hint_lyrics_title, R.string.hint_lyrics, above = false) {
+                LyricsButton(
+                    checked = showLyrics,
+                    onClick = { player.toggleLyrics() },
+                    onLongClick = { showLyricsSettings = true },
+                )
+            }
             IconButton(onClick = { showQueue = true }, shapes = IconButtonDefaults.shapes()) {
                 Icon(Icons.AutoMirrored.Rounded.QueueMusic, stringResource(R.string.queue))
             }

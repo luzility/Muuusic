@@ -1,5 +1,7 @@
 package me.luzility.muuusic.ui
 
+import androidx.compose.animation.scaleOut
+import me.luzility.muuusic.ui.onboarding.OnboardingScreen
 import me.luzility.muuusic.ui.update.UpdatePrompt
 import me.luzility.muuusic.ui.recognition.RecognitionScreen
 import me.luzility.muuusic.ui.download.DownloadsScreen
@@ -249,6 +251,15 @@ fun MuuusicRoot(player: PlayerViewModel) {
             }
             BackHandler(enabled = sheetProgress.targetValue > 0.5f) {
                 scope.launch { sheetProgress.animateTo(0f, spring) }
+            }
+
+            val settings = LocalContext.current.container.settings
+            AnimatedVisibility(
+                visible = !appPrefs.onboarded,
+                enter = fadeIn(),
+                exit = fadeOut() + scaleOut(targetScale = 1.05f),
+            ) {
+                OnboardingScreen(onDone = { settings.update { it.copy(onboarded = true) } })
             }
         }
     }

@@ -1,5 +1,7 @@
 package me.luzility.muuusic.ui.search
 
+import me.luzility.muuusic.data.settings.Hint
+import me.luzility.muuusic.ui.components.HintAnchor
 import me.luzility.muuusic.ui.components.playfulShapes
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.StateFlow
@@ -225,17 +227,19 @@ fun SearchScreen(
                                 Icon(Icons.Rounded.Mic, stringResource(R.string.voice_search))
                             }
                             if (recognitionEnabled) {
-                                IconButton(
-                                    onClick = onRecognize,
-                                    shapes = IconButtonDefaults.shapes(),
-                                    modifier = Modifier.testTag("recognize_button"),
-                                ) {
-                                    BadgedBox(badge = {
-                                        Badge(containerColor = MaterialTheme.colorScheme.tertiary) {
-                                            Icon(Icons.Rounded.Science, null, Modifier.size(10.dp))
+                                HintAnchor(Hint.Recognition, R.string.hint_recognition_title, R.string.hint_recognition, above = false) {
+                                    IconButton(
+                                        onClick = onRecognize,
+                                        shapes = IconButtonDefaults.shapes(),
+                                        modifier = Modifier.testTag("recognize_button"),
+                                    ) {
+                                        BadgedBox(badge = {
+                                            Badge(containerColor = MaterialTheme.colorScheme.tertiary) {
+                                                Icon(Icons.Rounded.Science, null, Modifier.size(10.dp))
+                                            }
+                                        }) {
+                                            Icon(Icons.Rounded.GraphicEq, stringResource(R.string.recognize_song))
                                         }
-                                    }) {
-                                        Icon(Icons.Rounded.GraphicEq, stringResource(R.string.recognize_song))
                                     }
                                 }
                             }

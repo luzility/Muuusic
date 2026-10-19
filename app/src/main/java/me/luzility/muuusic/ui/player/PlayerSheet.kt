@@ -1,5 +1,8 @@
 package me.luzility.muuusic.ui.player
 
+import me.luzility.muuusic.R
+import me.luzility.muuusic.data.settings.Hint
+import me.luzility.muuusic.ui.components.HintAnchor
 import androidx.compose.ui.platform.testTag
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.AnimationVector1D
@@ -149,10 +152,12 @@ fun PlayerSheet(
                 ) { if (progress.value < 0.01f) animateTo(1f) },
         ) {
             if (p < 0.4f) {
-                MiniPlayerContent(
-                    state = state,
-                    modifier = Modifier.graphicsLayer { alpha = (1f - p * 3f).coerceIn(0f, 1f) },
-                )
+                HintAnchor(Hint.MiniPlayer, R.string.hint_mini_player_title, R.string.hint_mini_player, enabled = p < 0.01f) {
+                    MiniPlayerContent(
+                        state = state,
+                        modifier = Modifier.graphicsLayer { alpha = (1f - p * 3f).coerceIn(0f, 1f) },
+                    )
+                }
             }
             if (p > 0.02f) {
                 // Laid out at full-screen size from the start, so the growing container reveals it

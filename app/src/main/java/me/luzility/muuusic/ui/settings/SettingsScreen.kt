@@ -367,6 +367,16 @@ fun SettingsScreen(onBack: () -> Unit, onOpenEqualizer: () -> Unit, vm: Settings
             SettingsGroup(
                 {
                     ActionSetting(
+                        title = stringResource(R.string.settings_tour),
+                        summary = stringResource(R.string.settings_tour_summary),
+                        onClick = {
+                            context.container.hints.reset()
+                            vm.update { it.copy(onboarded = false) }
+                        },
+                    )
+                },
+                {
+                    ActionSetting(
                         title = "Luzi",
                         summary = stringResource(R.string.settings_developer_summary),
                         onClick = { uriHandler.openUri("https://github.com/luzility") },

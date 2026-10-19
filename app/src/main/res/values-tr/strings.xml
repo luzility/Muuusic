@@ -236,4 +236,26 @@
     <string name="credit_font">Yazı tipi</string>
     <string name="credit_lrclib">Şarkı sözleri</string>
     <string name="credit_sponsorblock">Müzik dışı kısımları atlama</string>
+    <string name="onboarding_skip">Geç</string>
+    <string name="onboarding_next">İleri</string>
+    <string name="onboarding_start">Dinlemeye başla</string>
+    <string name="onboarding_welcome_title">Muuusic\'e hoş geldin</string>
+    <string name="onboarding_welcome_body">Reklamsız müzik, arka planda çalma ve senkronize şarkı sözleri. Hesap gerekmez.</string>
+    <string name="onboarding_notifications_title">Her yerden kontrol</string>
+    <string name="onboarding_notifications_body">Çalan şarkıyı kilit ekranından ve bildirim panelinden kontrol etmek için bildirimlere izin ver.</string>
+    <string name="onboarding_notifications_allow">Bildirimlere izin ver</string>
+    <string name="onboarding_notifications_granted">Bildirimlere izin verildi</string>
+    <string name="onboarding_look_title">Sana göre</string>
+    <string name="onboarding_look_body">Bir tema seç. Muuusic renklerini çalan şarkının kapağından da alabilir.</string>
+    <string name="onboarding_sound_title">Ses</string>
+    <string name="onboarding_sound_body">Düşük kalite mobil veriden tasarruf eder. Bunların hepsini sonra Ayarlar\'dan değiştirebilirsin.</string>
+    <string name="hint_got_it">Anladım</string>
+    <string name="hint_mini_player_title">Oynatıcın</string>
+    <string name="hint_mini_player">Açmak için dokun ya da yukarı kaydır. Çalmayı durdurmak için aşağı kaydır.</string>
+    <string name="hint_lyrics_title">Şarkı sözleri</string>
+    <string name="hint_lyrics">Sözleri göstermek için dokun. Zamanlama ve yazı boyutu için basılı tut.</string>
+    <string name="hint_recognition_title">Bu şarkı ne?</string>
+    <string name="hint_recognition">Çevrende çalan müziği dinleyip bulur. Henüz deneysel.</string>
+    <string name="settings_tour">Tanıtımı tekrar göster</string>
+    <string name="settings_tour_summary">İpuçları da yeniden görünür</string>
 </resources>

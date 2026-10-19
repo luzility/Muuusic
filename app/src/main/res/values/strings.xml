@@ -237,4 +237,26 @@
     <string name="credit_font">Font</string>
     <string name="credit_lrclib">Lyrics</string>
     <string name="credit_sponsorblock">Skipping non-music parts</string>
+    <string name="onboarding_skip">Skip</string>
+    <string name="onboarding_next">Next</string>
+    <string name="onboarding_start">Start listening</string>
+    <string name="onboarding_welcome_title">Welcome to Muuusic</string>
+    <string name="onboarding_welcome_body">Music without ads, playing in the background, with synced lyrics. No account needed.</string>
+    <string name="onboarding_notifications_title">Controls everywhere</string>
+    <string name="onboarding_notifications_body">Allow notifications to control what\'s playing from the lock screen and the notification shade.</string>
+    <string name="onboarding_notifications_allow">Allow notifications</string>
+    <string name="onboarding_notifications_granted">Notifications allowed</string>
+    <string name="onboarding_look_title">Make it yours</string>
+    <string name="onboarding_look_body">Pick a theme. Muuusic can also take its colors from what\'s playing.</string>
+    <string name="onboarding_sound_title">How it sounds</string>
+    <string name="onboarding_sound_body">Lower quality saves mobile data. You can change all of this later in Settings.</string>
+    <string name="hint_got_it">Got it</string>
+    <string name="hint_mini_player_title">Your player</string>
+    <string name="hint_mini_player">Tap or swipe up to open it. Swipe down to stop playback.</string>
+    <string name="hint_lyrics_title">Lyrics</string>
+    <string name="hint_lyrics">Tap to show lyrics. Hold for timing and text size.</string>
+    <string name="hint_recognition_title">What\'s this song?</string>
+    <string name="hint_recognition">Listens to music around you and finds it. This is still experimental.</string>
+    <string name="settings_tour">Show the welcome tour</string>
+    <string name="settings_tour_summary">Also brings back the tips</string>
 </resources>

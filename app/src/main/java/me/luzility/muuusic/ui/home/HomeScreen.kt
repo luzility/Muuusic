@@ -1,5 +1,10 @@
 package me.luzility.muuusic.ui.home
 
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.spring
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
+import me.luzility.muuusic.ui.theme.FlexFont
 import me.luzility.muuusic.ui.browse.BrowseSectionView
 import me.luzility.muuusic.data.model.Mood
 import me.luzility.muuusic.data.model.BrowseSection
@@ -209,6 +214,8 @@ fun HomeScreen(onOpenSettings: () -> Unit, vm: HomeViewModel = viewModel()) {
     }
 }
 
+private const val GREETING_WEIGHT = 860f
+
 @Composable
 private fun Greeting(onOpenSettings: () -> Unit) {
     val greeting = when (LocalTime.now().hour) {
@@ -222,9 +229,15 @@ private fun Greeting(onOpenSettings: () -> Unit) {
         verticalAlignment = Alignment.Top,
     ) {
         Column(Modifier.weight(1f)) {
+            // Grows from regular to heavy when the page appears.
+            val weight = remember { Animatable(400f) }
+            LaunchedEffect(Unit) { weight.animateTo(GREETING_WEIGHT, spring(dampingRatio = 0.6f, stiffness = 120f)) }
             Text(
                 stringResource(greeting),
-                style = MaterialTheme.typography.displaySmallEmphasized,
+                style = MaterialTheme.typography.displayMedium.copy(
+                    fontFamily = FlexFont.family(FlexFont.quantize(weight.value)),
+                    fontWeight = FontWeight(FlexFont.quantize(weight.value)),
+                ),
                 color = MaterialTheme.colorScheme.primary,
             )
             Text(

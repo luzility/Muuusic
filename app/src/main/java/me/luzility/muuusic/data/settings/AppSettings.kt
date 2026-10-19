@@ -25,6 +25,7 @@ data class AppPrefs(
     val downloadWifiOnly: Boolean = true,
     val songRecognition: Boolean = true,
     val sponsorBlock: Boolean = true,
+    val onboarded: Boolean = false,
     val updateChannel: UpdateChannel = if (Versions.isBeta(BuildConfig.VERSION_NAME)) UpdateChannel.Beta else UpdateChannel.Release,
     val normalizeVolume: Boolean = true,
     val fadeSeconds: Int = 0,
@@ -59,6 +60,7 @@ class AppSettings(context: Context) {
             putBoolean(KEY_DOWNLOAD_WIFI_ONLY, next.downloadWifiOnly)
             putBoolean(KEY_SONG_RECOGNITION, next.songRecognition)
             putBoolean(KEY_SPONSOR_BLOCK, next.sponsorBlock)
+            putBoolean(KEY_ONBOARDED, next.onboarded)
             putString(KEY_UPDATE_CHANNEL, next.updateChannel.name)
             putBoolean(KEY_NORMALIZE, next.normalizeVolume)
             putInt(KEY_FADE, next.fadeSeconds)
@@ -79,6 +81,7 @@ class AppSettings(context: Context) {
         downloadWifiOnly = store.getBoolean(KEY_DOWNLOAD_WIFI_ONLY, true),
         songRecognition = store.getBoolean(KEY_SONG_RECOGNITION, true),
         sponsorBlock = store.getBoolean(KEY_SPONSOR_BLOCK, true),
+        onboarded = store.getBoolean(KEY_ONBOARDED, false),
         updateChannel = enumOrNull<UpdateChannel>(store.getString(KEY_UPDATE_CHANNEL, null)) ?: AppPrefs().updateChannel,
         normalizeVolume = store.getBoolean(KEY_NORMALIZE, true),
         fadeSeconds = store.getInt(KEY_FADE, 0),
@@ -104,6 +107,7 @@ class AppSettings(context: Context) {
         private const val KEY_DOWNLOAD_WIFI_ONLY = "download_wifi_only"
         private const val KEY_SONG_RECOGNITION = "song_recognition"
         private const val KEY_SPONSOR_BLOCK = "sponsor_block"
+        private const val KEY_ONBOARDED = "onboarded"
         private const val KEY_UPDATE_CHANNEL = "update_channel"
         private const val KEY_NORMALIZE = "normalize_volume"
         private const val KEY_FADE = "fade_seconds"
