@@ -279,4 +279,11 @@
     <string name="settings_link_pitch_summary">Hızlanınca ses incelir, yavaşlayınca kalınlaşır; plak gibi</string>
     <string name="back">Geri</string>
     <string name="downloading">İndiriliyor</string>
+    <string name="share_lyrics">Sözleri paylaş</string>
+    <string name="lyrics_card_lines">Satırlar (en fazla %1$d)</string>
+    <string name="card_style_artwork">Kapak</string>
+    <string name="card_style_vivid">Canlı</string>
+    <string name="card_style_dark">Koyu</string>
+    <string name="hint_lyrics_share_title">Söz paylaş</string>
+    <string name="hint_lyrics_share">Bir satıra basılı tut, paylaşılabilir bir karta dönüşsün.</string>
 </resources>

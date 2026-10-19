@@ -1,5 +1,8 @@
 package me.luzility.muuusic.ui.player
 
+import androidx.compose.foundation.combinedClickable
+import me.luzility.muuusic.data.settings.Hint
+import me.luzility.muuusic.ui.components.HintAnchor
 import android.os.Build
 import androidx.compose.animation.AnimatedVisibility
 import kotlinx.coroutines.flow.first
@@ -118,6 +121,7 @@ fun LyricsPanel(state: PlayerUiState, lyrics: UiState<Lyrics?>, modifier: Modifi
     val player = LocalPlayer.current
     val prefs by player.lyricsPrefs.collectAsStateWithLifecycle()
     val offset by player.lyricsOffset.collectAsStateWithLifecycle()
+    var sharing by remember { mutableStateOf<Pair<List<String>, Int>?>(null) }
     Box(modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
         when {
             lyrics is UiState.Loading -> LoadingIndicator(Modifier.size(56.dp))
@@ -127,9 +131,20 @@ fun LyricsPanel(state: PlayerUiState, lyrics: UiState<Lyrics?>, modifier: Modifi
             lyrics is UiState.Success -> {
                 val data = lyrics.data!!
                 val synced = data.synced
-                if (synced != null) SyncedLyrics(state, synced, prefs, offset) else PlainLyrics(data.plain.orEmpty(), prefs)
+                if (synced != null) {
+                    SyncedLyrics(state, synced, prefs, offset, onShare = { lines, index -> sharing = lines to index })
+                } else {
+                    PlainLyrics(data.plain.orEmpty(), prefs, onShare = { lines -> sharing = lines to 0 })
+                }
+                HintAnchor(Hint.LyricsShare, R.string.hint_lyrics_share_title, R.string.hint_lyrics_share, above = false, modifier = Modifier.align(Alignment.TopCenter)) {
+                    Box(Modifier.size(1.dp))
+                }
             }
         }
+    }
+    val song = state.current
+    sharing?.let { (lines, index) ->
+        if (song != null) LyricCardSheet(song, lines, index, onDismiss = { sharing = null })
     }
 }
 
@@ -181,7 +196,13 @@ private class LyricsWave {
 }
 
 @Composable
-private fun SyncedLyrics(state: PlayerUiState, source: List<LyricLine>, prefs: LyricsPrefs, offsetMs: Long) {
+private fun SyncedLyrics(
+    state: PlayerUiState,
+    source: List<LyricLine>,
+    prefs: LyricsPrefs,
+    offsetMs: Long,
+    onShare: (List<String>, Int) -> Unit,
+) {
     val player = LocalPlayer.current
     val motion = MaterialTheme.motionScheme
     val positionState = rememberPlaybackPosition(player, state, intervalMs = 80)
@@ -255,6 +276,10 @@ private fun SyncedLyrics(state: PlayerUiState, source: List<LyricLine>, prefs: L
                         distance = if (current < 0) index + 1 else abs(index - current),
                         browsing = browsing,
                         prefs = prefs,
+                        onLongClick = {
+                            val texts = lines.filter { it.text.isNotBlank() }
+                            onShare(texts.map { it.text }, texts.indexOf(line).coerceAtLeast(0))
+                        },
                         onClick = {
                             player.seekTo((start - offsetMs).coerceAtLeast(0))
                             if (browsing) {
@@ -321,6 +346,7 @@ private fun LyricLineItem(
     browsing: Boolean,
     prefs: LyricsPrefs,
     onClick: () -> Unit,
+    onLongClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val motion = MaterialTheme.motionScheme
@@ -368,7 +394,7 @@ private fun LyricLineItem(
         modifier = modifier
             .fillMaxWidth()
             .clip(MaterialTheme.shapes.large)
-            .clickable(onClick = onClick)
+            .combinedClickable(onClick = onClick, onLongClick = onLongClick)
             .padding(horizontal = 8.dp, vertical = 10.dp),
     ) {
         // Bolder text is wider. Breaking lines where the boldest weight would wrap keeps the
@@ -446,7 +472,7 @@ private fun Interlude(active: Boolean, align: LyricsAlign, progress: () -> Float
 }
 
 @Composable
-private fun PlainLyrics(text: String, prefs: LyricsPrefs) {
+private fun PlainLyrics(text: String, prefs: LyricsPrefs, onShare: (List<String>) -> Unit) {
     val centered = prefs.align == LyricsAlign.Center
     Column(
         modifier = Modifier
@@ -462,7 +488,9 @@ private fun PlainLyrics(text: String, prefs: LyricsPrefs) {
                 fontWeight = FontWeight(RestWeight.toInt()),
                 textAlign = if (centered) TextAlign.Center else TextAlign.Start,
             ),
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .combinedClickable(onClick = {}, onLongClick = { onShare(text.lines().filter { it.isNotBlank() }) }),
         )
         ProviderCredit(prefs.align)
     }

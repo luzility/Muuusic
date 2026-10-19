@@ -1,5 +1,6 @@
 package me.luzility.muuusic.ui.components
 
+import androidx.compose.ui.Modifier
 import androidx.compose.material3.RichTooltip
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -30,6 +31,7 @@ fun HintAnchor(
     text: Int,
     enabled: Boolean = true,
     above: Boolean = true,
+    modifier: Modifier = Modifier,
     content: @Composable () -> Unit,
 ) {
     val container = LocalContext.current.container
@@ -63,6 +65,7 @@ fun HintAnchor(
             ) { Text(stringResource(text)) }
         },
         state = state,
+        modifier = modifier,
         enableUserInput = false,
         content = content,
     )

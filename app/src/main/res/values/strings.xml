@@ -280,4 +280,11 @@
     <string name="settings_link_pitch_summary">Faster sounds higher and slower sounds lower, like a record</string>
     <string name="back">Back</string>
     <string name="downloading">Downloading</string>
+    <string name="share_lyrics">Share lyrics</string>
+    <string name="lyrics_card_lines">Lines (up to %1$d)</string>
+    <string name="card_style_artwork">Artwork</string>
+    <string name="card_style_vivid">Vivid</string>
+    <string name="card_style_dark">Dark</string>
+    <string name="hint_lyrics_share_title">Share a lyric</string>
+    <string name="hint_lyrics_share">Hold a line to turn it into a card you can share.</string>
 </resources>

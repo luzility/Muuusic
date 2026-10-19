@@ -6,7 +6,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
-enum class Hint { MiniPlayer, Lyrics, Recognition }
+enum class Hint { MiniPlayer, Lyrics, Recognition, LyricsShare }
 
 /** One-time tips; each shows until the user dismisses it once. */
 class Hints(context: Context) {
