@@ -32,6 +32,10 @@ import kotlinx.coroutines.withContext
 
 private val BrandSeed = Color(0xFF7C4DFF)
 
+private val artworkSeeds = object : LinkedHashMap<String, Color>(16, 0.75f, true) {
+    override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, Color>?) = size > 50
+}
+
 @Composable
 fun MuuusicTheme(artworkUrl: String?, prefs: AppPrefs, content: @Composable () -> Unit) {
     val dark = when (prefs.themeMode) {
@@ -59,8 +63,13 @@ fun MuuusicTheme(artworkUrl: String?, prefs: AppPrefs, content: @Composable () -
         }
     }
     val seedUrl = artworkUrl.takeIf { prefs.artworkColors }
-    val artworkSeed by produceState<Color?>(initialValue = null, seedUrl) {
-        value = seedUrl?.let { seedFromArtwork(context, it) }
+    val artworkSeed by produceState(initialValue = seedUrl?.let { artworkSeeds[it] }, seedUrl) {
+        if (seedUrl == null) {
+            value = null
+            return@produceState
+        }
+        val seed = artworkSeeds[seedUrl] ?: seedFromArtwork(context, seedUrl)?.also { artworkSeeds[seedUrl] = it }
+        value = seed
     }
 
     DynamicMaterialExpressiveTheme(

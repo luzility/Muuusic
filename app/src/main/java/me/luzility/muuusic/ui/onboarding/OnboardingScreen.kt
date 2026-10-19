@@ -100,8 +100,8 @@ fun OnboardingScreen(onDone: () -> Unit) {
     val scope = rememberCoroutineScope()
     val last = pager.currentPage == pages.lastIndex
 
-    BackHandler(enabled = pager.currentPage > 0) {
-        scope.launch { pager.animateScrollToPage(pager.currentPage - 1) }
+    BackHandler {
+        if (pager.currentPage > 0) scope.launch { pager.animateScrollToPage(pager.currentPage - 1) } else onDone()
     }
 
     Surface(

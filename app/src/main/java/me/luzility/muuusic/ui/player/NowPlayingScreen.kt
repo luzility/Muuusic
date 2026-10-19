@@ -1,5 +1,7 @@
 package me.luzility.muuusic.ui.player
 
+import androidx.compose.foundation.layout.wrapContentSize
+import androidx.compose.ui.zIndex
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.material3.FilledTonalIconToggleButton
@@ -230,7 +232,14 @@ fun NowPlayingScreen(onCollapse: () -> Unit) {
             }
             val compactHeader: @Composable (Boolean) -> Unit = { showLike ->
                 Row(Modifier.fillMaxWidth().padding(vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-                    artwork(song.thumbnailUrl, state.isPlaying, true, Modifier.animateBounds(scope, Modifier.size(64.dp), boundsTransform))
+                    Box(Modifier.size(64.dp).zIndex(1f), contentAlignment = Alignment.Center) {
+                        artwork(
+                            song.thumbnailUrl,
+                            state.isPlaying,
+                            true,
+                            Modifier.wrapContentSize(unbounded = true).animateBounds(scope, Modifier.size(64.dp), boundsTransform),
+                        )
+                    }
                     Spacer(Modifier.width(16.dp))
                     title(song, true, Modifier.weight(1f).animateBounds(scope, boundsTransform = boundsTransform))
                     AnimatedVisibility(

@@ -143,7 +143,7 @@ class SearchViewModel(app: Application) : AndroidViewModel(app) {
 
     fun setFilter(value: SearchFilter) {
         _filter.value = value
-        if (submitted != null) search(submitted!!)
+        if (submitted != null && _query.value.isNotBlank()) search(_query.value)
     }
 
     fun search(text: String = _query.value) {

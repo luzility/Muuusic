@@ -142,7 +142,7 @@ fun SettingsScreen(onBack: () -> Unit, onOpenEqualizer: () -> Unit, vm: Settings
                 shapes = IconButtonDefaults.shapes(),
                 modifier = Modifier.padding(start = 12.dp, top = 8.dp),
             ) {
-                Icon(Icons.AutoMirrored.Rounded.ArrowBack, null)
+                Icon(Icons.AutoMirrored.Rounded.ArrowBack, stringResource(R.string.back))
             }
         }
         item {

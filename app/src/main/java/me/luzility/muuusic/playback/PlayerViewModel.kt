@@ -1,5 +1,6 @@
 package me.luzility.muuusic.playback
 
+import me.luzility.muuusic.data.model.SongJson
 import android.app.Application
 import android.content.ComponentName
 import androidx.compose.runtime.Immutable
@@ -131,7 +132,8 @@ class PlayerViewModel(app: Application) : AndroidViewModel(app) {
 
     init {
         controllerFuture.addListener({
-            val c = controllerFuture.get()
+            if (controllerFuture.isCancelled) return@addListener
+            val c = runCatching { controllerFuture.get() }.getOrNull() ?: return@addListener
             _sleepEndsAt.value = c.sessionExtras.getLong(SleepTimer.EXTRA_ENDS_AT)
             controller = c
             c.addListener(listener)
@@ -166,28 +168,45 @@ class PlayerViewModel(app: Application) : AndroidViewModel(app) {
         c.play()
     }
 
-    fun startRadio(song: Song) = play(listOf(song))
+    fun startRadio(song: Song) {
+        play(listOf(song))
+        controller?.sendCustomCommand(
+            SessionCommand(QueueCommands.START_RADIO, Bundle.EMPTY),
+            Bundle().apply { putString(QueueCommands.ARG_SONG, SongJson.toJson(song).toString()) },
+        )
+    }
 
-    fun playNext(song: Song): QueueResult = enqueue(song) { c -> c.currentMediaItemIndex + 1 }
+    fun playNext(song: Song): QueueResult = enqueue(song, next = true)
 
-    fun addToQueue(song: Song): QueueResult = enqueue(song) { c -> c.mediaItemCount }
+    fun addToQueue(song: Song): QueueResult = enqueue(song, next = false)
 
     // A song that is already coming up is moved rather than added twice; the playing one is left alone.
-    private fun enqueue(song: Song, target: (MediaController) -> Int): QueueResult {
+    private fun enqueue(song: Song, next: Boolean): QueueResult {
         val c = controller ?: return QueueResult.Added
         if (c.mediaItemCount == 0) {
             play(listOf(song))
             return QueueResult.Added
         }
         if (c.currentMediaItem?.mediaId == song.id) return QueueResult.AlreadyPlaying
+        if (c.shuffleModeEnabled) {
+            val queued = (0 until c.mediaItemCount).any { c.getMediaItemAt(it).mediaId == song.id }
+            c.sendCustomCommand(
+                SessionCommand(QueueCommands.ENQUEUE, Bundle.EMPTY),
+                Bundle().apply {
+                    putString(QueueCommands.ARG_SONG, SongJson.toJson(song).toString())
+                    putBoolean(QueueCommands.ARG_NEXT, next)
+                },
+            )
+            return if (queued) QueueResult.Moved else QueueResult.Added
+        }
         val upcoming = (c.currentMediaItemIndex + 1 until c.mediaItemCount).firstOrNull { c.getMediaItemAt(it).mediaId == song.id }
         if (upcoming != null) {
             // Moving removes the item first, so indices past it shift down by one.
-            val to = target(c).let { if (it > upcoming) it - 1 else it }.coerceAtMost(c.mediaItemCount - 1)
+            val to = (if (next) c.currentMediaItemIndex + 1 else c.mediaItemCount).let { if (it > upcoming) it - 1 else it }.coerceAtMost(c.mediaItemCount - 1)
             if (to != upcoming) c.moveMediaItem(upcoming, to)
             return QueueResult.Moved
         }
-        c.addMediaItem(target(c), song.toMediaItem())
+        c.addMediaItem((if (next) c.currentMediaItemIndex + 1 else c.mediaItemCount), song.toMediaItem())
         return QueueResult.Added
     }
 

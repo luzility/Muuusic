@@ -1,5 +1,9 @@
 package me.luzility.muuusic.playback
 
+import androidx.media3.exoplayer.source.ShuffleOrder.DefaultShuffleOrder
+import me.luzility.muuusic.data.model.Song
+import me.luzility.muuusic.data.model.SongJson
+import org.json.JSONObject
 import androidx.media3.common.PlaybackParameters
 import me.luzility.muuusic.data.settings.AppPrefs
 import kotlin.math.pow
@@ -67,6 +71,9 @@ class PlaybackService : MediaLibraryService() {
     private var radioJob: Job? = null
     private var retryId: String? = null
     private var retryCount = 0
+    private var failedInRow = 0
+    private var recordedFor: String? = null
+    private var restoreDone = false
 
     private lateinit var queueStore: QueueStore
     private var saveJob: Job? = null
@@ -142,7 +149,8 @@ class PlaybackService : MediaLibraryService() {
 
     override fun onDestroy() {
         // Last chance to save the queue; the file is tiny so write inline.
-        snapshot()?.let(queueStore::save) ?: queueStore.clear()
+        saveJob?.cancel()
+        if (restoreDone) snapshot()?.let(queueStore::save) ?: queueStore.clear()
         val item = player.currentMediaItem
         val artKey = widgetArtFor?.takeIf { it == item?.mediaId }
         val app = applicationContext
@@ -164,6 +172,8 @@ class PlaybackService : MediaLibraryService() {
                 .setAvailableSessionCommands(
                     MediaSession.ConnectionResult.DEFAULT_SESSION_AND_LIBRARY_COMMANDS.buildUpon()
                         .add(SessionCommand(SleepTimer.COMMAND, Bundle.EMPTY))
+                        .add(SessionCommand(QueueCommands.ENQUEUE, Bundle.EMPTY))
+                        .add(SessionCommand(QueueCommands.START_RADIO, Bundle.EMPTY))
                         .build()
                 )
                 .build()
@@ -174,10 +184,20 @@ class PlaybackService : MediaLibraryService() {
             customCommand: SessionCommand,
             args: Bundle,
         ): ListenableFuture<SessionResult> {
-            if (customCommand.customAction != SleepTimer.COMMAND) {
-                return Futures.immediateFuture(SessionResult(SessionError.ERROR_NOT_SUPPORTED))
+            when (customCommand.customAction) {
+                SleepTimer.COMMAND -> setSleepTimer(args.getInt(SleepTimer.ARG_MINUTES))
+                QueueCommands.ENQUEUE -> {
+                    val json = args.getString(QueueCommands.ARG_SONG)
+                        ?: return Futures.immediateFuture(SessionResult(SessionError.ERROR_BAD_VALUE))
+                    enqueueShuffled(SongJson.fromJson(JSONObject(json)), args.getBoolean(QueueCommands.ARG_NEXT))
+                }
+                QueueCommands.START_RADIO -> {
+                    val json = args.getString(QueueCommands.ARG_SONG)
+                        ?: return Futures.immediateFuture(SessionResult(SessionError.ERROR_BAD_VALUE))
+                    fetchRadio(SongJson.fromJson(JSONObject(json)).id)
+                }
+                else -> return Futures.immediateFuture(SessionResult(SessionError.ERROR_NOT_SUPPORTED))
             }
-            setSleepTimer(args.getInt(SleepTimer.ARG_MINUTES))
             return Futures.immediateFuture(SessionResult(SessionResult.RESULT_SUCCESS))
         }
 
@@ -288,7 +308,10 @@ class PlaybackService : MediaLibraryService() {
         }
 
         override fun onPlaybackStateChanged(playbackState: Int) {
-            if (playbackState == Player.STATE_READY) retryCount = 0
+            if (playbackState == Player.STATE_READY) {
+                retryCount = 0
+                failedInRow = 0
+            }
         }
 
         override fun onPlayWhenReadyChanged(playWhenReady: Boolean, reason: Int) {
@@ -317,7 +340,10 @@ class PlaybackService : MediaLibraryService() {
             ) {
                 scheduleSave()
             }
-            if (events.contains(Player.EVENT_IS_PLAYING_CHANGED)) trackPosition(player.isPlaying)
+            if (events.contains(Player.EVENT_IS_PLAYING_CHANGED)) {
+                trackPosition(player.isPlaying)
+                if (player.isPlaying) onPlaybackStarted()
+            }
         }
 
         override fun onPlayerError(error: PlaybackException) {
@@ -340,7 +366,8 @@ class PlaybackService : MediaLibraryService() {
                 return
             }
             Log.w(TAG, "Playback failed for $id", error)
-            if (player.hasNextMediaItem()) {
+            failedInRow++
+            if (failedInRow < MAX_SKIPS_IN_ROW && player.hasNextMediaItem()) {
                 player.seekToNextMediaItem()
                 player.prepare()
                 player.play()
@@ -376,10 +403,51 @@ class PlaybackService : MediaLibraryService() {
     private fun onSongStarted(mediaItem: MediaItem) {
         normalize(mediaItem.mediaId)
         loadSegments(mediaItem.mediaId)
+        recordedFor = null
         if (restoring) return
-        val song = mediaItem.toSong()
-        scope.launch(Dispatchers.IO) { container.library.recordPlay(song) }
+        if (player.isPlaying) onPlaybackStarted()
         extendQueueIfNeeded()
+    }
+
+    private fun onPlaybackStarted() {
+        val item = player.currentMediaItem ?: return
+        if (recordedFor != item.mediaId) {
+            recordedFor = item.mediaId
+            val song = item.toSong()
+            scope.launch(Dispatchers.IO) { container.library.recordPlay(song) }
+        }
+        extendQueueIfNeeded()
+    }
+
+    private fun playOrder(): MutableList<Int> {
+        val timeline = player.currentTimeline
+        val order = mutableListOf<Int>()
+        var index = timeline.getFirstWindowIndex(player.shuffleModeEnabled)
+        while (index != C.INDEX_UNSET && order.size < timeline.windowCount) {
+            order += index
+            index = timeline.getNextWindowIndex(index, Player.REPEAT_MODE_OFF, player.shuffleModeEnabled)
+        }
+        return order
+    }
+
+    private fun enqueueShuffled(song: Song, next: Boolean) {
+        if (player.mediaItemCount == 0) {
+            player.setMediaItem(song.toMediaItem())
+            player.prepare()
+            player.play()
+            return
+        }
+        val current = player.currentMediaItemIndex
+        if (player.currentMediaItem?.mediaId == song.id) return
+        val index = (0 until player.mediaItemCount).firstOrNull { it != current && player.getMediaItemAt(it).mediaId == song.id }
+            ?: player.mediaItemCount.also { player.addMediaItem(song.toMediaItem()) }
+        val order = playOrder()
+        order.remove(index)
+        val at = if (next) order.indexOf(player.currentMediaItemIndex) + 1 else order.size
+        order.add(at.coerceIn(0, order.size), index)
+        if (order.size == player.mediaItemCount) {
+            player.setShuffleOrder(DefaultShuffleOrder(order.toIntArray(), Random.nextLong()))
+        }
     }
 
     // Fades out over the last few seconds. The end time goes out via session extras for the UI countdown.
@@ -577,7 +645,9 @@ class PlaybackService : MediaLibraryService() {
     // Streams only load once play is pressed.
     private fun restoreQueue() {
         scope.launch {
-            val saved = withContext(Dispatchers.IO) { queueStore.load() } ?: return@launch
+            val saved = withContext(Dispatchers.IO) { queueStore.load() }
+            restoreDone = true
+            saved ?: return@launch
             // Something may already have started playing while the file was being read.
             if (player.mediaItemCount > 0) return@launch
             restoring = true
@@ -627,10 +697,14 @@ class PlaybackService : MediaLibraryService() {
     private fun extendQueueIfNeeded() {
         if (!container.settings.prefs.value.autoplay) return
         if (player.repeatMode != Player.REPEAT_MODE_OFF) return
-        val remaining = player.mediaItemCount - player.currentMediaItemIndex - 1
+        val order = playOrder()
+        val remaining = order.size - order.indexOf(player.currentMediaItemIndex) - 1
         if (remaining > 1 || radioJob?.isActive == true) return
-        val seedId = player.currentMediaItem?.mediaId ?: return
+        fetchRadio(player.currentMediaItem?.mediaId ?: return)
+    }
 
+    private fun fetchRadio(seedId: String) {
+        radioJob?.cancel()
         radioJob = scope.launch {
             val songs = runCatching { container.youtube.radio(seedId) }
                 .onFailure { Log.w(TAG, "Radio failed for $seedId", it) }
@@ -644,6 +718,7 @@ class PlaybackService : MediaLibraryService() {
     private companion object {
         const val TAG = "PlaybackService"
         const val MAX_RETRIES = 2
+        const val MAX_SKIPS_IN_ROW = 3
         const val SAVE_DEBOUNCE_MS = 500L
         const val POSITION_SAVE_INTERVAL_MS = 10_000L
         const val FADE_TICK_MS = 50L

@@ -1,5 +1,6 @@
 package me.luzility.muuusic
 
+import androidx.media3.exoplayer.offline.Download
 import kotlinx.coroutines.flow.MutableStateFlow
 import me.luzility.muuusic.playback.audio.EqualizerLayout
 import me.luzility.muuusic.playback.audio.LoudnessStore
@@ -130,6 +131,7 @@ class AppContainer(context: Context) {
         val network = CacheDataSource.Factory()
             .setCache(playerCache)
             .setUpstreamDataSourceFactory(streamDataSourceFactory())
+            .setCacheKeyFactory { spec -> "${spec.key ?: spec.uri}@${settings.prefs.value.audioQuality.name}" }
             .setFlags(CacheDataSource.FLAG_IGNORE_CACHE_ON_ERROR)
         // Downloads first (read-only, so streaming never writes into them), then the play cache,
         // then the network.
@@ -137,6 +139,10 @@ class AppContainer(context: Context) {
             .setCache(downloads.cache)
             .setUpstreamDataSourceFactory(network)
             .setCacheWriteDataSinkFactory(null)
+            .setCacheKeyFactory { spec ->
+                val id = spec.key ?: spec.uri.toString()
+                if (downloads.manager.downloadIndex.getDownload(id)?.state == Download.STATE_COMPLETED) id else "$id#partial"
+            }
     }
 
     private fun streamDataSourceFactory(): DataSource.Factory =

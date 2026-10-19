@@ -55,11 +55,18 @@ class SongRecognizer(private val client: ShazamClient) {
                     lookups.filter { it.isCompleted }.forEach { done ->
                         lookups.remove(done)
                         val outcome = done.await()
-                        outcome.getOrNull()?.let { return@coroutineScope Result.Found(it) }
+                        outcome.getOrNull()?.let {
+                            lookups.forEach { other -> other.cancel() }
+                            return@coroutineScope Result.Found(it)
+                        }
                         if (outcome.isFailure) failures++
                     }
                     val read = recorder.read(buffer, 0, buffer.size)
-                    if (read <= 0) continue
+                    if (read < 0) {
+                        lookups.forEach { it.cancel() }
+                        return@coroutineScope Result.Failed
+                    }
+                    if (read == 0) continue
                     signature.feed(buffer, read)
                     onLevel(level(buffer, read))
                     if (signature.sampleCount >= CHECKPOINTS_SECONDS[next] * ShazamSignature.SAMPLE_RATE) {
@@ -73,7 +80,10 @@ class SongRecognizer(private val client: ShazamClient) {
                 onSearching()
                 for (lookup in lookups) {
                     val outcome = lookup.await()
-                    outcome.getOrNull()?.let { return@coroutineScope Result.Found(it) }
+                    outcome.getOrNull()?.let {
+                        lookups.forEach { other -> other.cancel() }
+                        return@coroutineScope Result.Found(it)
+                    }
                     if (outcome.isFailure) failures++
                 }
                 // Every lookup failing means a network or service problem, not an unknown song.

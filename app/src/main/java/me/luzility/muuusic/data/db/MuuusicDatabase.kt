@@ -55,7 +55,7 @@ interface SongDao {
     suspend fun insertIgnore(song: SongEntity): Long
 
     // An unknown artist URL never wipes out one we already know.
-    @Query("UPDATE songs SET title = :title, artist = :artist, durationSec = :durationSec, thumbnailUrl = :thumbnailUrl, artistUrl = COALESCE(:artistUrl, artistUrl) WHERE id = :id")
+    @Query("UPDATE songs SET title = :title, artist = :artist, durationSec = CASE WHEN :durationSec > 0 THEN :durationSec ELSE durationSec END, thumbnailUrl = COALESCE(:thumbnailUrl, thumbnailUrl), artistUrl = COALESCE(:artistUrl, artistUrl) WHERE id = :id")
     suspend fun updateMetadata(id: String, title: String, artist: String, durationSec: Long, thumbnailUrl: String?, artistUrl: String?)
 
     @Query("UPDATE songs SET lastPlayedAt = :now, playCount = playCount + 1 WHERE id = :id")

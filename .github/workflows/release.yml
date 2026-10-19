@@ -49,15 +49,19 @@ jobs:
       - name: Write release notes
         run: |
           tag="$GITHUB_REF_NAME"
-          previous=$(git describe --tags --abbrev=0 "$tag^" 2>/dev/null || true)
+          if [[ "$tag" == *-beta.* ]]; then
+            previous=$(git describe --tags --abbrev=0 "$tag^" 2>/dev/null || true)
+          else
+            previous=$(git tag --merged "$tag^" --sort=-v:refname 2>/dev/null | grep -v -- '-beta\.' | head -1 || true)
+          fi
           range=${previous:+$previous..}$tag
           {
             if [[ "$(git cat-file -t "$tag")" == "tag" ]]; then
               git tag -l --format='%(contents)' "$tag"
             else
               # Commits that only touch the README or CI aren't news for people using the app.
-              git log "$range" --no-merges --perl-regexp --author='^((?!renovate|hosted\.weblate\.org).)*$' --pretty='- %s' -- . ':!README.md' ':!.github'
-              translations=$(git log "$range" --no-merges --author=hosted.weblate.org --oneline | wc -l)
+              git log "$range" --no-merges --perl-regexp --author='^((?!renovate).)*$' --committer='^((?!hosted@weblate\.org).)*$' --pretty='- %s' -- . ':!README.md' ':!.github'
+              translations=$(git log "$range" --no-merges --committer=hosted@weblate.org --oneline | wc -l)
               if [[ "$translations" -gt 0 ]]; then echo "- Translation updates"; fi
               updates=$(git log "$range" --no-merges --author=renovate --oneline | wc -l)
               if [[ "$updates" -gt 0 ]]; then echo "- $updates dependency updates"; fi

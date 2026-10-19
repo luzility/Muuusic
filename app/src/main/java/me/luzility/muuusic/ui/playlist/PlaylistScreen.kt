@@ -130,7 +130,7 @@ fun PlaylistScreen(onBack: () -> Unit, vm: PlaylistViewModel = viewModel()) {
         item(key = "toolbar") {
             Row(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
                 FilledTonalIconButton(onClick = onBack, shapes = IconButtonDefaults.shapes()) {
-                    Icon(Icons.AutoMirrored.Rounded.ArrowBack, null)
+                    Icon(Icons.AutoMirrored.Rounded.ArrowBack, stringResource(R.string.back))
                 }
                 Spacer(Modifier.weight(1f))
                 if (rows.isNotEmpty()) DownloadAllButton(songs)

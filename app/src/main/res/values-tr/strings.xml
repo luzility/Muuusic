@@ -277,4 +277,6 @@
     <string name="pitch_linked">Perde hıza bağlı. Bunu Ayarlar\'dan değiştirebilirsin.</string>
     <string name="settings_link_pitch">Perdeyi hıza bağla</string>
     <string name="settings_link_pitch_summary">Hızlanınca ses incelir, yavaşlayınca kalınlaşır; plak gibi</string>
+    <string name="back">Geri</string>
+    <string name="downloading">İndiriliyor</string>
 </resources>

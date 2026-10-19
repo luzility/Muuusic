@@ -48,6 +48,7 @@ fun BrowseSectionView(section: BrowseSection, songsAsList: Boolean = false, list
     val currentId = player.state.collectAsStateWithLifecycle().value.current?.id
     val songItems = section.items.filterIsInstance<BrowseItem.SongItem>()
     val songs = songItems.map { it.song }
+    if (section.items.isEmpty()) return
     val songShelf = songItems.size == section.items.size && songItems.none { it.wide }
 
     Column {

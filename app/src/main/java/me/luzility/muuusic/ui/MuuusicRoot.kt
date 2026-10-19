@@ -1,5 +1,10 @@
 package me.luzility.muuusic.ui
 
+import androidx.compose.animation.core.AnimationVector1D
+import androidx.lifecycle.Lifecycle
+import androidx.compose.runtime.saveable.Saver
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.lifecycle.compose.dropUnlessResumed
 import androidx.compose.animation.scaleOut
 import me.luzility.muuusic.ui.onboarding.OnboardingScreen
 import me.luzility.muuusic.ui.update.UpdatePrompt
@@ -100,7 +105,7 @@ fun MuuusicRoot(player: PlayerViewModel) {
             val scope = rememberCoroutineScope()
             val spring = MaterialTheme.motionScheme.defaultSpatialSpec<Float>()
             // 0 = mini bar, 1 = full-screen player.
-            val sheetProgress = remember { Animatable(0f) }
+            val sheetProgress = rememberSaveable(saver = SheetProgressSaver) { Animatable(0f) }
             var navBarHeight by remember { mutableStateOf(0.dp) }
             val hasSong = state.current != null
 
@@ -164,15 +169,15 @@ fun MuuusicRoot(player: PlayerViewModel) {
                         ) {
                             composable(Tab.Home.route) { HomeScreen(onOpenSettings = { nav.navigate("settings") }) }
                             composable("settings") {
-                                SettingsScreen(onBack = { nav.popBackStack() }, onOpenEqualizer = { nav.navigate("equalizer") })
+                                SettingsScreen(onBack = dropUnlessResumed { nav.popBackStack() }, onOpenEqualizer = { nav.navigate("equalizer") })
                             }
-                            composable("equalizer") { EqualizerScreen(onBack = { nav.popBackStack() }) }
-                            composable("downloads") { DownloadsScreen(onBack = { nav.popBackStack() }) }
+                            composable("equalizer") { EqualizerScreen(onBack = dropUnlessResumed { nav.popBackStack() }) }
+                            composable("downloads") { DownloadsScreen(onBack = dropUnlessResumed { nav.popBackStack() }) }
                             composable(
                                 route = "playlist/{id}",
                                 arguments = listOf(navArgument("id") { type = NavType.LongType }),
                             ) {
-                                PlaylistScreen(onBack = { nav.popBackStack() })
+                                PlaylistScreen(onBack = dropUnlessResumed { nav.popBackStack() })
                             }
                             composable(Tab.Search.route) { entry ->
                                 val recognized by entry.savedStateHandle
@@ -185,12 +190,14 @@ fun MuuusicRoot(player: PlayerViewModel) {
                                     onRecognizedConsumed = { entry.savedStateHandle[RecognizedQueryKey] = null },
                                 )
                             }
-                            composable("recognize") {
+                            composable("recognize") { entry ->
                                 RecognitionScreen(
-                                    onClose = { nav.popBackStack() },
+                                    onClose = dropUnlessResumed { nav.popBackStack() },
                                     onResult = { query ->
-                                        nav.previousBackStackEntry?.savedStateHandle?.set(RecognizedQueryKey, query)
-                                        nav.popBackStack()
+                                        if (entry.lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED)) {
+                                            nav.previousBackStackEntry?.savedStateHandle?.set(RecognizedQueryKey, query)
+                                            nav.popBackStack()
+                                        }
                                     },
                                 )
                             }
@@ -202,7 +209,7 @@ fun MuuusicRoot(player: PlayerViewModel) {
                                     navArgument("type") { type = NavType.StringType },
                                 ),
                             ) {
-                                CollectionScreen(onBack = { nav.popBackStack() })
+                                CollectionScreen(onBack = dropUnlessResumed { nav.popBackStack() })
                             }
                             composable(
                                 route = "artist?url={url}&name={name}",
@@ -211,7 +218,7 @@ fun MuuusicRoot(player: PlayerViewModel) {
                                     navArgument("name") { type = NavType.StringType; defaultValue = "" },
                                 ),
                             ) {
-                                ArtistScreen(onBack = { nav.popBackStack() })
+                                ArtistScreen(onBack = dropUnlessResumed { nav.popBackStack() })
                             }
                         }
                         }
@@ -264,3 +271,8 @@ fun MuuusicRoot(player: PlayerViewModel) {
         }
     }
 }
+
+private val SheetProgressSaver = Saver<Animatable<Float, AnimationVector1D>, Float>(
+    save = { if (it.targetValue > 0.5f) 1f else 0f },
+    restore = { Animatable(it) },
+)

@@ -23,4 +23,4 @@ jobs:
       - uses: gradle/actions/setup-gradle@v6
 
       - name: Build and test
-        run: ./gradlew :app:assembleDebug testDebugUnitTest
+        run: ./gradlew :app:assembleDebug :app:assembleRelease testDebugUnitTest

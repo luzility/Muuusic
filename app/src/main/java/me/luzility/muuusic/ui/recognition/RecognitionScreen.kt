@@ -1,5 +1,8 @@
 package me.luzility.muuusic.ui.recognition
 
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import kotlinx.coroutines.withTimeoutOrNull
 import androidx.compose.ui.layout.ContentScale
 import coil3.request.ImageRequest
@@ -171,7 +174,10 @@ fun RecognitionScreen(onClose: () -> Unit, onResult: (String) -> Unit, vm: Recog
         }
     }
 
+    var started by rememberSaveable { mutableStateOf(false) }
     LaunchedEffect(Unit) {
+        if (started) return@LaunchedEffect
+        started = true
         // Our own music would drown out (or be recognised instead of) what the user wants to identify.
         player.pause()
         begin()

@@ -278,4 +278,6 @@
     <string name="pitch_linked">Pitch follows the speed. You can change this in Settings.</string>
     <string name="settings_link_pitch">Pitch follows speed</string>
     <string name="settings_link_pitch_summary">Faster sounds higher and slower sounds lower, like a record</string>
+    <string name="back">Back</string>
+    <string name="downloading">Downloading</string>
 </resources>

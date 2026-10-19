@@ -1,5 +1,7 @@
 package me.luzility.muuusic.ui.playlist
 
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Job
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
@@ -46,17 +48,26 @@ class PlaylistsViewModel(app: Application) : AndroidViewModel(app) {
             _import.value = ImportState.InvalidLink
             return
         }
-        viewModelScope.launch {
+        importJob?.cancel()
+        importJob = viewModelScope.launch {
             _import.value = ImportState.Working
-            _import.value = runCatching {
+            _import.value = try {
                 val detail = youtube.collection("https://www.youtube.com/playlist?list=$listId", CollectionType.Playlist)
                 repository.create(detail.collection.title, detail.songs)
                 ImportState.Done(detail.collection.title, detail.songs.size)
-            }.getOrElse { ImportState.Failed }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                ImportState.Failed
+            }
         }
     }
 
+    private var importJob: Job? = null
+
     fun resetImport() {
+        importJob?.cancel()
+        importJob = null
         _import.value = ImportState.Idle
     }
 

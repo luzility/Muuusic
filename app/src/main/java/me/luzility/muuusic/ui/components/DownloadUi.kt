@@ -1,5 +1,7 @@
 package me.luzility.muuusic.ui.components
 
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Download
@@ -60,6 +62,7 @@ fun DownloadAllButton(songs: List<Song>, modifier: Modifier = Modifier) {
     val done = songs.isNotEmpty() && inList.count { it.state == DownloadStatus.State.Done } == songs.size
     val active = inList.any { it.state == DownloadStatus.State.Downloading || it.state == DownloadStatus.State.Queued }
 
+    val downloadingLabel = stringResource(R.string.downloading)
     FilledTonalIconButton(
         onClick = { if (!done) downloads.download(songs) },
         shapes = IconButtonDefaults.shapes(),
@@ -69,7 +72,7 @@ fun DownloadAllButton(songs: List<Song>, modifier: Modifier = Modifier) {
             done -> Icon(Icons.Rounded.DownloadDone, stringResource(R.string.all_downloaded))
             active -> CircularProgressIndicator(
                 progress = { inList.sumOf { it.percent.toDouble() }.toFloat() / (songs.size * 100f) },
-                modifier = Modifier.size(20.dp),
+                modifier = Modifier.size(20.dp).semantics { contentDescription = downloadingLabel },
                 strokeWidth = 2.5.dp,
             )
             else -> Icon(Icons.Rounded.Download, stringResource(R.string.download_all))

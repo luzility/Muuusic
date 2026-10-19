@@ -93,7 +93,7 @@ fun CollectionScreen(
         Spacer(Modifier.windowInsetsTopHeight(WindowInsets.statusBars))
         Row(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp)) {
             FilledTonalIconButton(onClick = onBack, shapes = IconButtonDefaults.shapes()) {
-                Icon(Icons.AutoMirrored.Rounded.ArrowBack, null)
+                Icon(Icons.AutoMirrored.Rounded.ArrowBack, stringResource(R.string.back))
             }
             Spacer(Modifier.weight(1f))
             val loaded = (state as? UiState.Success)?.data
