@@ -271,4 +271,11 @@
     <string name="settings_translate_summary">Translate Muuusic into your language on Weblate</string>
     <string name="lyrics_fullscreen">Full screen lyrics</string>
     <string name="lyrics_exit_fullscreen">Exit full screen</string>
+    <string name="speed_pitch">Speed and pitch</string>
+    <string name="speed">Speed</string>
+    <string name="pitch">Pitch</string>
+    <string name="pitch_semitones">%1$s semitones</string>
+    <string name="pitch_linked">Pitch follows the speed. You can change this in Settings.</string>
+    <string name="settings_link_pitch">Pitch follows speed</string>
+    <string name="settings_link_pitch_summary">Faster sounds higher and slower sounds lower, like a record</string>
 </resources>

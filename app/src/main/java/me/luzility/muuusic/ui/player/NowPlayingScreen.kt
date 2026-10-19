@@ -129,6 +129,7 @@ fun NowPlayingScreen(onCollapse: () -> Unit) {
     var showQueue by rememberSaveable { mutableStateOf(false) }
     var showLyricsSettings by rememberSaveable { mutableStateOf(false) }
     var showSleepTimer by rememberSaveable { mutableStateOf(false) }
+    var showSpeed by rememberSaveable { mutableStateOf(false) }
 
     LaunchedEffect(song == null) { if (song == null) onCollapse() }
     song ?: return
@@ -158,6 +159,7 @@ fun NowPlayingScreen(onCollapse: () -> Unit) {
                 Icon(Icons.Rounded.KeyboardArrowDown, stringResource(R.string.collapse))
             }
             Spacer(Modifier.weight(1f))
+            SpeedButton(onClick = { showSpeed = true })
             SleepTimerButton(onClick = { showSleepTimer = true })
             HintAnchor(Hint.Lyrics, R.string.hint_lyrics_title, R.string.hint_lyrics, above = false) {
                 LyricsButton(
@@ -330,6 +332,7 @@ fun NowPlayingScreen(onCollapse: () -> Unit) {
     if (showQueue) QueueSheet(state, onDismiss = { showQueue = false })
     if (showLyricsSettings) LyricsSettingsSheet(onDismiss = { showLyricsSettings = false })
     if (showSleepTimer) SleepTimerSheet(onDismiss = { showSleepTimer = false })
+    if (showSpeed) SpeedSheet(onDismiss = { showSpeed = false })
 }
 
 @Composable

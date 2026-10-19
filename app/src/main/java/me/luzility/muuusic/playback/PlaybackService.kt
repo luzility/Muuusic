@@ -1,5 +1,7 @@
 package me.luzility.muuusic.playback
 
+import androidx.media3.common.PlaybackParameters
+import me.luzility.muuusic.data.settings.AppPrefs
 import kotlin.math.pow
 import me.luzility.muuusic.playback.audio.GainAudioProcessor
 import me.luzility.muuusic.playback.audio.AudioEffects
@@ -102,6 +104,7 @@ class PlaybackService : MediaLibraryService() {
         scope.launch {
             container.settings.prefs.collect { prefs ->
                 effects.apply(prefs)
+                player.playbackParameters = playbackParametersOf(prefs)
                 normalize(player.currentMediaItem?.mediaId)
                 val current = player.currentMediaItem?.mediaId
                 if (prefs.sponsorBlock && current != null && current != segmentsFor) loadSegments(current)
@@ -365,6 +368,11 @@ class PlaybackService : MediaLibraryService() {
         return if (from >= size) emptyList() else subList(from, minOf(size, from + pageSize))
     }
 
+    private fun playbackParametersOf(prefs: AppPrefs): PlaybackParameters {
+        val pitch = if (prefs.linkPitch) prefs.playbackSpeed else 2.0.pow(prefs.pitchSemitones / 12.0).toFloat()
+        return PlaybackParameters(prefs.playbackSpeed, pitch)
+    }
+
     private fun onSongStarted(mediaItem: MediaItem) {
         normalize(mediaItem.mediaId)
         loadSegments(mediaItem.mediaId)
@@ -528,6 +536,7 @@ class PlaybackService : MediaLibraryService() {
             shuffleModeEnabled = old.shuffleModeEnabled
             repeatMode = old.repeatMode
             volume = old.volume
+            playbackParameters = old.playbackParameters
         }
 
         // The old player gives up the session and audio focus, and stops once its song ends.

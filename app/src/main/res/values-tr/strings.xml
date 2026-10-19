@@ -270,4 +270,11 @@
     <string name="settings_translate_summary">Muuusic\'i Weblate\'te kendi diline çevir</string>
     <string name="lyrics_fullscreen">Sözleri tam ekran yap</string>
     <string name="lyrics_exit_fullscreen">Tam ekrandan çık</string>
+    <string name="speed_pitch">Hız ve perde</string>
+    <string name="speed">Hız</string>
+    <string name="pitch">Perde</string>
+    <string name="pitch_semitones">%1$s yarım ton</string>
+    <string name="pitch_linked">Perde hıza bağlı. Bunu Ayarlar\'dan değiştirebilirsin.</string>
+    <string name="settings_link_pitch">Perdeyi hıza bağla</string>
+    <string name="settings_link_pitch_summary">Hızlanınca ses incelir, yavaşlayınca kalınlaşır; plak gibi</string>
 </resources>

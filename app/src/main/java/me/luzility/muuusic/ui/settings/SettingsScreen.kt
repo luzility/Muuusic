@@ -245,6 +245,14 @@ fun SettingsScreen(onBack: () -> Unit, onOpenEqualizer: () -> Unit, vm: Settings
                     )
                 },
                 {
+                    SwitchSetting(
+                        title = stringResource(R.string.settings_link_pitch),
+                        summary = stringResource(R.string.settings_link_pitch_summary),
+                        checked = prefs.linkPitch,
+                        onCheckedChange = { on -> vm.update { it.copy(linkPitch = on) } },
+                    )
+                },
+                {
                     ActionSetting(
                         title = stringResource(R.string.equalizer),
                         summary = stringResource(if (prefs.equalizerEnabled) R.string.equalizer_on else R.string.equalizer_summary),
