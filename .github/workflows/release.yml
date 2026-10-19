@@ -1,6 +1,7 @@
 name: Release
 
 # Push a tag like v1.2.0 for a release or v1.2.0-beta.1 for a beta.
+# Notes come from the tag message (git tag -a v1.2.0 -m "..."), or from the commits since the last tag.
 on:
   push:
     tags:
@@ -14,6 +15,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      # checkout turns annotated tags into plain ones; fetch them again to read their messages.
+      - run: git fetch --force --tags
 
       - uses: actions/setup-java@v6
         with:
@@ -40,10 +46,30 @@ jobs:
           ./gradlew :app:assembleRelease -PversionName=${{ steps.version.outputs.name }}
           cp app/build/outputs/apk/release/app-release.apk "Muuusic-${{ steps.version.outputs.name }}.apk"
 
+      - name: Write release notes
+        run: |
+          tag="$GITHUB_REF_NAME"
+          previous=$(git describe --tags --abbrev=0 "$tag^" 2>/dev/null || true)
+          range=${previous:+$previous..}$tag
+          {
+            if [[ "$(git cat-file -t "$tag")" == "tag" ]]; then
+              git tag -l --format='%(contents)' "$tag"
+            else
+              git log "$range" --no-merges --perl-regexp --author='^((?!renovate).)*$' --pretty='- %s'
+              updates=$(git log "$range" --no-merges --author=renovate --oneline | wc -l)
+              if [[ "$updates" -gt 0 ]]; then echo "- $updates dependency updates"; fi
+            fi
+            if [[ -n "$previous" ]]; then
+              echo
+              echo "**Changes:** https://github.com/$GITHUB_REPOSITORY/compare/$previous...$tag"
+            fi
+          } > notes.md
+          cat notes.md
+
       - name: Publish on GitHub Releases
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          flags=(--generate-notes --title "Muuusic ${{ steps.version.outputs.name }}")
+          flags=(--notes-file notes.md --title "Muuusic ${{ steps.version.outputs.name }}")
           if [[ "${{ steps.version.outputs.prerelease }}" == "true" ]]; then flags+=(--prerelease); fi
           gh release create "$GITHUB_REF_NAME" "Muuusic-${{ steps.version.outputs.name }}.apk" "${flags[@]}"
