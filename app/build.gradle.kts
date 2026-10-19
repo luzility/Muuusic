@@ -16,6 +16,38 @@ fun versionCodeOf(version: String): Int {
     return ((major.toInt() * 100 + minor.toInt()) * 100 + patch.toInt()) * 100 + (beta.toIntOrNull() ?: 99)
 }
 
+// Weblate adds a language as soon as someone starts it; only ship the ones that are mostly done,
+// so nobody picks a language that turns out to be half English.
+val minTranslated = 0.7
+
+fun translatedNames(file: File, baseNames: Set<String>? = null): Set<String> {
+    val doc = javax.xml.parsers.DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(file)
+    val nodes = doc.documentElement.childNodes
+    return (0 until nodes.length).map { nodes.item(it) }
+        .filterIsInstance<org.w3c.dom.Element>()
+        .filter { it.tagName == "string" || it.tagName == "plurals" }
+        .filter { it.getAttribute("translatable") != "false" && it.textContent.isNotBlank() }
+        .map { it.getAttribute("name") }
+        .filter { baseNames == null || it in baseNames }
+        .toSet()
+}
+
+val shippedLocales: List<String> = run {
+    val res = file("src/main/res")
+    val base = translatedNames(res.resolve("values/strings.xml"))
+    val ratios = res.listFiles().orEmpty()
+        .filter { it.name.startsWith("values-") && it.resolve("strings.xml").exists() }
+        .associate { it.name.removePrefix("values-") to translatedNames(it.resolve("strings.xml"), base).size.toDouble() / base.size }
+    val (kept, dropped) = ratios.entries.sortedBy { it.key }.partition { it.value >= minTranslated }
+    logger.lifecycle(
+        "Languages: en, " + kept.joinToString { it.key } +
+            dropped.joinToString(prefix = if (dropped.isEmpty()) "" else " (left out: ", postfix = if (dropped.isEmpty()) "" else ")") {
+                "${it.key} ${(it.value * 100).toInt()}%"
+            },
+    )
+    listOf("en") + kept.map { it.key }
+}
+
 android {
     namespace = "me.luzility.muuusic"
     compileSdk = 37
@@ -58,9 +90,10 @@ android {
         isCoreLibraryDesugaringEnabled = true
     }
 
-    // Lists every values-xx folder as an app language, so new translations show up in Android's language settings.
+    // Lists the shipped languages in Android's per-app language settings.
     androidResources {
         generateLocaleConfig = true
+        localeFilters += shippedLocales
     }
 
     buildFeatures {
