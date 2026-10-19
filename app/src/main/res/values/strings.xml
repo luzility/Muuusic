@@ -216,7 +216,6 @@
     <string name="update_failed">Couldn\'t reach GitHub. Try again later.</string>
     <string name="update_ready">Version %1$s is available. Tap to see what\'s new.</string>
     <string name="update_available">Muuusic %1$s is out</string>
-    <string name="update_available_beta">Muuusic %1$s beta is out</string>
     <string name="update_no_notes">No release notes for this version.</string>
     <string name="update_download">Download</string>
     <string name="update_later">Later</string>

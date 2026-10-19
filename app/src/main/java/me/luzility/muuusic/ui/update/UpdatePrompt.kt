@@ -105,12 +105,8 @@ fun UpdatePrompt(vm: UpdateViewModel = updateViewModel()) {
     AlertDialog(
         onDismissRequest = vm::dismiss,
         title = {
-            Text(
-                stringResource(
-                    if (shown.prerelease) R.string.update_available_beta else R.string.update_available,
-                    shown.version,
-                )
-            )
+            // The version name already says when it's a beta.
+            Text(stringResource(R.string.update_available, shown.version))
         },
         text = {
             Column(Modifier.heightIn(max = 320.dp).verticalScroll(rememberScrollState())) {

@@ -22,6 +22,12 @@ class UpdatesTest {
     }
 
     @Test
+    fun notesLoseMarkdownAndTheCompareLink() {
+        val body = "- Add widget\n- **Faster** search\n\n**Changes:** https://github.com/x/y/compare/a...b"
+        assertEquals("• Add widget\n• Faster search", Updates.cleanNotes(body))
+    }
+
+    @Test
     fun parsesReleasesAndSkipsDrafts() {
         val json = """
             [

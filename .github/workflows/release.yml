@@ -55,7 +55,8 @@ jobs:
             if [[ "$(git cat-file -t "$tag")" == "tag" ]]; then
               git tag -l --format='%(contents)' "$tag"
             else
-              git log "$range" --no-merges --perl-regexp --author='^((?!renovate).)*$' --pretty='- %s'
+              # Commits that only touch the README or CI aren't news for people using the app.
+              git log "$range" --no-merges --perl-regexp --author='^((?!renovate).)*$' --pretty='- %s' -- . ':!README.md' ':!.github'
               updates=$(git log "$range" --no-merges --author=renovate --oneline | wc -l)
               if [[ "$updates" -gt 0 ]]; then echo "- $updates dependency updates"; fi
             fi

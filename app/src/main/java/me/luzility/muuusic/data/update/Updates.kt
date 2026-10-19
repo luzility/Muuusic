@@ -60,6 +60,13 @@ class Updates(context: Context, private val client: OkHttpClient) {
         private const val KEY_LAST_CHECK = "last_check"
         private const val AUTO_CHECK_INTERVAL_MS = 12 * 60 * 60 * 1000L
 
+        // GitHub notes are Markdown; the app shows plain text, without the compare link at the end.
+        internal fun cleanNotes(body: String): String =
+            body.lines()
+                .filterNot { it.startsWith("**Changes:**") || it.startsWith("**Full Changelog**") }
+                .joinToString("\n") { it.replace("**", "").replace(Regex("^[-*] "), "• ") }
+                .trim()
+
         internal fun parse(json: String): List<AppRelease> {
             val array = JSONArray(json)
             return (0 until array.length()).mapNotNull { i ->
@@ -73,7 +80,7 @@ class Updates(context: Context, private val client: OkHttpClient) {
                     ?.optString("browser_download_url")
                 AppRelease(
                     version = tag,
-                    notes = release.optString("body").trim(),
+                    notes = cleanNotes(release.optString("body")),
                     pageUrl = release.optString("html_url"),
                     apkUrl = apk,
                     prerelease = release.optBoolean("prerelease"),

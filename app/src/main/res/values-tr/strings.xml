@@ -215,7 +215,6 @@
     <string name="update_failed">GitHub\'a ulaşılamadı. Daha sonra tekrar dene.</string>
     <string name="update_ready">%1$s sürümü çıktı. Yenilikleri görmek için dokun.</string>
     <string name="update_available">Muuusic %1$s çıktı</string>
-    <string name="update_available_beta">Muuusic %1$s beta çıktı</string>
     <string name="update_no_notes">Bu sürüm için not yok.</string>
     <string name="update_download">İndir</string>
     <string name="update_later">Sonra</string>
