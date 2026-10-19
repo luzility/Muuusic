@@ -268,4 +268,6 @@
     <string name="settings_language_system">Telefonla aynı</string>
     <string name="settings_translate">Çeviriye yardım et</string>
     <string name="settings_translate_summary">Muuusic\'i Weblate\'te kendi diline çevir</string>
+    <string name="lyrics_fullscreen">Sözleri tam ekran yap</string>
+    <string name="lyrics_exit_fullscreen">Tam ekrandan çık</string>
 </resources>

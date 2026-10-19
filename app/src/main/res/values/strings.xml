@@ -269,4 +269,6 @@
     <string name="settings_language_system">Same as the phone</string>
     <string name="settings_translate">Help translate</string>
     <string name="settings_translate_summary">Translate Muuusic into your language on Weblate</string>
+    <string name="lyrics_fullscreen">Full screen lyrics</string>
+    <string name="lyrics_exit_fullscreen">Exit full screen</string>
 </resources>

@@ -1,5 +1,20 @@
 package me.luzility.muuusic.ui.player
 
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
+import android.content.res.Configuration
+import androidx.activity.compose.BackHandler
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.expandHorizontally
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkHorizontally
+import androidx.compose.animation.shrinkVertically
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.material.icons.rounded.Fullscreen
+import androidx.compose.material.icons.rounded.FullscreenExit
+import androidx.compose.ui.platform.LocalConfiguration
 import me.luzility.muuusic.ui.components.SongMenu
 import me.luzility.muuusic.data.settings.Hint
 import me.luzility.muuusic.ui.components.HintAnchor
@@ -126,15 +141,14 @@ fun NowPlayingScreen(onCollapse: () -> Unit) {
         }
     }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Brush.verticalGradient(listOf(colors.primaryContainer, colors.surface, colors.surface)))
-            .statusBarsPadding()
-            .navigationBarsPadding()
-            .padding(horizontal = 24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
+    var fullscreen by rememberSaveable { mutableStateOf(false) }
+    val immersive = fullscreen && showLyrics
+    LaunchedEffect(showLyrics) { if (!showLyrics) fullscreen = false }
+    BackHandler(enabled = immersive) { fullscreen = false }
+    val landscape = LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
+    val motion = MaterialTheme.motionScheme
+
+    val topBar: @Composable () -> Unit = {
         Row(Modifier.fillMaxWidth().padding(vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
             IconButton(onClick = onCollapse, shapes = IconButtonDefaults.shapes()) {
                 Icon(Icons.Rounded.KeyboardArrowDown, stringResource(R.string.collapse))
@@ -153,78 +167,177 @@ fun NowPlayingScreen(onCollapse: () -> Unit) {
             }
             state.current?.let { SongMenu(it, nowPlaying = true) }
         }
+    }
+    val playback: @Composable () -> Unit = {
+        Column(Modifier.fillMaxWidth()) {
+            Spacer(Modifier.height(16.dp))
+            SeekBar(state)
+            Spacer(Modifier.height(16.dp))
+            Controls(state)
+            Spacer(Modifier.height(if (landscape) 16.dp else 32.dp))
+        }
+    }
+    val lyricsPanel: @Composable (Modifier) -> Unit = { modifier ->
+        Box(modifier) {
+            val appear = remember { MutableTransitionState(false) }.apply { targetState = true }
+            AnimatedVisibility(
+                visibleState = appear,
+                modifier = Modifier.fillMaxSize(),
+                enter = fadeIn(motion.slowEffectsSpec()) + slideInVertically(motion.defaultSpatialSpec()) { it / 12 },
+            ) {
+                LyricsPanel(state, lyrics)
+            }
+            FullscreenButton(
+                fullscreen = immersive,
+                onToggle = { fullscreen = !fullscreen },
+                modifier = Modifier.align(Alignment.BottomEnd).padding(8.dp),
+            )
+        }
+    }
 
-        // Artwork, title and like button are moved between the two layouts with animateBounds, not recreated.
-        Box(Modifier.weight(1f).fillMaxWidth()) {
-            LookaheadScope {
-                val scope = this
-                val artwork = remember {
-                    movableContentOf { url: String?, playing: Boolean, compact: Boolean, modifier: Modifier ->
-                        MorphingArtwork(url, playing, compact, modifier)
+    Box(
+        Modifier
+            .fillMaxSize()
+            .background(Brush.verticalGradient(listOf(colors.primaryContainer, colors.surface, colors.surface)))
+            .statusBarsPadding()
+            .navigationBarsPadding()
+            .padding(horizontal = 24.dp),
+    ) {
+        LookaheadScope {
+            val scope = this
+            val artwork = remember {
+                movableContentOf { url: String?, playing: Boolean, compact: Boolean, modifier: Modifier ->
+                    MorphingArtwork(url, playing, compact, modifier)
+                }
+            }
+            val title = remember {
+                movableContentOf { current: Song, compact: Boolean, modifier: Modifier ->
+                    TitleBlock(current, compact, modifier)
+                }
+            }
+            val like = remember {
+                movableContentOf { current: Song, isLiked: Boolean, modifier: Modifier ->
+                    Box(modifier, contentAlignment = Alignment.Center) {
+                        LikeButton(isLiked, { player.setLiked(current, it) })
                     }
                 }
-                val title = remember {
-                    movableContentOf { current: Song, compact: Boolean, modifier: Modifier ->
-                        TitleBlock(current, compact, modifier)
+            }
+            val compactHeader: @Composable (Boolean) -> Unit = { showLike ->
+                Row(Modifier.fillMaxWidth().padding(vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+                    artwork(song.thumbnailUrl, state.isPlaying, true, Modifier.animateBounds(scope, Modifier.size(64.dp), boundsTransform))
+                    Spacer(Modifier.width(16.dp))
+                    title(song, true, Modifier.weight(1f).animateBounds(scope, boundsTransform = boundsTransform))
+                    AnimatedVisibility(
+                        visible = showLike,
+                        enter = scaleIn(motion.defaultSpatialSpec()) + fadeIn(motion.defaultEffectsSpec()),
+                        exit = scaleOut(motion.fastSpatialSpec()) + fadeOut(motion.fastEffectsSpec()),
+                    ) {
+                        like(song, liked, Modifier.animateBounds(scope, boundsTransform = boundsTransform))
                     }
                 }
-                val like = remember {
-                    movableContentOf { current: Song, isLiked: Boolean, modifier: Modifier ->
-                        // animateBounds hands its child exact constraints; the Box relaxes them so
-                        // the button keeps its 40dp body inside the 48dp touch target mid-flight.
-                        Box(modifier, contentAlignment = Alignment.Center) {
-                            LikeButton(isLiked, { player.setLiked(current, it) })
-                        }
-                    }
+            }
+            val titleRow: @Composable () -> Unit = {
+                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                    title(song, false, Modifier.weight(1f).animateBounds(scope, boundsTransform = boundsTransform))
+                    like(song, liked, Modifier.animateBounds(scope, boundsTransform = boundsTransform))
                 }
+            }
 
-                if (showLyrics) {
-                    Column(Modifier.fillMaxSize()) {
-                        Row(Modifier.fillMaxWidth().padding(vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-                            artwork(song.thumbnailUrl, state.isPlaying, true, Modifier.animateBounds(scope, Modifier.size(64.dp), boundsTransform))
-                            Spacer(Modifier.width(16.dp))
-                            title(song, true, Modifier.weight(1f).animateBounds(scope, boundsTransform = boundsTransform))
-                            like(song, liked, Modifier.animateBounds(scope, boundsTransform = boundsTransform))
+            if (landscape) {
+                BoxWithConstraints(Modifier.fillMaxSize()) {
+                    val sideWidth = maxWidth * 0.45f
+                    Row(Modifier.fillMaxSize(), verticalAlignment = Alignment.CenterVertically) {
+                        Box(Modifier.weight(1f).fillMaxHeight(), contentAlignment = Alignment.Center) {
+                            if (showLyrics) {
+                                Column(Modifier.fillMaxSize()) {
+                                    AnimatedVisibility(
+                                        visible = immersive,
+                                        enter = expandVertically(motion.defaultSpatialSpec()) + fadeIn(motion.defaultEffectsSpec()),
+                                        exit = shrinkVertically(motion.defaultSpatialSpec()) + fadeOut(motion.fastEffectsSpec()),
+                                    ) {
+                                        compactHeader(false)
+                                    }
+                                    lyricsPanel(Modifier.weight(1f).fillMaxWidth())
+                                }
+                            } else {
+                                artwork(
+                                    song.thumbnailUrl,
+                                    state.isPlaying,
+                                    false,
+                                    Modifier.animateBounds(scope, Modifier.padding(vertical = 16.dp).fillMaxHeight().aspectRatio(1f), boundsTransform),
+                                )
+                            }
                         }
-                        val appear = remember { MutableTransitionState(false) }.apply { targetState = true }
                         AnimatedVisibility(
-                            visibleState = appear,
-                            modifier = Modifier.weight(1f),
-                            enter = fadeIn(MaterialTheme.motionScheme.slowEffectsSpec()) +
-                                slideInVertically(MaterialTheme.motionScheme.defaultSpatialSpec()) { it / 12 },
+                            visible = !immersive,
+                            enter = expandHorizontally(motion.defaultSpatialSpec()) + fadeIn(motion.defaultEffectsSpec()),
+                            exit = shrinkHorizontally(motion.defaultSpatialSpec()) + fadeOut(motion.fastEffectsSpec()),
                         ) {
-                            LyricsPanel(state, lyrics)
+                            Column(Modifier.width(sideWidth).fillMaxHeight().padding(start = 24.dp)) {
+                                topBar()
+                                Spacer(Modifier.weight(1f))
+                                if (showLyrics) compactHeader(true) else titleRow()
+                                playback()
+                            }
                         }
                     }
-                } else {
-                    Column(Modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally) {
-                        Spacer(Modifier.weight(0.5f))
-                        artwork(
-                            song.thumbnailUrl,
-                            state.isPlaying,
-                            false,
-                            Modifier.animateBounds(scope, Modifier.fillMaxWidth().aspectRatio(1f), boundsTransform),
-                        )
-                        Spacer(Modifier.weight(0.5f))
-                        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                            title(song, false, Modifier.weight(1f).animateBounds(scope, boundsTransform = boundsTransform))
-                            like(song, liked, Modifier.animateBounds(scope, boundsTransform = boundsTransform))
+                }
+            } else {
+                Column(Modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally) {
+                    AnimatedVisibility(
+                        visible = !immersive,
+                        enter = expandVertically(motion.defaultSpatialSpec()) + fadeIn(motion.defaultEffectsSpec()),
+                        exit = shrinkVertically(motion.defaultSpatialSpec()) + fadeOut(motion.fastEffectsSpec()),
+                    ) {
+                        topBar()
+                    }
+                    Box(Modifier.weight(1f).fillMaxWidth()) {
+                        if (showLyrics) {
+                            Column(Modifier.fillMaxSize()) {
+                                compactHeader(!immersive)
+                                lyricsPanel(Modifier.weight(1f).fillMaxWidth())
+                            }
+                        } else {
+                            Column(Modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally) {
+                                Spacer(Modifier.weight(0.5f))
+                                artwork(
+                                    song.thumbnailUrl,
+                                    state.isPlaying,
+                                    false,
+                                    Modifier.animateBounds(scope, Modifier.fillMaxWidth().aspectRatio(1f), boundsTransform),
+                                )
+                                Spacer(Modifier.weight(0.5f))
+                                titleRow()
+                            }
                         }
+                    }
+                    AnimatedVisibility(
+                        visible = !immersive,
+                        enter = expandVertically(motion.defaultSpatialSpec(), expandFrom = Alignment.Top) + fadeIn(motion.defaultEffectsSpec()),
+                        exit = shrinkVertically(motion.defaultSpatialSpec(), shrinkTowards = Alignment.Top) + fadeOut(motion.fastEffectsSpec()),
+                    ) {
+                        playback()
                     }
                 }
             }
         }
-
-        Spacer(Modifier.height(16.dp))
-        SeekBar(state)
-        Spacer(Modifier.height(16.dp))
-        Controls(state)
-        Spacer(Modifier.height(32.dp))
     }
 
     if (showQueue) QueueSheet(state, onDismiss = { showQueue = false })
     if (showLyricsSettings) LyricsSettingsSheet(onDismiss = { showLyricsSettings = false })
     if (showSleepTimer) SleepTimerSheet(onDismiss = { showSleepTimer = false })
+}
+
+@Composable
+private fun FullscreenButton(fullscreen: Boolean, onToggle: () -> Unit, modifier: Modifier = Modifier) {
+    FilledTonalIconButton(onClick = onToggle, shapes = IconButtonDefaults.shapes(), modifier = modifier) {
+        AnimatedContent(fullscreen, label = "fullscreenIcon") { on ->
+            Icon(
+                if (on) Icons.Rounded.FullscreenExit else Icons.Rounded.Fullscreen,
+                stringResource(if (on) R.string.lyrics_exit_fullscreen else R.string.lyrics_fullscreen),
+            )
+        }
+    }
 }
 
 @Composable
