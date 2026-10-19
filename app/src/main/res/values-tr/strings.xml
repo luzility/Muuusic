@@ -286,4 +286,10 @@
     <string name="card_style_dark">Koyu</string>
     <string name="hint_lyrics_share_title">Söz paylaş</string>
     <string name="hint_lyrics_share">Bir satıra basılı tut, paylaşılabilir bir karta dönüşsün.</string>
+    <string name="karaoke">Karaoke (deneysel)</string>
+    <string name="karaoke_on">Karaoke açık: vokal kısıldı. Bazı şarkılarda daha iyi çalışır.</string>
+    <string name="settings_karaoke">Karaoke</string>
+    <string name="settings_karaoke_summary">Sözlerin yanında vokali kısan bir buton. Ortadaki enstrümanlar da azalabilir.</string>
+    <string name="settings_karaoke_strength">Karaoke gücü</string>
+    <string name="settings_karaoke_strength_summary">Düşük güç melodiyi daha çok korur, yüksek güç vokali daha çok siler</string>
 </resources>

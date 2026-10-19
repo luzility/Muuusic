@@ -1,5 +1,7 @@
 package me.luzility.muuusic.playback
 
+import me.luzility.muuusic.playback.audio.Karaoke
+import me.luzility.muuusic.playback.audio.KaraokeAudioProcessor
 import androidx.media3.exoplayer.source.ShuffleOrder.DefaultShuffleOrder
 import me.luzility.muuusic.data.model.Song
 import me.luzility.muuusic.data.model.SongJson
@@ -112,6 +114,8 @@ class PlaybackService : MediaLibraryService() {
             container.settings.prefs.collect { prefs ->
                 effects.apply(prefs)
                 player.playbackParameters = playbackParametersOf(prefs)
+                Karaoke.setStrength(prefs.karaokeStrength)
+                if (!prefs.karaoke) Karaoke.set(false)
                 normalize(player.currentMediaItem?.mediaId)
                 val current = player.currentMediaItem?.mediaId
                 if (prefs.sponsorBlock && current != null && current != segmentsFor) loadSegments(current)
@@ -577,7 +581,7 @@ class PlaybackService : MediaLibraryService() {
             DefaultAudioSink.Builder(context)
                 .setEnableFloatOutput(enableFloatOutput)
                 .setEnableAudioTrackPlaybackParams(enableAudioTrackPlaybackParams)
-                .setAudioProcessors(arrayOf(gain))
+                .setAudioProcessors(arrayOf(KaraokeAudioProcessor(), gain))
                 .build()
     }
 

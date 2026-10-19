@@ -287,4 +287,10 @@
     <string name="card_style_dark">Dark</string>
     <string name="hint_lyrics_share_title">Share a lyric</string>
     <string name="hint_lyrics_share">Hold a line to turn it into a card you can share.</string>
+    <string name="karaoke">Karaoke (experimental)</string>
+    <string name="karaoke_on">Karaoke on: vocals turned down. Works better on some songs than others.</string>
+    <string name="settings_karaoke">Karaoke</string>
+    <string name="settings_karaoke_summary">A button next to the lyrics that turns vocals down. Instruments in the middle of the mix can drop too.</string>
+    <string name="settings_karaoke_strength">Karaoke strength</string>
+    <string name="settings_karaoke_strength_summary">Lower keeps more of the melody, higher removes more of the voice</string>
 </resources>

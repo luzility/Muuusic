@@ -1,5 +1,6 @@
 package me.luzility.muuusic.ui.settings
 
+import me.luzility.muuusic.playback.audio.Karaoke
 import android.app.LocaleManager
 import android.content.Intent
 import android.net.Uri
@@ -362,6 +363,24 @@ fun SettingsScreen(onBack: () -> Unit, onOpenEqualizer: () -> Unit, vm: Settings
         }
         item {
             SettingsGroup(
+                {
+                    SwitchSetting(
+                        title = stringResource(R.string.settings_karaoke),
+                        summary = stringResource(R.string.settings_karaoke_summary),
+                        checked = prefs.karaoke,
+                        onCheckedChange = { on -> vm.update { it.copy(karaoke = on) } },
+                    )
+                },
+                {
+                    ChoiceSetting(
+                        title = stringResource(R.string.settings_karaoke_strength),
+                        summary = stringResource(R.string.settings_karaoke_strength_summary),
+                        options = Karaoke.strengths,
+                        selected = prefs.karaokeStrength,
+                        labelText = { "%${(it * 100).toInt()}" },
+                        onSelect = { value -> vm.update { it.copy(karaokeStrength = value) } },
+                    )
+                },
                 {
                     SwitchSetting(
                         title = stringResource(R.string.settings_song_recognition),

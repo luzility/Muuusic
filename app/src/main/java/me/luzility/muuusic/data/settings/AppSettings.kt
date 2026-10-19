@@ -29,6 +29,8 @@ data class AppPrefs(
     val playbackSpeed: Float = 1f,
     val pitchSemitones: Float = 0f,
     val linkPitch: Boolean = false,
+    val karaoke: Boolean = true,
+    val karaokeStrength: Float = 1f,
     val updateChannel: UpdateChannel = if (Versions.isBeta(BuildConfig.VERSION_NAME)) UpdateChannel.Beta else UpdateChannel.Release,
     val normalizeVolume: Boolean = true,
     val fadeSeconds: Int = 0,
@@ -67,6 +69,8 @@ class AppSettings(context: Context) {
             putFloat(KEY_SPEED, next.playbackSpeed)
             putFloat(KEY_PITCH, next.pitchSemitones)
             putBoolean(KEY_LINK_PITCH, next.linkPitch)
+            putBoolean(KEY_KARAOKE, next.karaoke)
+            putFloat(KEY_KARAOKE_STRENGTH, next.karaokeStrength)
             putString(KEY_UPDATE_CHANNEL, next.updateChannel.name)
             putBoolean(KEY_NORMALIZE, next.normalizeVolume)
             putInt(KEY_FADE, next.fadeSeconds)
@@ -91,6 +95,8 @@ class AppSettings(context: Context) {
         playbackSpeed = store.getFloat(KEY_SPEED, 1f),
         pitchSemitones = store.getFloat(KEY_PITCH, 0f),
         linkPitch = store.getBoolean(KEY_LINK_PITCH, false),
+        karaoke = store.getBoolean(KEY_KARAOKE, true),
+        karaokeStrength = store.getFloat(KEY_KARAOKE_STRENGTH, 1f),
         updateChannel = enumOrNull<UpdateChannel>(store.getString(KEY_UPDATE_CHANNEL, null)) ?: AppPrefs().updateChannel,
         normalizeVolume = store.getBoolean(KEY_NORMALIZE, true),
         fadeSeconds = store.getInt(KEY_FADE, 0),
@@ -120,6 +126,8 @@ class AppSettings(context: Context) {
         private const val KEY_SPEED = "playback_speed"
         private const val KEY_PITCH = "pitch_semitones"
         private const val KEY_LINK_PITCH = "link_pitch"
+        private const val KEY_KARAOKE = "karaoke"
+        private const val KEY_KARAOKE_STRENGTH = "karaoke_strength"
         private const val KEY_UPDATE_CHANNEL = "update_channel"
         private const val KEY_NORMALIZE = "normalize_volume"
         private const val KEY_FADE = "fade_seconds"

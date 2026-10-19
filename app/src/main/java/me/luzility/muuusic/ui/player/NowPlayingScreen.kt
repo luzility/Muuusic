@@ -1,5 +1,23 @@
 package me.luzility.muuusic.ui.player
 
+import androidx.compose.material.icons.rounded.MicExternalOn
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.foundation.combinedClickable
+import androidx.compose.material.icons.rounded.Check
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
+import me.luzility.muuusic.container
+import android.widget.Toast
+import androidx.compose.material3.Badge
+import androidx.compose.material3.BadgedBox
+import androidx.compose.material.icons.rounded.Mic
+import androidx.compose.material.icons.rounded.Science
+import androidx.compose.ui.platform.LocalContext
+import me.luzility.muuusic.playback.audio.Karaoke
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.ui.zIndex
 import androidx.compose.foundation.interaction.collectIsPressedAsState
@@ -195,11 +213,14 @@ fun NowPlayingScreen(onCollapse: () -> Unit) {
             ) {
                 LyricsPanel(state, lyrics)
             }
-            FullscreenButton(
-                fullscreen = immersive,
-                onToggle = { fullscreen = !fullscreen },
-                modifier = Modifier.align(Alignment.BottomEnd).padding(8.dp),
-            )
+            Row(
+                Modifier.align(Alignment.BottomEnd).padding(8.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                KaraokeButton()
+                FullscreenButton(fullscreen = immersive, onToggle = { fullscreen = !fullscreen })
+            }
         }
     }
 
@@ -342,6 +363,77 @@ fun NowPlayingScreen(onCollapse: () -> Unit) {
     if (showLyricsSettings) LyricsSettingsSheet(onDismiss = { showLyricsSettings = false })
     if (showSleepTimer) SleepTimerSheet(onDismiss = { showSleepTimer = false })
     if (showSpeed) SpeedSheet(onDismiss = { showSpeed = false })
+}
+
+@Composable
+private fun KaraokeButton() {
+    val context = LocalContext.current
+    val settings = context.container.settings
+    val prefs by settings.prefs.collectAsStateWithLifecycle()
+    if (!prefs.karaoke) return
+    val on by Karaoke.enabled.collectAsStateWithLifecycle()
+    var menu by remember { mutableStateOf(false) }
+    val colors = MaterialTheme.colorScheme
+    val container by animateColorAsState(if (on) colors.secondary else colors.secondaryContainer, label = "karaokeContainer")
+    val content by animateColorAsState(if (on) colors.onSecondary else colors.onSecondaryContainer, label = "karaokeContent")
+    val corner by animateDpAsState(if (on) 12.dp else 20.dp, MaterialTheme.motionScheme.fastSpatialSpec(), label = "karaokeCorner")
+    val label = stringResource(R.string.karaoke)
+    val state = stringResource(if (on) R.string.equalizer_on else R.string.equalizer_summary)
+
+    Box {
+        Box(
+            Modifier
+                .padding(top = 4.dp, end = 4.dp)
+                .size(40.dp)
+                .clip(RoundedCornerShape(corner))
+                .background(container)
+                .combinedClickable(
+                    onClickLabel = label,
+                    onClick = {
+                        Karaoke.set(!on)
+                        if (!on) Toast.makeText(context, R.string.karaoke_on, Toast.LENGTH_SHORT).show()
+                    },
+                    onLongClick = { menu = true },
+                )
+                .semantics {
+                    contentDescription = label
+                    stateDescription = state
+                },
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(Icons.Rounded.MicExternalOn, null, tint = content)
+        }
+        Box(
+            Modifier
+                .align(Alignment.TopEnd)
+                .size(16.dp)
+                .clip(CircleShape)
+                .background(colors.tertiary),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(Icons.Rounded.Science, null, Modifier.size(10.dp), tint = colors.onTertiary)
+        }
+        DropdownMenu(expanded = menu, onDismissRequest = { menu = false }, shape = MaterialTheme.shapes.large) {
+            Text(
+                stringResource(R.string.settings_karaoke_strength),
+                style = MaterialTheme.typography.labelLarge,
+                color = colors.onSurfaceVariant,
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+            )
+            Karaoke.strengths.forEach { value ->
+                DropdownMenuItem(
+                    text = { Text("%${(value * 100).toInt()}") },
+                    leadingIcon = {
+                        if (value == prefs.karaokeStrength) Icon(Icons.Rounded.Check, null) else Spacer(Modifier.size(24.dp))
+                    },
+                    onClick = {
+                        settings.update { it.copy(karaokeStrength = value) }
+                        menu = false
+                    },
+                )
+            }
+        }
+    }
 }
 
 @Composable
