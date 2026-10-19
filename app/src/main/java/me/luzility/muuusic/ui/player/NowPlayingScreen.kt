@@ -1,5 +1,9 @@
 package me.luzility.muuusic.ui.player
 
+import androidx.compose.foundation.interaction.collectIsPressedAsState
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.material3.FilledTonalIconToggleButton
+import androidx.compose.ui.graphics.Color
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import android.content.res.Configuration
@@ -441,53 +445,73 @@ private fun SeekBar(state: PlayerUiState) {
 private fun Controls(state: PlayerUiState) {
     val player = LocalPlayer.current
     val motion = MaterialTheme.motionScheme
-    val playWidth by animateDpAsState(if (state.isPlaying) 128.dp else 96.dp, motion.fastSpatialSpec(), label = "playWidth")
     val playCorner by animateDpAsState(if (state.isPlaying) 28.dp else 48.dp, motion.fastSpatialSpec(), label = "playCorner")
+    val toggleColors = IconButtonDefaults.filledTonalIconToggleButtonColors(
+        containerColor = Color.Transparent,
+        checkedContainerColor = MaterialTheme.colorScheme.secondaryContainer,
+        checkedContentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+    )
+    val sideShapes = IconButtonDefaults.shapes(shape = RoundedCornerShape(24.dp), pressedShape = RoundedCornerShape(14.dp))
+    val previousInteraction = remember { MutableInteractionSource() }
+    val playInteraction = remember { MutableInteractionSource() }
+    val nextInteraction = remember { MutableInteractionSource() }
+    val previousWeight = pressWeight(previousInteraction, 1f, playInteraction, nextInteraction)
+    val playWeight = pressWeight(playInteraction, 1.6f, previousInteraction, nextInteraction)
+    val nextWeight = pressWeight(nextInteraction, 1f, previousInteraction, playInteraction)
 
-    Row(
-        Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        IconToggleButton(
+    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+        FilledTonalIconToggleButton(
             checked = state.shuffle,
             onCheckedChange = { player.toggleShuffle() },
             shapes = IconButtonDefaults.toggleableShapes(),
+            colors = toggleColors,
         ) {
             Icon(Icons.Rounded.Shuffle, stringResource(R.string.shuffle))
         }
-        FilledTonalIconButton(
-            onClick = { player.previous() },
-            shapes = IconButtonDefaults.shapes(),
-            modifier = Modifier.size(64.dp),
+        Spacer(Modifier.width(8.dp))
+        Row(
+            modifier = Modifier.weight(1f),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
-            Icon(Icons.Rounded.SkipPrevious, stringResource(R.string.previous), Modifier.size(32.dp))
-        }
-        FilledIconButton(
-            onClick = player::togglePlay,
-            shape = RoundedCornerShape(playCorner),
-            modifier = Modifier.size(width = playWidth, height = 96.dp),
-        ) {
-            Box(contentAlignment = Alignment.Center) {
-                when {
-                    state.isBuffering && !state.isPlaying ->
-                        LoadingIndicator(Modifier.size(48.dp), color = MaterialTheme.colorScheme.onPrimary)
-                    state.isPlaying -> Icon(Icons.Rounded.Pause, stringResource(R.string.pause), Modifier.size(44.dp))
-                    else -> Icon(Icons.Rounded.PlayArrow, stringResource(R.string.play), Modifier.size(44.dp))
+            FilledTonalIconButton(
+                onClick = { player.previous() },
+                shapes = sideShapes,
+                interactionSource = previousInteraction,
+                modifier = Modifier.weight(previousWeight).height(72.dp),
+            ) {
+                Icon(Icons.Rounded.SkipPrevious, stringResource(R.string.previous), Modifier.size(32.dp))
+            }
+            FilledIconButton(
+                onClick = player::togglePlay,
+                shape = RoundedCornerShape(playCorner),
+                interactionSource = playInteraction,
+                modifier = Modifier.weight(playWeight).height(96.dp),
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    when {
+                        state.isBuffering && !state.isPlaying ->
+                            LoadingIndicator(Modifier.size(48.dp), color = MaterialTheme.colorScheme.onPrimary)
+                        state.isPlaying -> Icon(Icons.Rounded.Pause, stringResource(R.string.pause), Modifier.size(44.dp))
+                        else -> Icon(Icons.Rounded.PlayArrow, stringResource(R.string.play), Modifier.size(44.dp))
+                    }
                 }
             }
+            FilledTonalIconButton(
+                onClick = { player.next() },
+                shapes = sideShapes,
+                interactionSource = nextInteraction,
+                modifier = Modifier.weight(nextWeight).height(72.dp),
+            ) {
+                Icon(Icons.Rounded.SkipNext, stringResource(R.string.next), Modifier.size(32.dp))
+            }
         }
-        FilledTonalIconButton(
-            onClick = { player.next() },
-            shapes = IconButtonDefaults.shapes(),
-            modifier = Modifier.size(64.dp),
-        ) {
-            Icon(Icons.Rounded.SkipNext, stringResource(R.string.next), Modifier.size(32.dp))
-        }
-        IconToggleButton(
+        Spacer(Modifier.width(8.dp))
+        FilledTonalIconToggleButton(
             checked = state.repeatMode != Player.REPEAT_MODE_OFF,
             onCheckedChange = { player.cycleRepeat() },
             shapes = IconButtonDefaults.toggleableShapes(),
+            colors = toggleColors,
         ) {
             Icon(
                 if (state.repeatMode == Player.REPEAT_MODE_ONE) Icons.Rounded.RepeatOne else Icons.Rounded.Repeat,
@@ -495,6 +519,23 @@ private fun Controls(state: PlayerUiState) {
             )
         }
     }
+}
+
+@Composable
+private fun pressWeight(
+    own: MutableInteractionSource,
+    base: Float,
+    vararg others: MutableInteractionSource,
+): Float {
+    val pressed by own.collectIsPressedAsState()
+    val neighbourPressed = others.map { it.collectIsPressedAsState().value }.any { it }
+    val target = when {
+        pressed -> base * 1.15f
+        neighbourPressed -> base * 0.92f
+        else -> base
+    }
+    val weight by animateFloatAsState(target, MaterialTheme.motionScheme.fastSpatialSpec(), label = "pressWeight")
+    return weight.coerceAtLeast(0.01f)
 }
 
 @Composable
