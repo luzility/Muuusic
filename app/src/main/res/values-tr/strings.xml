@@ -264,4 +264,9 @@
     <string name="queue_moved_next">Zaten sıradaydı, hemen sonraya alındı</string>
     <string name="queue_moved_end">Zaten sıradaydı, sonuna taşındı</string>
     <string name="share">Paylaş</string>
+    <string name="settings_language">Dil</string>
+    <string name="settings_app_language">Uygulama dili</string>
+    <string name="settings_language_system">Telefonla aynı</string>
+    <string name="settings_translate">Çeviriye yardım et</string>
+    <string name="settings_translate_summary">Muuusic\'i Weblate\'te kendi diline çevir</string>
 </resources>

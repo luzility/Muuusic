@@ -265,4 +265,9 @@
     <string name="queue_moved_next">Already in the queue, moved up to play next</string>
     <string name="queue_moved_end">Already in the queue, moved to the end</string>
     <string name="share">Share</string>
+    <string name="settings_language">Language</string>
+    <string name="settings_app_language">App language</string>
+    <string name="settings_language_system">Same as the phone</string>
+    <string name="settings_translate">Help translate</string>
+    <string name="settings_translate_summary">Translate Muuusic into your language on Weblate</string>
 </resources>

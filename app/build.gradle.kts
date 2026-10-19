@@ -58,6 +58,11 @@ android {
         isCoreLibraryDesugaringEnabled = true
     }
 
+    // Lists every values-xx folder as an app language, so new translations show up in Android's language settings.
+    androidResources {
+        generateLocaleConfig = true
+    }
+
     buildFeatures {
         compose = true
         buildConfig = true

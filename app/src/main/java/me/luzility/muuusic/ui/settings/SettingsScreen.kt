@@ -1,5 +1,10 @@
 package me.luzility.muuusic.ui.settings
 
+import android.app.LocaleManager
+import android.content.Intent
+import android.net.Uri
+import android.os.Build
+import android.provider.Settings
 import androidx.compose.ui.platform.LocalUriHandler
 import me.luzility.muuusic.data.update.UpdateChannel
 import me.luzility.muuusic.data.update.Updates
@@ -114,6 +119,8 @@ class SettingsViewModel(app: Application) : AndroidViewModel(app) {
     }
 }
 
+private const val TRANSLATE_URL = "https://hosted.weblate.org/engage/muuusic/"
+
 @Composable
 fun SettingsScreen(onBack: () -> Unit, onOpenEqualizer: () -> Unit, vm: SettingsViewModel = viewModel()) {
     val prefs by vm.prefs.collectAsStateWithLifecycle()
@@ -144,6 +151,38 @@ fun SettingsScreen(onBack: () -> Unit, onOpenEqualizer: () -> Unit, vm: Settings
                 style = MaterialTheme.typography.displaySmallEmphasized,
                 modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 16.dp, bottom = 8.dp),
             )
+        }
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            item { GroupTitle(stringResource(R.string.settings_language)) }
+            item {
+                SettingsGroup(
+                    {
+                        // Android 13+ keeps a language per app; its own screen lists the languages Muuusic has.
+                        val current = context.getSystemService(LocaleManager::class.java).applicationLocales
+                        ActionSetting(
+                            title = stringResource(R.string.settings_app_language),
+                            summary = if (current.isEmpty) {
+                                stringResource(R.string.settings_language_system)
+                            } else {
+                                current[0].getDisplayName(current[0]).replaceFirstChar { it.titlecase(current[0]) }
+                            },
+                            onClick = {
+                                context.startActivity(
+                                    Intent(Settings.ACTION_APP_LOCALE_SETTINGS, Uri.fromParts("package", context.packageName, null))
+                                )
+                            },
+                        )
+                    },
+                    {
+                        ActionSetting(
+                            title = stringResource(R.string.settings_translate),
+                            summary = stringResource(R.string.settings_translate_summary),
+                            onClick = { uriHandler.openUri(TRANSLATE_URL) },
+                        )
+                    },
+                )
+            }
         }
 
         item { GroupTitle(stringResource(R.string.settings_playback)) }
