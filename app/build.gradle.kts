@@ -91,6 +91,8 @@ dependencies {
     implementation(libs.okhttp)
     implementation(libs.newpipe.extractor)
     implementation(libs.reorderable)
+    implementation(libs.glance.appwidget)
+    implementation(libs.glance.material3)
     // Installs the bundled baseline profile on devices that don't get it from Play.
     implementation(libs.androidx.profileinstaller)
     baselineProfile(project(":baselineprofile"))

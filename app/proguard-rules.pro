@@ -9,3 +9,6 @@
 -dontwarn org.jsoup.**
 -dontwarn com.google.re2j.**
 -dontwarn org.slf4j.**
+
+# The widget renders through WorkManager, which creates its input merger by reflection.
+-keep class * extends androidx.work.InputMerger { <init>(); }

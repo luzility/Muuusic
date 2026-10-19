@@ -29,6 +29,13 @@ import androidx.media3.session.SessionCommand
 import androidx.media3.session.SessionError
 import androidx.media3.session.SessionResult
 import android.os.Bundle
+import android.graphics.Bitmap
+import android.net.Uri
+import coil3.SingletonImageLoader
+import coil3.request.ImageRequest
+import coil3.request.allowHardware
+import coil3.toBitmap
+import me.luzility.muuusic.widget.NowPlayingWidget
 import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.ListenableFuture
 import me.luzility.muuusic.MainActivity
@@ -71,6 +78,10 @@ class PlaybackService : MediaSessionService() {
     private var segments: List<Segment> = emptyList()
     private var segmentsFor: String? = null
     private var segmentJob: Job? = null
+
+    private var widgetJob: Job? = null
+    /** Song whose artwork is saved for the widget. */
+    private var widgetArtFor: String? = null
 
     override fun onCreate() {
         super.onCreate()
@@ -123,6 +134,12 @@ class PlaybackService : MediaSessionService() {
     override fun onDestroy() {
         // Last chance to save the queue; the file is tiny so write inline.
         snapshot()?.let(queueStore::save) ?: queueStore.clear()
+        val item = player.currentMediaItem
+        val artKey = widgetArtFor?.takeIf { it == item?.mediaId }
+        val app = applicationContext
+        CoroutineScope(Dispatchers.Default).launch {
+            NowPlayingWidget.update(app, item?.mediaMetadata?.title?.toString(), item?.mediaMetadata?.artist?.toString(), false, artKey, null)
+        }
         scope.cancel()
         crossfader.release()
         effects.release()
@@ -194,6 +211,15 @@ class PlaybackService : MediaSessionService() {
         }
 
         override fun onEvents(player: Player, events: Player.Events) {
+            if (events.containsAny(
+                    Player.EVENT_MEDIA_ITEM_TRANSITION,
+                    Player.EVENT_PLAY_WHEN_READY_CHANGED,
+                    Player.EVENT_MEDIA_METADATA_CHANGED,
+                    Player.EVENT_TIMELINE_CHANGED,
+                )
+            ) {
+                updateWidget()
+            }
             if (restoring) return
             if (events.containsAny(
                     Player.EVENT_TIMELINE_CHANGED,
@@ -304,6 +330,34 @@ class PlaybackService : MediaSessionService() {
         }
     }
 
+    private fun updateWidget() {
+        widgetJob?.cancel()
+        widgetJob = scope.launch {
+            delay(WIDGET_DEBOUNCE_MS)
+            val item = player.currentMediaItem
+            val id = item?.mediaId
+            val meta = item?.mediaMetadata
+            var art: Bitmap? = null
+            if (id != null && id != widgetArtFor) {
+                art = meta?.artworkUri?.let { loadArtwork(it) }
+                widgetArtFor = if (art != null) id else null
+            }
+            NowPlayingWidget.update(
+                this@PlaybackService,
+                meta?.title?.toString(),
+                meta?.artist?.toString(),
+                player.playWhenReady,
+                widgetArtFor?.takeIf { it == id },
+                art,
+            )
+        }
+    }
+
+    private suspend fun loadArtwork(uri: Uri): Bitmap? = runCatching {
+        val request = ImageRequest.Builder(this).data(uri).size(WIDGET_ART_PX).allowHardware(false).build()
+        SingletonImageLoader.get(this).execute(request).image?.toBitmap()
+    }.getOrNull()
+
     private fun loadSegments(videoId: String) {
         segmentJob?.cancel()
         segments = emptyList()
@@ -388,6 +442,7 @@ class PlaybackService : MediaSessionService() {
         next.play()
         next.currentMediaItem?.let(::onSongStarted)
         scheduleSave()
+        updateWidget()
         return Crossfader.Outgoing(old, oldGain, fadeStartMs = old.currentPosition)
     }
 
@@ -481,6 +536,8 @@ class PlaybackService : MediaSessionService() {
         const val SAVE_DEBOUNCE_MS = 500L
         const val POSITION_SAVE_INTERVAL_MS = 10_000L
         const val FADE_TICK_MS = 50L
+        const val WIDGET_DEBOUNCE_MS = 300L
+        const val WIDGET_ART_PX = 300
         val musicAttributes: AudioAttributes = AudioAttributes.Builder()
             .setUsage(C.USAGE_MEDIA)
             .setContentType(C.AUDIO_CONTENT_TYPE_MUSIC)

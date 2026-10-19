@@ -201,4 +201,7 @@
     <string name="equalizer_unavailable">Bu cihazda ekolayzır yok.</string>
     <string name="settings_sponsorblock">Müzik dışı kısımları atla</string>
     <string name="settings_sponsorblock_summary">Klip başındaki konuşmaları, girişleri ve sponsor kısımlarını SponsorBlock ile atlar</string>
+    <string name="widget_name">Şimdi çalan</string>
+    <string name="widget_description">Çalan şarkı ve oynatma kontrolleri</string>
+    <string name="widget_idle">Çalmak için dokun</string>
 </resources>

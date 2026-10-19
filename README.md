@@ -14,6 +14,7 @@ An ad-free YouTube Music client for Android.
 - Volume normalization, crossfade and an equalizer
 - Skips non-music parts of music videos (SponsorBlock)
 - Sleep timer
+- Home screen widget
 - Picks up where you left off after the app is closed
 - Download songs, albums and playlists for offline listening
 - Played songs are cached
