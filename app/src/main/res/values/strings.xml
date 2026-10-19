@@ -99,7 +99,7 @@
     <string name="settings_version">Version %1$s</string>
     <string name="settings_license">License</string>
     <string name="settings_credits">Open source</string>
-    <string name="settings_credits_summary">NewPipeExtractor, AndroidX Media3, LRCLIB, MaterialKolor, Roboto Flex</string>
+    <string name="settings_credits_summary">NewPipeExtractor, AndroidX Media3, LRCLIB, SponsorBlock, MaterialKolor, Roboto Flex</string>
     <string name="playlists">Playlists</string>
     <string name="new_playlist">New playlist</string>
     <string name="import_action">Import</string>
@@ -200,4 +200,6 @@
     <string name="equalizer_bass_boost">Bass boost</string>
     <string name="equalizer_reset">Reset</string>
     <string name="equalizer_unavailable">This device doesn\'t offer an equalizer.</string>
+    <string name="settings_sponsorblock">Skip non-music parts</string>
+    <string name="settings_sponsorblock_summary">Skips talking, intros and sponsor segments in music videos, using SponsorBlock</string>
 </resources>

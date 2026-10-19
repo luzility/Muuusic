@@ -21,6 +21,7 @@ data class AppPrefs(
     val cacheSizeMb: Int = 512,
     val downloadWifiOnly: Boolean = true,
     val songRecognition: Boolean = true,
+    val sponsorBlock: Boolean = true,
     val normalizeVolume: Boolean = true,
     val fadeSeconds: Int = 0,
     val equalizerEnabled: Boolean = false,
@@ -53,6 +54,7 @@ class AppSettings(context: Context) {
             putInt(KEY_CACHE_MB, next.cacheSizeMb)
             putBoolean(KEY_DOWNLOAD_WIFI_ONLY, next.downloadWifiOnly)
             putBoolean(KEY_SONG_RECOGNITION, next.songRecognition)
+            putBoolean(KEY_SPONSOR_BLOCK, next.sponsorBlock)
             putBoolean(KEY_NORMALIZE, next.normalizeVolume)
             putInt(KEY_FADE, next.fadeSeconds)
             putBoolean(KEY_EQ_ENABLED, next.equalizerEnabled)
@@ -71,6 +73,7 @@ class AppSettings(context: Context) {
         cacheSizeMb = store.getInt(KEY_CACHE_MB, 512),
         downloadWifiOnly = store.getBoolean(KEY_DOWNLOAD_WIFI_ONLY, true),
         songRecognition = store.getBoolean(KEY_SONG_RECOGNITION, true),
+        sponsorBlock = store.getBoolean(KEY_SPONSOR_BLOCK, true),
         normalizeVolume = store.getBoolean(KEY_NORMALIZE, true),
         fadeSeconds = store.getInt(KEY_FADE, 0),
         equalizerEnabled = store.getBoolean(KEY_EQ_ENABLED, false),
@@ -94,6 +97,7 @@ class AppSettings(context: Context) {
         private const val KEY_CACHE_MB = "cache_size_mb"
         private const val KEY_DOWNLOAD_WIFI_ONLY = "download_wifi_only"
         private const val KEY_SONG_RECOGNITION = "song_recognition"
+        private const val KEY_SPONSOR_BLOCK = "sponsor_block"
         private const val KEY_NORMALIZE = "normalize_volume"
         private const val KEY_FADE = "fade_seconds"
         private const val KEY_EQ_ENABLED = "eq_enabled"

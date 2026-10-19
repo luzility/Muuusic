@@ -164,6 +164,14 @@ fun SettingsScreen(onBack: () -> Unit, onOpenEqualizer: () -> Unit, vm: Settings
                         onCheckedChange = { on -> vm.update { it.copy(autoplay = on) } },
                     )
                 },
+                {
+                    SwitchSetting(
+                        title = stringResource(R.string.settings_sponsorblock),
+                        summary = stringResource(R.string.settings_sponsorblock_summary),
+                        checked = prefs.sponsorBlock,
+                        onCheckedChange = { on -> vm.update { it.copy(sponsorBlock = on) } },
+                    )
+                },
             )
         }
 

@@ -3,6 +3,7 @@ package me.luzility.muuusic
 import kotlinx.coroutines.flow.MutableStateFlow
 import me.luzility.muuusic.playback.audio.EqualizerLayout
 import me.luzility.muuusic.playback.audio.LoudnessStore
+import me.luzility.muuusic.data.sponsorblock.SponsorBlock
 import me.luzility.muuusic.data.recognition.SongRecognizer
 import me.luzility.muuusic.data.recognition.ShazamClient
 import me.luzility.muuusic.data.search.SearchHistory
@@ -78,6 +79,7 @@ class AppContainer(context: Context) {
     val innerTube by lazy { InnerTubeClient(okHttp) }
 
     val loudness by lazy { LoudnessStore(appContext) }
+    val sponsorBlock by lazy { SponsorBlock(okHttp) }
 
     // Set by the playback service once its equalizer exists; null if the device has none.
     val equalizerLayout = MutableStateFlow<EqualizerLayout?>(null)

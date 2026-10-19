@@ -11,7 +11,8 @@ An ad-free YouTube Music client for Android.
 - Import YouTube / YouTube Music playlists from a link
 - YouTube Music home feed with moods, and full artist pages
 - Voice search and song recognition (experimental)
-- Volume normalization, fades between songs and an equalizer
+- Volume normalization, crossfade and an equalizer
+- Skips non-music parts of music videos (SponsorBlock)
 - Sleep timer
 - Picks up where you left off after the app is closed
 - Download songs, albums and playlists for offline listening

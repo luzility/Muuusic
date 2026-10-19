@@ -4,6 +4,7 @@ import kotlin.math.pow
 import me.luzility.muuusic.playback.audio.GainAudioProcessor
 import me.luzility.muuusic.playback.audio.AudioEffects
 import me.luzility.muuusic.playback.audio.Crossfader
+import me.luzility.muuusic.data.sponsorblock.Segment
 import androidx.media3.exoplayer.audio.DefaultAudioSink
 import androidx.media3.exoplayer.audio.AudioSink
 import androidx.media3.exoplayer.DefaultRenderersFactory
@@ -67,6 +68,10 @@ class PlaybackService : MediaSessionService() {
     private lateinit var crossfader: Crossfader
     private var normalizeJob: Job? = null
 
+    private var segments: List<Segment> = emptyList()
+    private var segmentsFor: String? = null
+    private var segmentJob: Job? = null
+
     override fun onCreate() {
         super.onCreate()
         // A fixed audio session lets the equalizer attach before anything plays, and is shared
@@ -81,11 +86,14 @@ class PlaybackService : MediaSessionService() {
             container.settings.prefs.collect { prefs ->
                 effects.apply(prefs)
                 normalize(player.currentMediaItem?.mediaId)
+                val current = player.currentMediaItem?.mediaId
+                if (prefs.sponsorBlock && current != null && current != segmentsFor) loadSegments(current)
             }
         }
         scope.launch {
             while (true) {
                 crossfader.tick(container.settings.prefs.value.fadeSeconds, player, gain)
+                skipSegment()
                 delay(FADE_TICK_MS)
             }
         }
@@ -231,6 +239,7 @@ class PlaybackService : MediaSessionService() {
 
     private fun onSongStarted(mediaItem: MediaItem) {
         normalize(mediaItem.mediaId)
+        loadSegments(mediaItem.mediaId)
         if (restoring) return
         val song = mediaItem.toSong()
         scope.launch(Dispatchers.IO) { container.library.recordPlay(song) }
@@ -292,6 +301,33 @@ class PlaybackService : MediaSessionService() {
                 }
             }
             if (next != null && container.loudness.get(next) == null) lookupLoudness(next)
+        }
+    }
+
+    private fun loadSegments(videoId: String) {
+        segmentJob?.cancel()
+        segments = emptyList()
+        segmentsFor = null
+        if (!container.settings.prefs.value.sponsorBlock) return
+        segmentsFor = videoId
+        val next = if (player.hasNextMediaItem()) player.getMediaItemAt(player.nextMediaItemIndex).mediaId else null
+        segmentJob = scope.launch {
+            val found = runCatching { container.sponsorBlock.segments(videoId) }.getOrDefault(emptyList())
+            if (player.currentMediaItem?.mediaId == videoId) segments = found
+            if (next != null) runCatching { container.sponsorBlock.segments(next) }
+        }
+    }
+
+    private fun skipSegment() {
+        if (segments.isEmpty() || !player.isPlaying || !container.settings.prefs.value.sponsorBlock) return
+        val position = player.currentPosition
+        // Stop a little before the end so a segment just skipped doesn't match again.
+        val segment = segments.firstOrNull { position >= it.startMs && position < it.endMs - 500 } ?: return
+        val duration = player.duration
+        if (duration != C.TIME_UNSET && segment.endMs >= duration - 1_000) {
+            if (player.hasNextMediaItem()) player.seekToNextMediaItem() else player.seekTo(duration)
+        } else {
+            player.seekTo(segment.endMs)
         }
     }
 

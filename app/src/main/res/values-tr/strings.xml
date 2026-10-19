@@ -98,7 +98,7 @@
     <string name="settings_version">Sürüm %1$s</string>
     <string name="settings_license">Lisans</string>
     <string name="settings_credits">Açık kaynak</string>
-    <string name="settings_credits_summary">NewPipeExtractor, AndroidX Media3, LRCLIB, MaterialKolor, Roboto Flex</string>
+    <string name="settings_credits_summary">NewPipeExtractor, AndroidX Media3, LRCLIB, SponsorBlock, MaterialKolor, Roboto Flex</string>
     <string name="playlists">Listeler</string>
     <string name="new_playlist">Yeni liste</string>
     <string name="import_action">İçe aktar</string>
@@ -199,4 +199,6 @@
     <string name="equalizer_bass_boost">Bas güçlendirme</string>
     <string name="equalizer_reset">Sıfırla</string>
     <string name="equalizer_unavailable">Bu cihazda ekolayzır yok.</string>
+    <string name="settings_sponsorblock">Müzik dışı kısımları atla</string>
+    <string name="settings_sponsorblock_summary">Klip başındaki konuşmaları, girişleri ve sponsor kısımlarını SponsorBlock ile atlar</string>
 </resources>
