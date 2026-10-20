@@ -1,5 +1,6 @@
 package me.luzility.muuusic.ui.player
 
+import kotlinx.coroutines.delay
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.graphics.CompositingStrategy
@@ -525,10 +526,25 @@ private fun MorphingArtwork(url: String?, isPlaying: Boolean, compact: Boolean, 
         scaleX = scale
         scaleY = scale
     }
-    if (compact) {
-        Artwork(url = url, modifier = modifier.then(artworkModifier), shape = shape)
-    } else {
-        ArtworkPager(url, shape, artworkModifier, modifier)
+    var pagerReady by remember { mutableStateOf(false) }
+    LaunchedEffect(compact) {
+        pagerReady = false
+        if (!compact) {
+            delay(PagerSettleMs)
+            pagerReady = true
+        }
+    }
+    val showPager = !compact && pagerReady
+    Box(modifier) {
+        Artwork(
+            url = url,
+            modifier = Modifier
+                .fillMaxSize()
+                .graphicsLayer { alpha = if (showPager) 0f else 1f }
+                .then(artworkModifier),
+            shape = shape,
+        )
+        if (showPager) ArtworkPager(url, shape, artworkModifier, Modifier.fillMaxSize())
     }
 }
 
@@ -778,6 +794,7 @@ private fun QueueSheet(state: PlayerUiState, onDismiss: () -> Unit) {
 }
 
 private val PagerBleed = 48.dp
+private const val PagerSettleMs = 500L
 private val PagerSpacing = 24.dp
 private val LandscapeBleed = 88.dp
 private val LandscapeSpacing = 16.dp
