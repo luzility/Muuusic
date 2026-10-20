@@ -25,6 +25,7 @@ data class AppPrefs(
     val downloadWifiOnly: Boolean = true,
     val songRecognition: Boolean = true,
     val sponsorBlock: Boolean = true,
+    val haptics: Boolean = true,
     val onboarded: Boolean = false,
     val playbackSpeed: Float = 1f,
     val pitchSemitones: Float = 0f,
@@ -65,6 +66,7 @@ class AppSettings(context: Context) {
             putBoolean(KEY_DOWNLOAD_WIFI_ONLY, next.downloadWifiOnly)
             putBoolean(KEY_SONG_RECOGNITION, next.songRecognition)
             putBoolean(KEY_SPONSOR_BLOCK, next.sponsorBlock)
+            putBoolean(KEY_HAPTICS, next.haptics)
             putBoolean(KEY_ONBOARDED, next.onboarded)
             putFloat(KEY_SPEED, next.playbackSpeed)
             putFloat(KEY_PITCH, next.pitchSemitones)
@@ -95,6 +97,7 @@ class AppSettings(context: Context) {
         downloadWifiOnly = store.getBoolean(KEY_DOWNLOAD_WIFI_ONLY, true),
         songRecognition = store.getBoolean(KEY_SONG_RECOGNITION, true),
         sponsorBlock = store.getBoolean(KEY_SPONSOR_BLOCK, true),
+        haptics = store.getBoolean(KEY_HAPTICS, true),
         onboarded = store.getBoolean(KEY_ONBOARDED, false),
         playbackSpeed = store.getFloat(KEY_SPEED, 1f),
         pitchSemitones = store.getFloat(KEY_PITCH, 0f),
@@ -126,6 +129,7 @@ class AppSettings(context: Context) {
         private const val KEY_DOWNLOAD_WIFI_ONLY = "download_wifi_only"
         private const val KEY_SONG_RECOGNITION = "song_recognition"
         private const val KEY_SPONSOR_BLOCK = "sponsor_block"
+        private const val KEY_HAPTICS = "haptics"
         private const val KEY_ONBOARDED = "onboarded"
         private const val KEY_SPEED = "playback_speed"
         private const val KEY_PITCH = "pitch_semitones"

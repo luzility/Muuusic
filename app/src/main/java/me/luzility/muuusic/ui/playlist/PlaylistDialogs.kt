@@ -1,5 +1,6 @@
 package me.luzility.muuusic.ui.playlist
 
+import me.luzility.muuusic.ui.components.tapHaptics
 import android.widget.Toast
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
@@ -136,7 +137,7 @@ fun AddToPlaylistSheet(songs: List<Song>, onDismiss: () -> Unit, vm: PlaylistsVi
         onDismiss()
     }
 
-    ModalBottomSheet(onDismissRequest = onDismiss) {
+    ModalBottomSheet(modifier = Modifier.tapHaptics(), onDismissRequest = onDismiss) {
         Text(
             stringResource(R.string.add_to_playlist),
             style = MaterialTheme.typography.titleLargeEmphasized,

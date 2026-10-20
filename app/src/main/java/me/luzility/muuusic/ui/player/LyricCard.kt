@@ -1,5 +1,6 @@
 package me.luzility.muuusic.ui.player
 
+import me.luzility.muuusic.ui.components.tapHaptics
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.toArgb
 import androidx.core.graphics.createBitmap
@@ -84,7 +85,7 @@ fun LyricCardSheet(song: Song, lines: List<String>, initial: Int, onDismiss: () 
     val layer = rememberGraphicsLayer()
     val backdrop = cardColors(style).first
 
-    ModalBottomSheet(onDismissRequest = onDismiss, sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)) {
+    ModalBottomSheet(modifier = Modifier.tapHaptics(), onDismissRequest = onDismiss, sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)) {
         Column(
             Modifier
                 .fillMaxWidth()

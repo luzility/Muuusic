@@ -1,5 +1,6 @@
 package me.luzility.muuusic.ui.player
 
+import me.luzility.muuusic.ui.components.tapHaptics
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.ui.platform.testTag
@@ -103,7 +104,7 @@ fun LyricsSettingsSheet(onDismiss: () -> Unit) {
 
     fun setOffset(value: Long) = player.setLyricsOffset(value.coerceIn(-OffsetRangeMs, OffsetRangeMs))
 
-    ModalBottomSheet(onDismissRequest = onDismiss, sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)) {
+    ModalBottomSheet(modifier = Modifier.tapHaptics(), onDismissRequest = onDismiss, sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)) {
         Column(
             Modifier
                 .fillMaxWidth()

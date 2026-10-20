@@ -1,5 +1,7 @@
 package me.luzility.muuusic.ui
 
+import me.luzility.muuusic.ui.components.tapHaptics
+import me.luzility.muuusic.ui.components.ProvideHaptics
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -125,6 +127,7 @@ fun MuuusicRoot(player: PlayerViewModel) {
 
     MuuusicTheme(artworkUrl = state.current?.thumbnailUrl, prefs = appPrefs) {
         CompositionLocalProvider(LocalPlayer provides player) {
+        ProvideHaptics(appPrefs.haptics) {
             UpdatePrompt()
             val nav = rememberNavController()
             val density = LocalDensity.current
@@ -156,7 +159,7 @@ fun MuuusicRoot(player: PlayerViewModel) {
             CompositionLocalProvider(LocalNavigator provides navigator) {
             Surface(color = MaterialTheme.colorScheme.surface) {
                 // Test tags double as resource ids so UI Automator (baseline profile journeys) can find them.
-                Box(Modifier.fillMaxSize().semantics { testTagsAsResourceId = true }) {
+                Box(Modifier.fillMaxSize().tapHaptics().semantics { testTagsAsResourceId = true }) {
                     Scaffold(
                         bottomBar = {
                             Column(Modifier.onSizeChanged { navBarHeight = with(density) { it.height.toDp() } }) {
@@ -302,6 +305,7 @@ fun MuuusicRoot(player: PlayerViewModel) {
             ) {
                 OnboardingScreen(onDone = { settings.update { it.copy(onboarded = true) } })
             }
+        }
         }
     }
 }

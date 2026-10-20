@@ -1,5 +1,6 @@
 package me.luzility.muuusic.ui.player
 
+import me.luzility.muuusic.ui.components.tapHaptics
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.Arrangement
@@ -74,7 +75,7 @@ fun SpeedSheet(onDismiss: () -> Unit) {
     val settings = LocalContext.current.container.settings
     val prefs by settings.prefs.collectAsStateWithLifecycle()
 
-    ModalBottomSheet(onDismissRequest = onDismiss) {
+    ModalBottomSheet(modifier = Modifier.tapHaptics(), onDismissRequest = onDismiss) {
         Column(Modifier.fillMaxWidth().padding(horizontal = 24.dp).padding(bottom = 24.dp)) {
             Text(stringResource(R.string.speed_pitch), style = MaterialTheme.typography.titleLargeEmphasized)
             Spacer(Modifier.height(16.dp))

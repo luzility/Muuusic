@@ -1,5 +1,6 @@
 package me.luzility.muuusic.ui.player
 
+import me.luzility.muuusic.ui.components.tapHaptics
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -89,7 +90,7 @@ fun SleepTimerSheet(onDismiss: () -> Unit) {
         onDismiss()
     }
 
-    ModalBottomSheet(onDismissRequest = onDismiss) {
+    ModalBottomSheet(modifier = Modifier.tapHaptics(), onDismissRequest = onDismiss) {
         Column(
             Modifier.fillMaxWidth().padding(start = 24.dp, end = 24.dp, bottom = 32.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),

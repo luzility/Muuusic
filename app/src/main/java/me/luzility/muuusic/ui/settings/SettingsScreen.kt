@@ -352,6 +352,14 @@ fun SettingsScreen(onBack: () -> Unit, onOpenEqualizer: () -> Unit, vm: Settings
                         onCheckedChange = { on -> vm.update { it.copy(pureBlack = on) } },
                     )
                 },
+                {
+                    SwitchSetting(
+                        title = stringResource(R.string.settings_haptics),
+                        summary = stringResource(R.string.settings_haptics_summary),
+                        checked = prefs.haptics,
+                        onCheckedChange = { on -> vm.update { it.copy(haptics = on) } },
+                    )
+                },
             )
         }
 

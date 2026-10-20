@@ -1,5 +1,10 @@
 package me.luzility.muuusic.ui.player
 
+import androidx.compose.foundation.pager.PagerSnapDistance
+import androidx.compose.foundation.pager.PagerDefaults
+import kotlinx.coroutines.flow.drop
+import androidx.compose.foundation.interaction.collectIsDraggedAsState
+import me.luzility.muuusic.ui.components.tapHaptics
 import kotlinx.coroutines.delay
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.draw.drawWithContent
@@ -575,10 +580,18 @@ private fun ArtworkPager(url: String?, shape: Shape, artworkModifier: Modifier, 
     LaunchedEffect(pager) {
         snapshotFlow { pager.settledPage }.collect { page ->
             val index = currentOrder.getOrNull(page) ?: return@collect
-            if (index != player.state.value.currentIndex) {
-                haptics.performHapticFeedback(HapticFeedbackType.GestureThresholdActivate)
-                player.skipTo(index)
-            }
+            if (index != player.state.value.currentIndex) player.skipTo(index)
+        }
+    }
+    val dragged by pager.interactionSource.collectIsDraggedAsState()
+    var swiping by remember { mutableStateOf(false) }
+    LaunchedEffect(dragged) { if (dragged) swiping = true }
+    LaunchedEffect(pager) {
+        snapshotFlow { pager.isScrollInProgress }.collect { if (!it) swiping = false }
+    }
+    LaunchedEffect(pager) {
+        snapshotFlow { pager.currentPage }.drop(1).collect {
+            if (swiping) haptics.performHapticFeedback(HapticFeedbackType.SegmentTick)
         }
     }
 
@@ -609,6 +622,7 @@ private fun ArtworkPager(url: String?, shape: Shape, artworkModifier: Modifier, 
             },
         contentPadding = PaddingValues(horizontal = bleed),
         pageSpacing = spacing,
+        flingBehavior = PagerDefaults.flingBehavior(pager, pagerSnapDistance = PagerSnapDistance.atMost(MaxFlingPages)),
         key = { page -> order.getOrNull(page)?.let { state.queue[it].id + "@" + it } ?: page },
         beyondViewportPageCount = 1,
     ) { page ->
@@ -767,7 +781,7 @@ private fun pressWeight(
 private fun QueueSheet(state: PlayerUiState, onDismiss: () -> Unit) {
     val player = LocalPlayer.current
     val listState = rememberLazyListState(initialFirstVisibleItemIndex = state.currentIndex.coerceAtLeast(0))
-    ModalBottomSheet(onDismissRequest = onDismiss, sheetState = rememberModalBottomSheetState()) {
+    ModalBottomSheet(modifier = Modifier.tapHaptics(), onDismissRequest = onDismiss, sheetState = rememberModalBottomSheetState()) {
         Text(
             stringResource(R.string.queue),
             style = MaterialTheme.typography.titleLargeEmphasized,
@@ -795,6 +809,7 @@ private fun QueueSheet(state: PlayerUiState, onDismiss: () -> Unit) {
 
 private val PagerBleed = 48.dp
 private const val PagerSettleMs = 500L
+private const val MaxFlingPages = 5
 private val PagerSpacing = 24.dp
 private val LandscapeBleed = 88.dp
 private val LandscapeSpacing = 16.dp

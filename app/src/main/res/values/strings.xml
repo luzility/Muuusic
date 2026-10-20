@@ -316,4 +316,6 @@
     <string name="go_to_downloads">Go to downloads</string>
     <string name="offline_banner">You\'re offline</string>
     <string name="offline_playback">No connection. Only downloaded songs can play.</string>
+    <string name="settings_haptics">Haptic feedback</string>
+    <string name="settings_haptics_summary">A light tap when you touch something, and a tick for each cover you swipe past</string>
 </resources>
