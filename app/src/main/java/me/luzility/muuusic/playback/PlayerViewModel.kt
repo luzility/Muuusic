@@ -1,5 +1,6 @@
 package me.luzility.muuusic.playback
 
+import androidx.media3.common.C
 import me.luzility.muuusic.data.model.SongJson
 import android.app.Application
 import android.content.ComponentName
@@ -47,6 +48,7 @@ data class PlayerUiState(
     val durationMs: Long = 0,
     val queue: List<Song> = emptyList(),
     val currentIndex: Int = 0,
+    val playOrder: List<Int> = emptyList(),
     val shuffle: Boolean = false,
     val repeatMode: Int = Player.REPEAT_MODE_OFF,
 )
@@ -184,9 +186,22 @@ class PlayerViewModel(app: Application) : AndroidViewModel(app) {
             durationMs = player.duration.takeIf { it > 0 } ?: ((current?.durationSec ?: 0) * 1000),
             queue = queue,
             currentIndex = player.currentMediaItemIndex,
+            playOrder = playOrderOf(player),
             shuffle = player.shuffleModeEnabled,
             repeatMode = player.repeatMode,
         )
+    }
+
+    private fun playOrderOf(player: Player): List<Int> {
+        val timeline = player.currentTimeline
+        if (timeline.isEmpty) return List(player.mediaItemCount) { it }
+        val order = ArrayList<Int>(timeline.windowCount)
+        var index = timeline.getFirstWindowIndex(player.shuffleModeEnabled)
+        while (index != C.INDEX_UNSET && order.size < timeline.windowCount) {
+            order += index
+            index = timeline.getNextWindowIndex(index, Player.REPEAT_MODE_OFF, player.shuffleModeEnabled)
+        }
+        return order
     }
 
     fun position(): Long = controller?.currentPosition ?: 0
@@ -266,6 +281,7 @@ class PlayerViewModel(app: Application) : AndroidViewModel(app) {
 
     fun next() = controller?.seekToNext()
     fun previous() = controller?.seekToPrevious()
+
     fun seekTo(positionMs: Long) = controller?.seekTo(positionMs)
     fun skipTo(index: Int) = controller?.seekTo(index, 0)
     fun removeAt(index: Int) = controller?.removeMediaItem(index)

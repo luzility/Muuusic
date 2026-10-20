@@ -1,5 +1,20 @@
 package me.luzility.muuusic.ui.player
 
+import androidx.compose.ui.graphics.BlendMode
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.graphics.CompositingStrategy
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.ui.layout.layout
+import androidx.compose.ui.graphics.Shape
+import androidx.compose.runtime.snapshotFlow
+import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.pager.HorizontalPager
+import kotlin.math.abs
+import kotlinx.coroutines.launch
+import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.animation.core.Animatable
 import androidx.compose.material.icons.rounded.MicExternalOn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.animation.animateColorAsState
@@ -505,14 +520,98 @@ private fun MorphingArtwork(url: String?, isPlaying: Boolean, compact: Boolean, 
         animationSpec = MaterialTheme.motionScheme.defaultSpatialSpec(),
         label = "artworkScale",
     )
-    Artwork(
-        url = url,
-        modifier = modifier.graphicsLayer {
-            scaleX = scale
-            scaleY = scale
-        },
-        shape = MorphShape(morph, progress),
-    )
+    val shape = MorphShape(morph, progress)
+    val artworkModifier = Modifier.graphicsLayer {
+        scaleX = scale
+        scaleY = scale
+    }
+    if (compact) {
+        Artwork(url = url, modifier = modifier.then(artworkModifier), shape = shape)
+    } else {
+        ArtworkPager(url, shape, artworkModifier, modifier)
+    }
+}
+
+@Composable
+private fun ArtworkPager(url: String?, shape: Shape, artworkModifier: Modifier, modifier: Modifier) {
+    val player = LocalPlayer.current
+    val state by player.state.collectAsStateWithLifecycle()
+    val order = state.playOrder.filter { it in state.queue.indices }
+    val position = order.indexOf(state.currentIndex)
+    if (position < 0) {
+        Artwork(url = url, modifier = modifier.then(artworkModifier), shape = shape)
+        return
+    }
+    val pager = rememberPagerState(initialPage = position) { order.size }
+    val haptics = LocalHapticFeedback.current
+    val spring = MaterialTheme.motionScheme.defaultSpatialSpec<Float>()
+    val landscape = LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
+    val bleed = if (landscape) LandscapeBleed else PagerBleed
+    val spacing = if (landscape) LandscapeSpacing else PagerSpacing
+    val sideAlpha = if (landscape) 0.45f else 0.6f
+    val sideShrink = if (landscape) 0.05f else 0.1f
+
+    LaunchedEffect(position, order.size) {
+        if (pager.currentPage == position || pager.isScrollInProgress) return@LaunchedEffect
+        if (abs(pager.currentPage - position) > 1) pager.scrollToPage(position) else pager.animateScrollToPage(position, animationSpec = spring)
+    }
+    val currentOrder by rememberUpdatedState(order)
+    LaunchedEffect(pager) {
+        snapshotFlow { pager.settledPage }.collect { page ->
+            val index = currentOrder.getOrNull(page) ?: return@collect
+            if (index != player.state.value.currentIndex) {
+                haptics.performHapticFeedback(HapticFeedbackType.GestureThresholdActivate)
+                player.skipTo(index)
+            }
+        }
+    }
+
+    HorizontalPager(
+        state = pager,
+        modifier = modifier.layout { measurable, constraints ->
+            val extra = bleed.roundToPx()
+            val wide = constraints.copy(
+                minWidth = constraints.minWidth + extra * 2,
+                maxWidth = if (constraints.hasBoundedWidth) constraints.maxWidth + extra * 2 else constraints.maxWidth,
+            )
+            val placeable = measurable.measure(wide)
+            layout(placeable.width - extra * 2, placeable.height) { placeable.place(-extra, 0) }
+        }
+            .graphicsLayer { compositingStrategy = CompositingStrategy.Offscreen }
+            .drawWithContent {
+                drawContent()
+                val edge = (bleed.toPx() / size.width).coerceIn(0f, 0.5f)
+                drawRect(
+                    brush = Brush.horizontalGradient(
+                        0f to Color.Transparent,
+                        edge to Color.Black,
+                        1f - edge to Color.Black,
+                        1f to Color.Transparent,
+                    ),
+                    blendMode = BlendMode.DstIn,
+                )
+            },
+        contentPadding = PaddingValues(horizontal = bleed),
+        pageSpacing = spacing,
+        key = { page -> order.getOrNull(page)?.let { state.queue[it].id + "@" + it } ?: page },
+        beyondViewportPageCount = 1,
+    ) { page ->
+        val song = state.queue.getOrNull(order[page])
+        Artwork(
+            url = if (page == position) url ?: song?.thumbnailUrl else song?.thumbnailUrl,
+            modifier = Modifier
+                .fillMaxSize()
+                .graphicsLayer {
+                    val distance = abs(pager.currentPage - page + pager.currentPageOffsetFraction).coerceIn(0f, 1f)
+                    val shrink = 1f - distance * sideShrink
+                    scaleX = shrink
+                    scaleY = shrink
+                    alpha = 1f - distance * (1f - sideAlpha)
+                }
+                .then(artworkModifier),
+            shape = shape,
+        )
+    }
 }
 
 @Composable
@@ -677,3 +776,8 @@ private fun QueueSheet(state: PlayerUiState, onDismiss: () -> Unit) {
         }
     }
 }
+
+private val PagerBleed = 48.dp
+private val PagerSpacing = 24.dp
+private val LandscapeBleed = 88.dp
+private val LandscapeSpacing = 16.dp
