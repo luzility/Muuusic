@@ -1,5 +1,9 @@
 package me.luzility.muuusic.ui.components
 
+import androidx.compose.runtime.DisposableEffect
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.activity.compose.LocalOnBackPressedDispatcherOwner
+import androidx.activity.OnBackPressedCallback
 import me.luzility.muuusic.container
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.foundation.layout.Spacer
@@ -230,5 +234,20 @@ fun LabBadge(modifier: Modifier = Modifier) {
             Icon(Icons.Rounded.Science, null, Modifier.size(16.dp))
             Text(stringResource(R.string.experimental), style = MaterialTheme.typography.labelMedium)
         }
+    }
+}
+
+@Composable
+fun TopBackHandler(enabled: Boolean, onBack: () -> Unit) {
+    val dispatcher = LocalOnBackPressedDispatcherOwner.current?.onBackPressedDispatcher ?: return
+    val lifecycleOwner = LocalLifecycleOwner.current
+    val currentOnBack by rememberUpdatedState(onBack)
+    DisposableEffect(enabled, dispatcher, lifecycleOwner) {
+        if (!enabled) return@DisposableEffect onDispose {}
+        val callback = object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() = currentOnBack()
+        }
+        dispatcher.addCallback(lifecycleOwner, callback)
+        onDispose { callback.remove() }
     }
 }

@@ -27,7 +27,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import android.content.res.Configuration
-import androidx.activity.compose.BackHandler
+import me.luzility.muuusic.ui.components.TopBackHandler
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.expandHorizontally
 import androidx.compose.animation.expandVertically
@@ -174,7 +174,7 @@ fun NowPlayingScreen(onCollapse: () -> Unit) {
     var fullscreen by rememberSaveable { mutableStateOf(false) }
     val immersive = fullscreen && showLyrics
     LaunchedEffect(showLyrics) { if (!showLyrics) fullscreen = false }
-    BackHandler(enabled = immersive) { fullscreen = false }
+    TopBackHandler(enabled = immersive) { fullscreen = false }
     val landscape = LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
     val motion = MaterialTheme.motionScheme
 

@@ -1,5 +1,24 @@
 package me.luzility.muuusic.ui
 
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.animation.core.VisibilityThreshold
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.animateDp
+import androidx.compose.animation.EnterExitState
+import androidx.compose.animation.AnimatedContentScope
+import androidx.navigation.NamedNavArgument
+import androidx.navigation.NavGraphBuilder
+import androidx.compose.ui.unit.IntOffset
+import androidx.navigation.NavBackStackEntry
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.ExitTransition
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.material.icons.rounded.CloudOff
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -23,7 +42,7 @@ import androidx.compose.ui.semantics.testTagsAsResourceId
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.platform.testTag
 import android.net.Uri
-import androidx.activity.compose.BackHandler
+import me.luzility.muuusic.ui.components.TopBackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -118,23 +137,19 @@ fun MuuusicRoot(player: PlayerViewModel) {
 
             LaunchedEffect(hasSong) { if (!hasSong) sheetProgress.snapTo(0f) }
 
+            fun go(route: String, collapsePlayer: Boolean = false) {
+                if (nav.currentBackStackEntry?.lifecycle?.currentState != Lifecycle.State.RESUMED) return
+                if (collapsePlayer) scope.launch { sheetProgress.animateTo(0f, spring) }
+                nav.navigate(route)
+            }
+
             val navigator = remember(nav) {
                 AppNavigator(
-                    openArtist = { name, url ->
-                        // Opening a page from the full-screen player first tucks the player away.
-                        scope.launch { sheetProgress.animateTo(0f, spring) }
-                        nav.navigate("artist?url=${Uri.encode(url.orEmpty())}&name=${Uri.encode(name)}")
-                    },
-                    openCollection = { c ->
-                        scope.launch { sheetProgress.animateTo(0f, spring) }
-                        nav.navigate("collection?url=${Uri.encode(c.url)}&type=${c.type.name}")
-                    },
-                    openPlaylist = { id ->
-                        scope.launch { sheetProgress.animateTo(0f, spring) }
-                        nav.navigate("playlist/$id")
-                    },
-                    openDownloads = { nav.navigate("downloads") },
-                    openRecognition = { nav.navigate("recognize") },
+                    openArtist = { name, url -> go("artist?url=${Uri.encode(url.orEmpty())}&name=${Uri.encode(name)}", collapsePlayer = true) },
+                    openCollection = { c -> go("collection?url=${Uri.encode(c.url)}&type=${c.type.name}", collapsePlayer = true) },
+                    openPlaylist = { id -> go("playlist/$id", collapsePlayer = true) },
+                    openDownloads = { go("downloads") },
+                    openRecognition = { go("recognize") },
                 )
             }
 
@@ -176,24 +191,29 @@ fun MuuusicRoot(player: PlayerViewModel) {
                         // Pages run under the floating mini player; lists pad themselves by its height.
                         val miniSpace = if (hasSong) MiniPlayerHeight + 16.dp else 0.dp
                         CompositionLocalProvider(LocalMiniPlayerInset provides miniSpace) {
+                        val transitions = rememberPageTransitions()
                         NavHost(
                             navController = nav,
                             startDestination = Tab.Home.route,
                             modifier = Modifier.padding(bottom = padding.calculateBottomPadding()),
+                            enterTransition = transitions.enter,
+                            exitTransition = transitions.exit,
+                            popEnterTransition = transitions.popEnter,
+                            popExitTransition = transitions.popExit,
                         ) {
-                            composable(Tab.Home.route) { HomeScreen(onOpenSettings = { nav.navigate("settings") }) }
-                            composable("settings") {
-                                SettingsScreen(onBack = dropUnlessResumed { nav.popBackStack() }, onOpenEqualizer = { nav.navigate("equalizer") })
+                            page(Tab.Home.route) { HomeScreen(onOpenSettings = { go("settings") }) }
+                            page("settings") {
+                                SettingsScreen(onBack = dropUnlessResumed { nav.popBackStack() }, onOpenEqualizer = { go("equalizer") })
                             }
-                            composable("equalizer") { EqualizerScreen(onBack = dropUnlessResumed { nav.popBackStack() }) }
-                            composable("downloads") { DownloadsScreen(onBack = dropUnlessResumed { nav.popBackStack() }) }
-                            composable(
+                            page("equalizer") { EqualizerScreen(onBack = dropUnlessResumed { nav.popBackStack() }) }
+                            page("downloads") { DownloadsScreen(onBack = dropUnlessResumed { nav.popBackStack() }) }
+                            page(
                                 route = "playlist/{id}",
                                 arguments = listOf(navArgument("id") { type = NavType.LongType }),
                             ) {
                                 PlaylistScreen(onBack = dropUnlessResumed { nav.popBackStack() })
                             }
-                            composable(Tab.Search.route) { entry ->
+                            page(Tab.Search.route) { entry ->
                                 val recognized by entry.savedStateHandle
                                     .getStateFlow<String?>(RecognizedQueryKey, null)
                                     .collectAsStateWithLifecycle()
@@ -204,7 +224,7 @@ fun MuuusicRoot(player: PlayerViewModel) {
                                     onRecognizedConsumed = { entry.savedStateHandle[RecognizedQueryKey] = null },
                                 )
                             }
-                            composable("recognize") { entry ->
+                            page("recognize") { entry ->
                                 RecognitionScreen(
                                     onClose = dropUnlessResumed { nav.popBackStack() },
                                     onResult = { query ->
@@ -215,8 +235,8 @@ fun MuuusicRoot(player: PlayerViewModel) {
                                     },
                                 )
                             }
-                            composable(Tab.Library.route) { LibraryScreen() }
-                            composable(
+                            page(Tab.Library.route) { LibraryScreen() }
+                            page(
                                 route = "collection?url={url}&type={type}",
                                 arguments = listOf(
                                     navArgument("url") { type = NavType.StringType },
@@ -225,7 +245,7 @@ fun MuuusicRoot(player: PlayerViewModel) {
                             ) {
                                 CollectionScreen(onBack = dropUnlessResumed { nav.popBackStack() })
                             }
-                            composable(
+                            page(
                                 route = "artist?url={url}&name={name}",
                                 arguments = listOf(
                                     navArgument("url") { type = NavType.StringType; defaultValue = "" },
@@ -270,7 +290,7 @@ fun MuuusicRoot(player: PlayerViewModel) {
                 }
             }
             }
-            BackHandler(enabled = sheetProgress.targetValue > 0.5f) {
+            TopBackHandler(enabled = sheetProgress.targetValue > 0.5f) {
                 scope.launch { sheetProgress.animateTo(0f, spring) }
             }
 
@@ -312,4 +332,61 @@ private fun OfflineStrip() {
             }
         }
     }
+}
+
+private class PageTransitions(
+    val enter: AnimatedContentTransitionScope<NavBackStackEntry>.() -> EnterTransition,
+    val exit: AnimatedContentTransitionScope<NavBackStackEntry>.() -> ExitTransition,
+    val popEnter: AnimatedContentTransitionScope<NavBackStackEntry>.() -> EnterTransition,
+    val popExit: AnimatedContentTransitionScope<NavBackStackEntry>.() -> ExitTransition,
+)
+
+private fun AnimatedContentTransitionScope<NavBackStackEntry>.isTabSwitch() =
+    Tab.entries.any { it.route == initialState.destination.route } && Tab.entries.any { it.route == targetState.destination.route }
+
+@Composable
+private fun rememberPageTransitions(): PageTransitions {
+    val motion = MaterialTheme.motionScheme
+    val slide = spring<IntOffset>(dampingRatio = Spring.DampingRatioNoBouncy, stiffness = PageStiffness, visibilityThreshold = IntOffset.VisibilityThreshold)
+    val depth = spring<Float>(dampingRatio = Spring.DampingRatioNoBouncy, stiffness = PageStiffness)
+    val fadeIn = motion.defaultEffectsSpec<Float>()
+    val fadeOut = motion.fastEffectsSpec<Float>()
+    val tabScale = motion.fastSpatialSpec<Float>()
+    return remember(motion) {
+        val recede = scaleOut(depth, targetScale = 0.92f) + fadeOut(depth, targetAlpha = 0.5f)
+        val emerge = scaleIn(depth, initialScale = 0.92f) + fadeIn(depth, initialAlpha = 0.5f)
+        PageTransitions(
+            enter = {
+                if (isTabSwitch()) fadeIn(fadeIn) + scaleIn(tabScale, initialScale = 0.97f) else slideInHorizontally(slide) { it }
+            },
+            exit = {
+                if (isTabSwitch()) fadeOut(fadeOut) else slideOutHorizontally(slide) { -it / 5 } + recede
+            },
+            popEnter = {
+                if (isTabSwitch()) fadeIn(fadeIn) + scaleIn(tabScale, initialScale = 0.97f) else slideInHorizontally(slide) { -it / 5 } + emerge
+            },
+            popExit = {
+                if (isTabSwitch()) fadeOut(fadeOut) else slideOutHorizontally(slide) { it }
+            },
+        )
+    }
+}
+
+private const val PageStiffness = 550f
+
+private fun NavGraphBuilder.page(
+    route: String,
+    arguments: List<NamedNavArgument> = emptyList(),
+    content: @Composable AnimatedContentScope.(NavBackStackEntry) -> Unit,
+) = composable(route, arguments) { entry ->
+    val scope = this
+    val corner by transition.animateDp(label = "pageCorner") { if (it == EnterExitState.Visible) 0.dp else 28.dp }
+    val shape = RoundedCornerShape(corner)
+    Box(
+        Modifier
+            .fillMaxSize()
+            .shadow(if (corner > 0.dp) 12.dp else 0.dp, shape, clip = false)
+            .clip(shape)
+            .background(MaterialTheme.colorScheme.surface),
+    ) { scope.content(entry) }
 }
