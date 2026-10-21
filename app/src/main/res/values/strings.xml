@@ -318,4 +318,6 @@
     <string name="offline_playback">No connection. Only downloaded songs can play.</string>
     <string name="settings_haptics">Haptic feedback</string>
     <string name="settings_haptics_summary">A light tap when you touch something, and a tick for each cover you swipe past</string>
+    <string name="settings_floating_nav">Floating navigation bar</string>
+    <string name="settings_floating_nav_summary">A compact bar that floats above the content, with icons only</string>
 </resources>

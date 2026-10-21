@@ -1,5 +1,13 @@
 package me.luzility.muuusic.ui
 
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.ui.semantics.Role
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.animation.shrinkHorizontally
+import androidx.compose.animation.expandHorizontally
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.foundation.shape.CircleShape
 import me.luzility.muuusic.ui.components.tapHaptics
 import me.luzility.muuusic.ui.components.ProvideHaptics
 import androidx.compose.ui.draw.clip
@@ -160,45 +168,48 @@ fun MuuusicRoot(player: PlayerViewModel) {
             Surface(color = MaterialTheme.colorScheme.surface) {
                 // Test tags double as resource ids so UI Automator (baseline profile journeys) can find them.
                 Box(Modifier.fillMaxSize().tapHaptics().semantics { testTagsAsResourceId = true }) {
+                    val stack by nav.currentBackStack.collectAsStateWithLifecycle()
+                    val currentTab = stack.lastOrNull { entry -> Tab.entries.any { it.route == entry.destination.route } }?.destination?.route
+                    val selectTab: (Tab) -> Unit = { tab ->
+                        if (currentTab == tab.route) {
+                            nav.popBackStack(tab.route, inclusive = false)
+                        } else {
+                            nav.navigate(tab.route) {
+                                popUpTo(nav.graph.findStartDestination().id) { saveState = true }
+                                launchSingleTop = true
+                                restoreState = true
+                            }
+                        }
+                    }
+                    val floating = appPrefs.floatingNavBar
                     Scaffold(
                         bottomBar = {
-                            Column(Modifier.onSizeChanged { navBarHeight = with(density) { it.height.toDp() } }) {
-                            OfflineStrip()
-                            ShortNavigationBar {
-                                val stack by nav.currentBackStack.collectAsStateWithLifecycle()
-                                val currentTab = stack.lastOrNull { entry -> Tab.entries.any { it.route == entry.destination.route } }?.destination?.route
-                                Tab.entries.forEach { tab ->
-                                    val selected = currentTab == tab.route
-                                    ShortNavigationBarItem(
-                                        modifier = Modifier.testTag("nav_${tab.route}"),
-                                        selected = selected,
-                                        onClick = {
-                                            if (selected) {
-                                                nav.popBackStack(tab.route, inclusive = false)
-                                            } else {
-                                                nav.navigate(tab.route) {
-                                                    popUpTo(nav.graph.findStartDestination().id) { saveState = true }
-                                                    launchSingleTop = true
-                                                    restoreState = true
-                                                }
-                                            }
-                                        },
-                                        icon = { Icon(tab.icon, null) },
-                                        label = { Text(stringResource(tab.label)) },
-                                    )
+                            if (!floating) {
+                                Column(Modifier.onSizeChanged { navBarHeight = with(density) { it.height.toDp() } }) {
+                                    OfflineStrip()
+                                    ShortNavigationBar {
+                                        Tab.entries.forEach { tab ->
+                                            ShortNavigationBarItem(
+                                                modifier = Modifier.testTag("nav_${tab.route}"),
+                                                selected = currentTab == tab.route,
+                                                onClick = { selectTab(tab) },
+                                                icon = { Icon(tab.icon, null) },
+                                                label = { Text(stringResource(tab.label)) },
+                                            )
+                                        }
+                                    }
                                 }
-                            }
                             }
                         },
                     ) { padding ->
                         // Pages run under the floating mini player; lists pad themselves by its height.
-                        val miniSpace = if (hasSong) MiniPlayerHeight + 16.dp else 0.dp
+                        val miniSpace = (if (hasSong) MiniPlayerHeight + 16.dp else 0.dp) + if (floating) navBarHeight else 0.dp
                         CompositionLocalProvider(LocalMiniPlayerInset provides miniSpace) {
                         val transitions = rememberPageTransitions()
                         NavHost(
                             navController = nav,
                             startDestination = Tab.Home.route,
-                            modifier = Modifier.padding(bottom = padding.calculateBottomPadding()),
+                            modifier = Modifier.padding(bottom = if (floating) 0.dp else padding.calculateBottomPadding()),
                             enterTransition = transitions.enter,
                             exitTransition = transitions.exit,
                             popEnterTransition = transitions.popEnter,
@@ -264,18 +275,33 @@ fun MuuusicRoot(player: PlayerViewModel) {
                     // Content fades out under the floating bar: transparent at the top, the nav bar's
                     // colour at the bottom, so the bar never sits on a hard cut of list items.
                     AnimatedVisibility(
-                        visible = hasSong,
-                        modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = navBarHeight),
+                        visible = hasSong || floating,
+                        modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = if (floating) 0.dp else navBarHeight),
                         enter = fadeIn(),
                         exit = fadeOut(),
                     ) {
-                        val fadeColor = MaterialTheme.colorScheme.surfaceContainer
+                        val fadeColor = if (floating) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.surfaceContainer
+                        val height = (if (hasSong) MiniPlayerHeight + 56.dp else 32.dp) + if (floating) navBarHeight else 0.dp
                         Box(
                             Modifier
                                 .fillMaxWidth()
-                                .height(MiniPlayerHeight + 56.dp)
+                                .height(height)
                                 .background(Brush.verticalGradient(0f to Color.Transparent, 0.55f to fadeColor, 1f to fadeColor)),
                         )
+                    }
+
+                    if (floating) {
+                        Column(
+                            Modifier
+                                .align(Alignment.BottomCenter)
+                                .onSizeChanged { navBarHeight = with(density) { it.height.toDp() } }
+                                .navigationBarsPadding()
+                                .padding(bottom = 12.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                        ) {
+                            OfflineStrip(pill = true)
+                            FloatingNavBar(currentTab, selectTab)
+                        }
                     }
 
                     AnimatedVisibility(
@@ -316,7 +342,46 @@ private val SheetProgressSaver = Saver<Animatable<Float, AnimationVector1D>, Flo
 )
 
 @Composable
-private fun OfflineStrip() {
+private fun FloatingNavBar(currentTab: String?, onSelect: (Tab) -> Unit) {
+    val colors = MaterialTheme.colorScheme
+    val motion = MaterialTheme.motionScheme
+    Surface(shape = CircleShape, color = colors.surfaceContainerHigh, shadowElevation = 6.dp) {
+        Row(Modifier.padding(6.dp), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+            Tab.entries.forEach { tab ->
+                val selected = currentTab == tab.route
+                val background by animateColorAsState(if (selected) colors.secondaryContainer else Color.Transparent, motion.defaultEffectsSpec(), label = "navItem")
+                val content by animateColorAsState(if (selected) colors.onSecondaryContainer else colors.onSurfaceVariant, motion.defaultEffectsSpec(), label = "navItemContent")
+                Row(
+                    Modifier
+                        .testTag("nav_${tab.route}")
+                        .clip(CircleShape)
+                        .background(background)
+                        .selectable(selected = selected, role = Role.Tab, onClick = { onSelect(tab) })
+                        .padding(horizontal = 18.dp, vertical = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Icon(tab.icon, stringResource(tab.label), tint = content)
+                    AnimatedVisibility(
+                        visible = selected,
+                        enter = expandHorizontally(motion.defaultSpatialSpec()) + fadeIn(motion.defaultEffectsSpec()),
+                        exit = shrinkHorizontally(motion.defaultSpatialSpec()) + fadeOut(motion.fastEffectsSpec()),
+                    ) {
+                        Text(
+                            stringResource(tab.label),
+                            style = MaterialTheme.typography.labelLarge,
+                            color = content,
+                            maxLines = 1,
+                            modifier = Modifier.padding(start = 8.dp),
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun OfflineStrip(pill: Boolean = false) {
     val online by LocalContext.current.container.connectivity.online.collectAsStateWithLifecycle()
     val motion = MaterialTheme.motionScheme
     AnimatedVisibility(
@@ -324,9 +389,14 @@ private fun OfflineStrip() {
         enter = expandVertically(motion.defaultSpatialSpec()) + fadeIn(motion.defaultEffectsSpec()),
         exit = shrinkVertically(motion.defaultSpatialSpec()) + fadeOut(motion.defaultEffectsSpec()),
     ) {
-        Surface(color = MaterialTheme.colorScheme.inverseSurface, contentColor = MaterialTheme.colorScheme.inverseOnSurface) {
+        Surface(
+            shape = if (pill) CircleShape else RectangleShape,
+            color = MaterialTheme.colorScheme.inverseSurface,
+            contentColor = MaterialTheme.colorScheme.inverseOnSurface,
+            modifier = if (pill) Modifier.padding(bottom = 8.dp) else Modifier,
+        ) {
             Row(
-                Modifier.fillMaxWidth().padding(vertical = 6.dp),
+                (if (pill) Modifier.padding(horizontal = 14.dp) else Modifier.fillMaxWidth()).padding(vertical = 6.dp),
                 horizontalArrangement = Arrangement.Center,
                 verticalAlignment = Alignment.CenterVertically,
             ) {

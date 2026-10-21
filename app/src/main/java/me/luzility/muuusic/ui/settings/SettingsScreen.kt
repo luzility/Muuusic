@@ -354,6 +354,14 @@ fun SettingsScreen(onBack: () -> Unit, onOpenEqualizer: () -> Unit, vm: Settings
                 },
                 {
                     SwitchSetting(
+                        title = stringResource(R.string.settings_floating_nav),
+                        summary = stringResource(R.string.settings_floating_nav_summary),
+                        checked = prefs.floatingNavBar,
+                        onCheckedChange = { on -> vm.update { it.copy(floatingNavBar = on) } },
+                    )
+                },
+                {
+                    SwitchSetting(
                         title = stringResource(R.string.settings_haptics),
                         summary = stringResource(R.string.settings_haptics_summary),
                         checked = prefs.haptics,

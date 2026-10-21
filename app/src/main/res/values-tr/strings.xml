@@ -317,4 +317,6 @@
     <string name="offline_playback">Bağlantı yok. Sadece indirilen şarkılar çalınabilir.</string>
     <string name="settings_haptics">Dokunsal geri bildirim</string>
     <string name="settings_haptics_summary">Bir şeye dokununca hafif bir titreşim, kapakları kaydırırken her kapakta bir tık</string>
+    <string name="settings_floating_nav">Yüzen alt çubuk</string>
+    <string name="settings_floating_nav_summary">İçeriğin üstünde duran, sadece simgeli küçük bir çubuk</string>
 </resources>
