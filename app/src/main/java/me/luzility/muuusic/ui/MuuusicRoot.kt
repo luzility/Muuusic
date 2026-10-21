@@ -1,5 +1,10 @@
 package me.luzility.muuusic.ui
 
+import androidx.compose.runtime.rememberUpdatedState
+import kotlinx.coroutines.flow.drop
+import androidx.compose.runtime.snapshotFlow
+import me.luzility.muuusic.ui.components.Haptic
+import me.luzility.muuusic.ui.components.LocalHaptics
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.ui.semantics.Role
 import androidx.compose.foundation.selection.selectable
@@ -318,6 +323,12 @@ fun MuuusicRoot(player: PlayerViewModel) {
                     }
                 }
             }
+            }
+            val haptics by rememberUpdatedState(LocalHaptics.current)
+            LaunchedEffect(sheetProgress) {
+                snapshotFlow { sheetProgress.targetValue > 0.5f }.drop(1).collect { open ->
+                    haptics.perform(if (open) Haptic.Rise else Haptic.Fall)
+                }
             }
             TopBackHandler(enabled = sheetProgress.targetValue > 0.5f) {
                 scope.launch { sheetProgress.animateTo(0f, spring) }

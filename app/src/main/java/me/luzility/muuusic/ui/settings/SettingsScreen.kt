@@ -1,5 +1,7 @@
 package me.luzility.muuusic.ui.settings
 
+import me.luzility.muuusic.ui.components.Haptic
+import me.luzility.muuusic.ui.components.LocalHaptics
 import java.time.LocalDate
 import me.luzility.muuusic.data.backup.InvalidBackupException
 import kotlinx.coroutines.flow.asSharedFlow
@@ -663,15 +665,20 @@ private fun SettingText(title: String, summary: String?, modifier: Modifier = Mo
 
 @Composable
 private fun SwitchSetting(title: String, summary: String?, checked: Boolean, onCheckedChange: (Boolean) -> Unit) {
+    val haptics = LocalHaptics.current
+    val toggle: (Boolean) -> Unit = { on ->
+        haptics.perform(if (on) Haptic.ToggleOn else Haptic.ToggleOff)
+        onCheckedChange(on)
+    }
     Row(
         Modifier
             .fillMaxWidth()
-            .clickable { onCheckedChange(!checked) }
+            .clickable { toggle(!checked) }
             .padding(horizontal = 20.dp, vertical = 16.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         SettingText(title, summary, Modifier.weight(1f).padding(end = 16.dp))
-        Switch(checked = checked, onCheckedChange = onCheckedChange)
+        Switch(checked = checked, onCheckedChange = toggle)
     }
 }
 

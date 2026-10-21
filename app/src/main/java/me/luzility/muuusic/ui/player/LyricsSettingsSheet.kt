@@ -99,6 +99,7 @@ fun LyricsButton(checked: Boolean, onClick: () -> Unit, onLongClick: () -> Unit)
 @Composable
 fun LyricsSettingsSheet(onDismiss: () -> Unit) {
     val player = LocalPlayer.current
+    val haptics = LocalHapticFeedback.current
     val prefs by player.lyricsPrefs.collectAsStateWithLifecycle()
     val offset by player.lyricsOffset.collectAsStateWithLifecycle()
 
@@ -175,7 +176,10 @@ fun LyricsSettingsSheet(onDismiss: () -> Unit) {
 
             Row(Modifier.padding(top = 8.dp), verticalAlignment = Alignment.CenterVertically) {
                 Text(stringResource(R.string.lyrics_blur), style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(1f))
-                Switch(checked = prefs.blur, onCheckedChange = { blur -> player.updateLyricsPrefs { it.copy(blur = blur) } })
+                Switch(checked = prefs.blur, onCheckedChange = { blur ->
+                    haptics.performHapticFeedback(if (blur) HapticFeedbackType.ToggleOn else HapticFeedbackType.ToggleOff)
+                    player.updateLyricsPrefs { it.copy(blur = blur) }
+                })
             }
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
@@ -187,7 +191,10 @@ fun LyricsSettingsSheet(onDismiss: () -> Unit) {
                     )
                 }
                 Spacer(Modifier.width(16.dp))
-                Switch(checked = prefs.translate, onCheckedChange = { on -> player.updateLyricsPrefs { it.copy(translate = on) } })
+                Switch(checked = prefs.translate, onCheckedChange = { on ->
+                    haptics.performHapticFeedback(if (on) HapticFeedbackType.ToggleOn else HapticFeedbackType.ToggleOff)
+                    player.updateLyricsPrefs { it.copy(translate = on) }
+                })
             }
         }
     }

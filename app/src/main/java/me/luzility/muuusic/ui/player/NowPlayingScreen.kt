@@ -1,5 +1,7 @@
 package me.luzility.muuusic.ui.player
 
+import me.luzility.muuusic.ui.components.Haptic
+import me.luzility.muuusic.ui.components.LocalHaptics
 import androidx.compose.foundation.pager.PagerSnapDistance
 import androidx.compose.foundation.pager.PagerDefaults
 import kotlinx.coroutines.flow.drop
@@ -500,9 +502,13 @@ private fun TitleBlock(song: Song, compact: Boolean, modifier: Modifier = Modifi
 
 @Composable
 private fun LikeButton(liked: Boolean, onLikedChange: (Boolean) -> Unit, modifier: Modifier = Modifier) {
+    val haptics = LocalHaptics.current
     FilledIconToggleButton(
         checked = liked,
-        onCheckedChange = onLikedChange,
+        onCheckedChange = {
+            haptics.perform(if (it) Haptic.Like else Haptic.ToggleOff)
+            onLikedChange(it)
+        },
         shapes = IconButtonDefaults.toggleableShapes(),
         modifier = modifier,
     ) {
@@ -580,7 +586,10 @@ private fun ArtworkPager(url: String?, shape: Shape, artworkModifier: Modifier, 
     LaunchedEffect(pager) {
         snapshotFlow { pager.settledPage }.collect { page ->
             val index = currentOrder.getOrNull(page) ?: return@collect
-            if (index != player.state.value.currentIndex) player.skipTo(index)
+            if (index != player.state.value.currentIndex) {
+                haptics.performHapticFeedback(HapticFeedbackType.GestureEnd)
+                player.skipTo(index)
+            }
         }
     }
     val dragged by pager.interactionSource.collectIsDraggedAsState()
@@ -721,8 +730,12 @@ private fun Controls(state: PlayerUiState) {
             ) {
                 Icon(Icons.Rounded.SkipPrevious, stringResource(R.string.previous), Modifier.size(32.dp))
             }
+            val haptics = LocalHaptics.current
             FilledIconButton(
-                onClick = player::togglePlay,
+                onClick = {
+                    haptics.perform(Haptic.Heavy)
+                    player.togglePlay()
+                },
                 shape = RoundedCornerShape(playCorner),
                 interactionSource = playInteraction,
                 modifier = Modifier.weight(playWeight).height(96.dp),

@@ -1,5 +1,7 @@
 package me.luzility.muuusic.ui.player
 
+import me.luzility.muuusic.ui.components.Haptic
+import me.luzility.muuusic.ui.components.LocalHaptics
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.rounded.SkipPrevious
@@ -97,8 +99,12 @@ private fun MiniControls(state: PlayerUiState) {
         IconButton(onClick = { player.previous() }, shapes = IconButtonDefaults.shapes(), modifier = Modifier.size(40.dp)) {
             Icon(Icons.Rounded.SkipPrevious, stringResource(R.string.previous))
         }
+        val haptics = LocalHaptics.current
         FilledIconButton(
-            onClick = player::togglePlay,
+            onClick = {
+                haptics.perform(Haptic.Heavy)
+                player.togglePlay()
+            },
             shape = RoundedCornerShape(corner),
             modifier = Modifier.size(width = 52.dp, height = 40.dp),
         ) {
