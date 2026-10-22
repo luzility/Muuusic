@@ -14,6 +14,8 @@ class Crossfader(private val startNext: () -> Outgoing?) {
     class Outgoing(val player: ExoPlayer, val gain: GainAudioProcessor, val fadeStartMs: Long)
 
     private var outgoing: Outgoing? = null
+
+    val fading: Boolean get() = outgoing?.player?.isPlaying == true
     private var fadeMs = 0L
 
     private var fadeInMs = 0L

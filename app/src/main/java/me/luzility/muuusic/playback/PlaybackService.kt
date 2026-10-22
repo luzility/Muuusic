@@ -141,7 +141,12 @@ class PlaybackService : MediaLibraryService() {
             while (true) {
                 crossfader.tick(container.settings.prefs.value.fadeSeconds, player, gain)
                 skipSegment()
-                if (player.isPlaying) delay(FADE_TICK_MS) else playbackWanted.first { it }
+                if (player.isPlaying || crossfader.fading) {
+                    delay(FADE_TICK_MS)
+                } else {
+                    playbackWanted.value = false
+                    playbackWanted.first { it }
+                }
             }
         }
         queueStore = QueueStore(File(filesDir, "queue.json"))
