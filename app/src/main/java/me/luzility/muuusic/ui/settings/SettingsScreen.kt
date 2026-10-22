@@ -1,5 +1,28 @@
 package me.luzility.muuusic.ui.settings
 
+import me.luzility.muuusic.data.update.Versions
+import java.time.format.FormatStyle
+import java.time.format.DateTimeFormatter
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.res.colorResource
+import androidx.compose.ui.res.painterResource
+import androidx.compose.foundation.Image
+import me.luzility.muuusic.data.lyrics.LyricsAlign
+import me.luzility.muuusic.data.lyrics.LyricsTextSize
+import java.util.Locale
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.background
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.rounded.Close
+import androidx.compose.material.icons.rounded.Search
+import androidx.compose.material3.toShape
+import androidx.compose.material3.MaterialShapes
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.TextFieldDefaults
+import androidx.compose.material3.TextField
 import me.luzility.muuusic.ui.components.Haptic
 import me.luzility.muuusic.ui.components.LocalHaptics
 import java.time.LocalDate
@@ -20,7 +43,6 @@ import me.luzility.muuusic.ui.update.UpdateCheck
 import me.luzility.muuusic.ui.update.updateViewModel
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.size
-import androidx.compose.material.icons.rounded.Science
 import android.app.Application
 import android.text.format.Formatter
 import androidx.compose.foundation.clickable
@@ -166,8 +188,17 @@ class SettingsViewModel(app: Application) : AndroidViewModel(app) {
 private const val TRANSLATE_URL = "https://hosted.weblate.org/engage/muuusic/"
 
 @Composable
-fun SettingsScreen(onBack: () -> Unit, onOpenEqualizer: () -> Unit, vm: SettingsViewModel = viewModel()) {
+fun SettingsScreen(
+    onBack: () -> Unit,
+    onOpenEqualizer: () -> Unit,
+    onOpenCategory: (SettingsCategory) -> Unit,
+    category: SettingsCategory? = null,
+    vm: SettingsViewModel = viewModel(),
+) {
     val prefs by vm.prefs.collectAsStateWithLifecycle()
+    var query by rememberSaveable { mutableStateOf("") }
+    val lyricsSettings = LocalContext.current.container.lyricsSettings
+    val lyricsPrefs by lyricsSettings.prefs.collectAsStateWithLifecycle()
     val cacheUsed by vm.cacheUsed.collectAsStateWithLifecycle()
     val downloadsUsed by vm.downloadsUsed.collectAsStateWithLifecycle()
     var confirmDownloads by rememberSaveable { mutableStateOf(false) }
@@ -198,371 +229,431 @@ fun SettingsScreen(onBack: () -> Unit, onOpenEqualizer: () -> Unit, vm: Settings
         }
         item {
             Text(
-                stringResource(R.string.settings),
+                stringResource(category?.title ?: R.string.settings),
                 style = MaterialTheme.typography.displaySmallEmphasized,
                 modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 16.dp, bottom = 8.dp),
             )
         }
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            item { GroupTitle(stringResource(R.string.settings_language)) }
+        when (category) {
+            null -> {
+                item {
+                    SettingsSearch(query, onQueryChange = { query = it })
+                }
+                if (query.isBlank()) {
+                    SettingsCategory.sections.forEach { section ->
+                        item {
+                            Spacer(Modifier.height(16.dp))
+                            SettingsGroup(*section.filter { it.available }.map { category -> @Composable { CategoryRow(category) { onOpenCategory(category) } } }.toTypedArray())
+                        }
+                    }
+                } else {
+                    item {
+                        SearchResults(query, onOpen = onOpenCategory)
+                    }
+                }
+            }
+            SettingsCategory.Appearance -> {
             item {
                 SettingsGroup(
                     {
-                        // Android 13+ keeps a language per app; its own screen lists the languages Muuusic has.
-                        val current = context.getSystemService(LocaleManager::class.java).applicationLocales
-                        ActionSetting(
-                            title = stringResource(R.string.settings_app_language),
-                            summary = if (current.isEmpty) {
-                                stringResource(R.string.settings_language_system)
-                            } else {
-                                current[0].getDisplayName(current[0]).replaceFirstChar { it.titlecase(current[0]) }
+                        ChoiceSetting(
+                            title = stringResource(R.string.settings_theme),
+                            summary = null,
+                            options = ThemeMode.entries,
+                            selected = prefs.themeMode,
+                            label = {
+                                when (it) {
+                                    ThemeMode.System -> R.string.theme_system
+                                    ThemeMode.Light -> R.string.theme_light
+                                    ThemeMode.Dark -> R.string.theme_dark
+                                }
                             },
-                            onClick = {
-                                context.startActivity(
-                                    Intent(Settings.ACTION_APP_LOCALE_SETTINGS, Uri.fromParts("package", context.packageName, null))
-                                )
-                            },
+                            onSelect = { mode -> vm.update { it.copy(themeMode = mode) } },
                         )
                     },
                     {
-                        ActionSetting(
-                            title = stringResource(R.string.settings_translate),
-                            summary = stringResource(R.string.settings_translate_summary),
-                            onClick = { uriHandler.openUri(TRANSLATE_URL) },
+                        SwitchSetting(
+                            title = stringResource(R.string.settings_artwork_colors),
+                            summary = stringResource(R.string.settings_artwork_colors_summary),
+                            checked = prefs.artworkColors,
+                            onCheckedChange = { on -> vm.update { it.copy(artworkColors = on) } },
+                        )
+                    },
+                    {
+                        SwitchSetting(
+                            title = stringResource(R.string.settings_pure_black),
+                            summary = stringResource(R.string.settings_pure_black_summary),
+                            checked = prefs.pureBlack,
+                            onCheckedChange = { on -> vm.update { it.copy(pureBlack = on) } },
+                        )
+                    },
+                    {
+                        SwitchSetting(
+                            title = stringResource(R.string.settings_floating_nav),
+                            summary = stringResource(R.string.settings_floating_nav_summary),
+                            checked = prefs.floatingNavBar,
+                            onCheckedChange = { on -> vm.update { it.copy(floatingNavBar = on) } },
+                        )
+                    },
+                    {
+                        SwitchSetting(
+                            title = stringResource(R.string.settings_haptics),
+                            summary = stringResource(R.string.settings_haptics_summary),
+                            checked = prefs.haptics,
+                            onCheckedChange = { on -> vm.update { it.copy(haptics = on) } },
                         )
                     },
                 )
             }
-        }
-
-        item { GroupTitle(stringResource(R.string.settings_playback)) }
-        item {
-            SettingsGroup(
-                {
-                    ChoiceSetting(
-                        title = stringResource(R.string.settings_audio_quality),
-                        summary = stringResource(R.string.settings_audio_quality_summary),
-                        options = AudioQuality.entries,
-                        selected = prefs.audioQuality,
-                        label = {
-                            when (it) {
-                                AudioQuality.High -> R.string.quality_high
-                                AudioQuality.Normal -> R.string.quality_normal
-                                AudioQuality.Low -> R.string.quality_low
-                            }
-                        },
-                        onSelect = { q -> vm.update { it.copy(audioQuality = q) } },
-                    )
-                },
-                {
-                    SwitchSetting(
-                        title = stringResource(R.string.settings_autoplay),
-                        summary = stringResource(R.string.settings_autoplay_summary),
-                        checked = prefs.autoplay,
-                        onCheckedChange = { on -> vm.update { it.copy(autoplay = on) } },
-                    )
-                },
-                {
-                    SwitchSetting(
-                        title = stringResource(R.string.settings_sponsorblock),
-                        summary = stringResource(R.string.settings_sponsorblock_summary),
-                        checked = prefs.sponsorBlock,
-                        onCheckedChange = { on -> vm.update { it.copy(sponsorBlock = on) } },
-                    )
-                },
-            )
-        }
-
-        item { GroupTitle(stringResource(R.string.settings_sound)) }
-        item {
-            SettingsGroup(
-                {
-                    SwitchSetting(
-                        title = stringResource(R.string.settings_normalize),
-                        summary = stringResource(R.string.settings_normalize_summary),
-                        checked = prefs.normalizeVolume,
-                        onCheckedChange = { on -> vm.update { it.copy(normalizeVolume = on) } },
-                    )
-                },
-                {
-                    ChoiceSetting(
-                        title = stringResource(R.string.settings_crossfade),
-                        summary = stringResource(R.string.settings_crossfade_summary),
-                        options = AppSettings.FadeSeconds,
-                        selected = prefs.fadeSeconds,
-                        labelText = { s -> if (s == 0) context.getString(R.string.off) else context.getString(R.string.seconds_short, s) },
-                        onSelect = { s -> vm.update { it.copy(fadeSeconds = s) } },
-                    )
-                },
-                {
-                    SwitchSetting(
-                        title = stringResource(R.string.settings_link_pitch),
-                        summary = stringResource(R.string.settings_link_pitch_summary),
-                        checked = prefs.linkPitch,
-                        onCheckedChange = { on -> vm.update { it.copy(linkPitch = on) } },
-                    )
-                },
-                {
-                    ActionSetting(
-                        title = stringResource(R.string.equalizer),
-                        summary = stringResource(if (prefs.equalizerEnabled) R.string.equalizer_on else R.string.equalizer_summary),
-                        onClick = onOpenEqualizer,
-                    )
-                },
-            )
-        }
-
-        item { GroupTitle(stringResource(R.string.settings_appearance)) }
-        item {
-            SettingsGroup(
-                {
-                    ChoiceSetting(
-                        title = stringResource(R.string.settings_theme),
-                        summary = null,
-                        options = ThemeMode.entries,
-                        selected = prefs.themeMode,
-                        label = {
-                            when (it) {
-                                ThemeMode.System -> R.string.theme_system
-                                ThemeMode.Light -> R.string.theme_light
-                                ThemeMode.Dark -> R.string.theme_dark
-                            }
-                        },
-                        onSelect = { mode -> vm.update { it.copy(themeMode = mode) } },
-                    )
-                },
-                {
-                    SwitchSetting(
-                        title = stringResource(R.string.settings_artwork_colors),
-                        summary = stringResource(R.string.settings_artwork_colors_summary),
-                        checked = prefs.artworkColors,
-                        onCheckedChange = { on -> vm.update { it.copy(artworkColors = on) } },
-                    )
-                },
-                {
-                    SwitchSetting(
-                        title = stringResource(R.string.settings_pure_black),
-                        summary = stringResource(R.string.settings_pure_black_summary),
-                        checked = prefs.pureBlack,
-                        onCheckedChange = { on -> vm.update { it.copy(pureBlack = on) } },
-                    )
-                },
-                {
-                    SwitchSetting(
-                        title = stringResource(R.string.settings_floating_nav),
-                        summary = stringResource(R.string.settings_floating_nav_summary),
-                        checked = prefs.floatingNavBar,
-                        onCheckedChange = { on -> vm.update { it.copy(floatingNavBar = on) } },
-                    )
-                },
-                {
-                    SwitchSetting(
-                        title = stringResource(R.string.settings_haptics),
-                        summary = stringResource(R.string.settings_haptics_summary),
-                        checked = prefs.haptics,
-                        onCheckedChange = { on -> vm.update { it.copy(haptics = on) } },
-                    )
-                },
-            )
-        }
-
-        item { GroupTitle(stringResource(R.string.settings_storage)) }
-        item {
-            SettingsGroup(
-                {
-                    val used = if (cacheUsed >= 0) Formatter.formatShortFileSize(context, cacheUsed) else "…"
-                    val pending = prefs.cacheSizeMb != vm.startupCacheSizeMb
-                    ChoiceSetting(
-                        title = stringResource(R.string.settings_cache_size),
-                        summary = stringResource(R.string.settings_cache_used, used) +
-                            if (pending) "\n" + stringResource(R.string.settings_cache_restart) else "",
-                        options = AppSettings.CacheSizesMb,
-                        selected = prefs.cacheSizeMb,
-                        labelText = { mb -> if (mb >= 1024) "${mb / 1024} GB" else "$mb MB" },
-                        onSelect = { mb -> vm.update { it.copy(cacheSizeMb = mb) } },
-                    )
-                },
-                {
-                    ActionSetting(
-                        title = stringResource(R.string.settings_clear_cache),
-                        summary = stringResource(R.string.settings_clear_cache_summary),
-                        onClick = vm::clearCache,
-                    )
-                },
-                {
-                    SwitchSetting(
-                        title = stringResource(R.string.settings_download_wifi),
-                        summary = stringResource(R.string.settings_download_wifi_summary),
-                        checked = prefs.downloadWifiOnly,
-                        onCheckedChange = vm::setDownloadWifiOnly,
-                    )
-                },
-                {
-                    val used = if (downloadsUsed >= 0) Formatter.formatShortFileSize(context, downloadsUsed) else "…"
-                    ActionSetting(
-                        title = stringResource(R.string.settings_remove_downloads),
-                        summary = stringResource(R.string.settings_downloads_used, used) + "\n" +
-                            stringResource(R.string.settings_remove_downloads_summary),
-                        onClick = { confirmDownloads = true },
-                    )
-                },
-                {
-                    ActionSetting(
-                        title = stringResource(R.string.settings_clear_history),
-                        summary = stringResource(R.string.settings_clear_history_summary),
-                        onClick = { confirmHistory = true },
-                    )
-                },
-            )
-        }
-
-        item { GroupTitle(stringResource(R.string.settings_backup)) }
-        item {
-            SettingsGroup(
-                {
-                    ActionSetting(
-                        title = stringResource(R.string.settings_backup_create),
-                        summary = stringResource(R.string.settings_backup_create_summary),
-                        onClick = { createBackup.launch("muuusic-${LocalDate.now()}.json") },
-                    )
-                },
-                {
-                    ActionSetting(
-                        title = stringResource(R.string.settings_backup_restore),
-                        summary = stringResource(R.string.settings_backup_restore_summary),
-                        onClick = { pickBackup.launch(arrayOf("application/json", "application/octet-stream", "text/plain")) },
-                    )
-                },
-            )
-        }
-
-        item {
-            Row(
-                Modifier.padding(start = 28.dp, end = 28.dp, top = 24.dp, bottom = 8.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Icon(Icons.Rounded.Science, null, tint = MaterialTheme.colorScheme.tertiary, modifier = Modifier.size(18.dp))
-                Spacer(Modifier.width(8.dp))
-                Text(stringResource(R.string.settings_lab), style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.tertiary)
             }
-        }
-        item {
-            SettingsGroup(
-                {
-                    SwitchSetting(
-                        title = stringResource(R.string.settings_karaoke),
-                        summary = stringResource(R.string.settings_karaoke_summary),
-                        checked = prefs.karaoke,
-                        onCheckedChange = { on -> vm.update { it.copy(karaoke = on) } },
-                    )
-                },
-                {
-                    ChoiceSetting(
-                        title = stringResource(R.string.settings_karaoke_strength),
-                        summary = stringResource(R.string.settings_karaoke_strength_summary),
-                        options = Karaoke.strengths,
-                        selected = prefs.karaokeStrength,
-                        labelText = { "%${(it * 100).toInt()}" },
-                        onSelect = { value -> vm.update { it.copy(karaokeStrength = value) } },
-                    )
-                },
-                {
-                    SwitchSetting(
-                        title = stringResource(R.string.settings_song_recognition),
-                        summary = stringResource(R.string.settings_song_recognition_summary),
-                        checked = prefs.songRecognition,
-                        onCheckedChange = { on -> vm.update { it.copy(songRecognition = on) } },
-                    )
-                },
-            )
-        }
-
-        item { GroupTitle(stringResource(R.string.settings_updates)) }
-        item {
-            SettingsGroup(
-                {
-                    val check = updateCheck
-                    val available = check as? UpdateCheck.Available
-                    ActionSetting(
-                        title = stringResource(R.string.settings_check_updates),
-                        summary = when (check) {
-                            UpdateCheck.Checking -> stringResource(R.string.update_checking)
-                            UpdateCheck.UpToDate -> stringResource(R.string.update_up_to_date, BuildConfig.VERSION_NAME)
-                            UpdateCheck.Failed -> stringResource(R.string.update_failed)
-                            is UpdateCheck.Available -> stringResource(R.string.update_ready, check.release.version)
-                            UpdateCheck.Idle -> stringResource(R.string.settings_version, BuildConfig.VERSION_NAME)
+            SettingsCategory.Playback -> {
+            item {
+                SettingsGroup(
+                    {
+                        ChoiceSetting(
+                            title = stringResource(R.string.settings_audio_quality),
+                            summary = stringResource(R.string.settings_audio_quality_summary),
+                            options = AudioQuality.entries,
+                            selected = prefs.audioQuality,
+                            label = {
+                                when (it) {
+                                    AudioQuality.High -> R.string.quality_high
+                                    AudioQuality.Normal -> R.string.quality_normal
+                                    AudioQuality.Low -> R.string.quality_low
+                                }
+                            },
+                            onSelect = { q -> vm.update { it.copy(audioQuality = q) } },
+                        )
+                    },
+                    {
+                        SwitchSetting(
+                            title = stringResource(R.string.settings_autoplay),
+                            summary = stringResource(R.string.settings_autoplay_summary),
+                            checked = prefs.autoplay,
+                            onCheckedChange = { on -> vm.update { it.copy(autoplay = on) } },
+                        )
+                    },
+                    {
+                        SwitchSetting(
+                            title = stringResource(R.string.settings_sponsorblock),
+                            summary = stringResource(R.string.settings_sponsorblock_summary),
+                            checked = prefs.sponsorBlock,
+                            onCheckedChange = { on -> vm.update { it.copy(sponsorBlock = on) } },
+                        )
+                    },
+                )
+            }
+            }
+            SettingsCategory.Sound -> {
+            item {
+                SettingsGroup(
+                    {
+                        SwitchSetting(
+                            title = stringResource(R.string.settings_normalize),
+                            summary = stringResource(R.string.settings_normalize_summary),
+                            checked = prefs.normalizeVolume,
+                            onCheckedChange = { on -> vm.update { it.copy(normalizeVolume = on) } },
+                        )
+                    },
+                    {
+                        ChoiceSetting(
+                            title = stringResource(R.string.settings_crossfade),
+                            summary = stringResource(R.string.settings_crossfade_summary),
+                            options = AppSettings.FadeSeconds,
+                            selected = prefs.fadeSeconds,
+                            labelText = { s -> if (s == 0) context.getString(R.string.off) else context.getString(R.string.seconds_short, s) },
+                            onSelect = { s -> vm.update { it.copy(fadeSeconds = s) } },
+                        )
+                    },
+                    {
+                        SwitchSetting(
+                            title = stringResource(R.string.settings_link_pitch),
+                            summary = stringResource(R.string.settings_link_pitch_summary),
+                            checked = prefs.linkPitch,
+                            onCheckedChange = { on -> vm.update { it.copy(linkPitch = on) } },
+                        )
+                    },
+                    {
+                        ActionSetting(
+                            title = stringResource(R.string.equalizer),
+                            summary = stringResource(if (prefs.equalizerEnabled) R.string.equalizer_on else R.string.equalizer_summary),
+                            onClick = onOpenEqualizer,
+                        )
+                    },
+                )
+            }
+            }
+            SettingsCategory.Lyrics -> {
+            item {
+                SettingsGroup(
+                    {
+                        ChoiceSetting(
+                            title = stringResource(R.string.lyrics_text_size),
+                            summary = null,
+                            options = LyricsTextSize.entries,
+                            selected = lyricsPrefs.textSize,
+                            label = {
+                                when (it) {
+                                    LyricsTextSize.Small -> R.string.size_small
+                                    LyricsTextSize.Medium -> R.string.size_medium
+                                    LyricsTextSize.Large -> R.string.size_large
+                                }
+                            },
+                            onSelect = { size -> lyricsSettings.update { it.copy(textSize = size) } },
+                        )
+                    },
+                    {
+                        ChoiceSetting(
+                            title = stringResource(R.string.lyrics_alignment),
+                            summary = null,
+                            options = LyricsAlign.entries,
+                            selected = lyricsPrefs.align,
+                            label = { if (it == LyricsAlign.Start) R.string.align_start else R.string.align_center },
+                            onSelect = { align -> lyricsSettings.update { it.copy(align = align) } },
+                        )
+                    },
+                    {
+                        SwitchSetting(
+                            title = stringResource(R.string.lyrics_blur),
+                            summary = null,
+                            checked = lyricsPrefs.blur,
+                            onCheckedChange = { on -> lyricsSettings.update { it.copy(blur = on) } },
+                        )
+                    },
+                    {
+                        SwitchSetting(
+                            title = stringResource(R.string.lyrics_translate),
+                            summary = stringResource(R.string.lyrics_translate_summary),
+                            checked = lyricsPrefs.translate,
+                            onCheckedChange = { on -> lyricsSettings.update { it.copy(translate = on) } },
+                        )
+                    },
+                )
+            }
+            }
+            SettingsCategory.Storage -> {
+            item {
+                SettingsGroup(
+                    {
+                        val used = if (cacheUsed >= 0) Formatter.formatShortFileSize(context, cacheUsed) else "…"
+                        val pending = prefs.cacheSizeMb != vm.startupCacheSizeMb
+                        ChoiceSetting(
+                            title = stringResource(R.string.settings_cache_size),
+                            summary = stringResource(R.string.settings_cache_used, used) +
+                                if (pending) "\n" + stringResource(R.string.settings_cache_restart) else "",
+                            options = AppSettings.CacheSizesMb,
+                            selected = prefs.cacheSizeMb,
+                            labelText = { mb -> if (mb >= 1024) "${mb / 1024} GB" else "$mb MB" },
+                            onSelect = { mb -> vm.update { it.copy(cacheSizeMb = mb) } },
+                        )
+                    },
+                    {
+                        ActionSetting(
+                            title = stringResource(R.string.settings_clear_cache),
+                            summary = stringResource(R.string.settings_clear_cache_summary),
+                            onClick = vm::clearCache,
+                        )
+                    },
+                    {
+                        SwitchSetting(
+                            title = stringResource(R.string.settings_download_wifi),
+                            summary = stringResource(R.string.settings_download_wifi_summary),
+                            checked = prefs.downloadWifiOnly,
+                            onCheckedChange = vm::setDownloadWifiOnly,
+                        )
+                    },
+                    {
+                        val used = if (downloadsUsed >= 0) Formatter.formatShortFileSize(context, downloadsUsed) else "…"
+                        ActionSetting(
+                            title = stringResource(R.string.settings_remove_downloads),
+                            summary = stringResource(R.string.settings_downloads_used, used) + "\n" +
+                                stringResource(R.string.settings_remove_downloads_summary),
+                            onClick = { confirmDownloads = true },
+                        )
+                    },
+                    {
+                        ActionSetting(
+                            title = stringResource(R.string.settings_clear_history),
+                            summary = stringResource(R.string.settings_clear_history_summary),
+                            onClick = { confirmHistory = true },
+                        )
+                    },
+                )
+            }
+            }
+            SettingsCategory.Backup -> {
+            item {
+                SettingsGroup(
+                    {
+                        ActionSetting(
+                            title = stringResource(R.string.settings_backup_create),
+                            summary = stringResource(R.string.settings_backup_create_summary),
+                            onClick = { createBackup.launch("muuusic-${LocalDate.now()}.json") },
+                        )
+                    },
+                    {
+                        ActionSetting(
+                            title = stringResource(R.string.settings_backup_restore),
+                            summary = stringResource(R.string.settings_backup_restore_summary),
+                            onClick = { pickBackup.launch(arrayOf("application/json", "application/octet-stream", "text/plain")) },
+                        )
+                    },
+                )
+            }
+            }
+            SettingsCategory.Language -> {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                item {
+                    SettingsGroup(
+                        {
+                            // Android 13+ keeps a language per app; its own screen lists the languages Muuusic has.
+                            val current = context.getSystemService(LocaleManager::class.java).applicationLocales
+                            ActionSetting(
+                                title = stringResource(R.string.settings_app_language),
+                                summary = if (current.isEmpty) {
+                                    stringResource(R.string.settings_language_system)
+                                } else {
+                                    current[0].getDisplayName(current[0]).replaceFirstChar { it.titlecase(current[0]) }
+                                },
+                                onClick = {
+                                    context.startActivity(
+                                        Intent(Settings.ACTION_APP_LOCALE_SETTINGS, Uri.fromParts("package", context.packageName, null))
+                                    )
+                                },
+                            )
                         },
-                        onClick = { available?.let { updates.show(it.release) } ?: updates.checkNow() },
-                    )
-                },
-                {
-                    ChoiceSetting(
-                        title = stringResource(R.string.settings_update_channel),
-                        summary = stringResource(R.string.settings_update_channel_summary),
-                        options = UpdateChannel.entries,
-                        selected = prefs.updateChannel,
-                        label = {
-                            when (it) {
-                                UpdateChannel.Release -> R.string.channel_release
-                                UpdateChannel.Beta -> R.string.channel_beta
-                            }
-                        },
-                        onSelect = { channel -> vm.update { it.copy(updateChannel = channel) } },
-                    )
-                },
-            )
-        }
-
-        item { GroupTitle(stringResource(R.string.settings_about)) }
-        item {
-            SettingsGroup(
-                {
-                    ActionSetting(
-                        title = stringResource(R.string.settings_tour),
-                        summary = stringResource(R.string.settings_tour_summary),
-                        onClick = {
-                            context.container.hints.reset()
-                            vm.update { it.copy(onboarded = false) }
+                        {
+                            ActionSetting(
+                                title = stringResource(R.string.settings_translate),
+                                summary = stringResource(R.string.settings_translate_summary),
+                                onClick = { uriHandler.openUri(TRANSLATE_URL) },
+                            )
                         },
                     )
-                },
-                {
-                    ActionSetting(
-                        title = "Luzi",
-                        summary = stringResource(R.string.settings_developer_summary),
-                        onClick = { uriHandler.openUri("https://github.com/luzility") },
-                    )
-                },
-                {
-                    ActionSetting(
-                        title = stringResource(R.string.settings_source),
-                        summary = "github.com/${Updates.REPO}",
-                        onClick = { uriHandler.openUri("https://github.com/${Updates.REPO}") },
-                    )
-                },
-                {
-                    ActionSetting(
-                        title = stringResource(R.string.settings_report),
-                        summary = stringResource(R.string.settings_report_summary),
-                        onClick = { uriHandler.openUri("https://github.com/${Updates.REPO}/issues/new") },
-                    )
-                },
-                {
-                    ActionSetting(
-                        title = stringResource(R.string.settings_license),
-                        summary = stringResource(R.string.settings_license_summary),
-                        onClick = { uriHandler.openUri("https://www.gnu.org/licenses/gpl-3.0.html") },
-                    )
-                },
-                {
-                    ActionSetting(
-                        title = stringResource(R.string.settings_credits),
-                        summary = stringResource(R.string.settings_credits_summary, Credits.size),
-                        onClick = { showCredits = true },
-                    )
-                },
-            )
+                }
+            }
+            }
+            SettingsCategory.Lab -> {
+            item {
+                SettingsGroup(
+                    {
+                        SwitchSetting(
+                            title = stringResource(R.string.settings_karaoke),
+                            summary = stringResource(R.string.settings_karaoke_summary),
+                            checked = prefs.karaoke,
+                            onCheckedChange = { on -> vm.update { it.copy(karaoke = on) } },
+                        )
+                    },
+                    {
+                        ChoiceSetting(
+                            title = stringResource(R.string.settings_karaoke_strength),
+                            summary = stringResource(R.string.settings_karaoke_strength_summary),
+                            options = Karaoke.strengths,
+                            selected = prefs.karaokeStrength,
+                            labelText = { "%${(it * 100).toInt()}" },
+                            onSelect = { value -> vm.update { it.copy(karaokeStrength = value) } },
+                        )
+                    },
+                    {
+                        SwitchSetting(
+                            title = stringResource(R.string.settings_song_recognition),
+                            summary = stringResource(R.string.settings_song_recognition_summary),
+                            checked = prefs.songRecognition,
+                            onCheckedChange = { on -> vm.update { it.copy(songRecognition = on) } },
+                        )
+                    },
+                )
+            }
+            }
+            SettingsCategory.Updates -> {
+            item {
+                SettingsGroup(
+                    {
+                        val check = updateCheck
+                        val available = check as? UpdateCheck.Available
+                        ActionSetting(
+                            title = stringResource(R.string.settings_check_updates),
+                            summary = when (check) {
+                                UpdateCheck.Checking -> stringResource(R.string.update_checking)
+                                UpdateCheck.UpToDate -> stringResource(R.string.update_up_to_date, BuildConfig.VERSION_NAME)
+                                UpdateCheck.Failed -> stringResource(R.string.update_failed)
+                                is UpdateCheck.Available -> stringResource(R.string.update_ready, check.release.version)
+                                UpdateCheck.Idle -> stringResource(R.string.settings_version, BuildConfig.VERSION_NAME)
+                            },
+                            onClick = { available?.let { updates.show(it.release) } ?: updates.checkNow() },
+                        )
+                    },
+                    {
+                        ChoiceSetting(
+                            title = stringResource(R.string.settings_update_channel),
+                            summary = stringResource(R.string.settings_update_channel_summary),
+                            options = UpdateChannel.entries,
+                            selected = prefs.updateChannel,
+                            label = {
+                                when (it) {
+                                    UpdateChannel.Release -> R.string.channel_release
+                                    UpdateChannel.Beta -> R.string.channel_beta
+                                }
+                            },
+                            onSelect = { channel -> vm.update { it.copy(updateChannel = channel) } },
+                        )
+                    },
+                )
+            }
+            }
+            SettingsCategory.About -> {
+            item { AboutCard() }
+            item {
+                SettingsGroup(
+                    {
+                        ActionSetting(
+                            title = stringResource(R.string.settings_tour),
+                            summary = stringResource(R.string.settings_tour_summary),
+                            onClick = {
+                                context.container.hints.reset()
+                                vm.update { it.copy(onboarded = false) }
+                            },
+                        )
+                    },
+                    {
+                        ActionSetting(
+                            title = "Luzi",
+                            summary = stringResource(R.string.settings_developer_summary),
+                            onClick = { uriHandler.openUri("https://github.com/luzility") },
+                        )
+                    },
+                    {
+                        ActionSetting(
+                            title = stringResource(R.string.settings_source),
+                            summary = "github.com/${Updates.REPO}",
+                            onClick = { uriHandler.openUri("https://github.com/${Updates.REPO}") },
+                        )
+                    },
+                    {
+                        ActionSetting(
+                            title = stringResource(R.string.settings_report),
+                            summary = stringResource(R.string.settings_report_summary),
+                            onClick = { uriHandler.openUri("https://github.com/${Updates.REPO}/issues/new") },
+                        )
+                    },
+                    {
+                        ActionSetting(
+                            title = stringResource(R.string.settings_license),
+                            summary = stringResource(R.string.settings_license_summary),
+                            onClick = { uriHandler.openUri("https://www.gnu.org/licenses/gpl-3.0.html") },
+                        )
+                    },
+                    {
+                        ActionSetting(
+                            title = stringResource(R.string.settings_credits),
+                            summary = stringResource(R.string.settings_credits_summary, Credits.size),
+                            onClick = { showCredits = true },
+                        )
+                    },
+                )
+            }
+            }
         }
     }
 
@@ -618,12 +709,183 @@ fun SettingsScreen(onBack: () -> Unit, onOpenEqualizer: () -> Unit, vm: Settings
 }
 
 @Composable
-private fun GroupTitle(text: String) {
-    Text(
-        text,
-        style = MaterialTheme.typography.titleSmall,
-        color = MaterialTheme.colorScheme.primary,
-        modifier = Modifier.padding(start = 28.dp, end = 28.dp, top = 24.dp, bottom = 8.dp),
+private fun SettingsSearch(query: String, onQueryChange: (String) -> Unit) {
+    TextField(
+        value = query,
+        onValueChange = onQueryChange,
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
+        placeholder = { Text(stringResource(R.string.settings_search)) },
+        leadingIcon = { Icon(Icons.Rounded.Search, null) },
+        trailingIcon = {
+            if (query.isNotEmpty()) {
+                IconButton(onClick = { onQueryChange("") }) { Icon(Icons.Rounded.Close, stringResource(R.string.clear)) }
+            }
+        },
+        singleLine = true,
+        shape = CircleShape,
+        colors = TextFieldDefaults.colors(
+            focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+            unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+            focusedIndicatorColor = Color.Transparent,
+            unfocusedIndicatorColor = Color.Transparent,
+        ),
+    )
+}
+
+private val CategoryShapes = listOf(
+    MaterialShapes.Cookie9Sided,
+    MaterialShapes.Clover4Leaf,
+    MaterialShapes.Sunny,
+    MaterialShapes.Cookie6Sided,
+    MaterialShapes.Pentagon,
+    MaterialShapes.Cookie4Sided,
+    MaterialShapes.Gem,
+    MaterialShapes.Flower,
+    MaterialShapes.Cookie7Sided,
+    MaterialShapes.SoftBurst,
+)
+
+@Composable
+private fun AboutCard() {
+    val colors = MaterialTheme.colorScheme
+    val released = remember {
+        runCatching {
+            LocalDate.parse(BuildConfig.RELEASE_DATE).format(DateTimeFormatter.ofLocalizedDate(FormatStyle.LONG).withLocale(Locale.getDefault()))
+        }.getOrNull()
+    }
+    Surface(
+        shape = RoundedCornerShape(32.dp),
+        color = colors.primaryContainer,
+        contentColor = colors.onPrimaryContainer,
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
+    ) {
+        Column(Modifier.padding(vertical = 28.dp, horizontal = 24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+            Box(
+                Modifier
+                    .size(96.dp)
+                    .clip(MaterialShapes.Cookie12Sided.toShape())
+                    .background(colorResource(R.color.brand)),
+            ) {
+                Image(
+                    painterResource(R.drawable.ic_launcher_foreground),
+                    null,
+                    Modifier.fillMaxSize().graphicsLayer {
+                        scaleX = 1.5f
+                        scaleY = 1.5f
+                    },
+                )
+            }
+            Spacer(Modifier.height(16.dp))
+            Text("Muuusic", style = MaterialTheme.typography.headlineMediumEmphasized)
+            Text(
+                stringResource(R.string.about_tagline),
+                style = MaterialTheme.typography.bodyMedium,
+                color = colors.onPrimaryContainer.copy(alpha = 0.8f),
+                textAlign = TextAlign.Center,
+            )
+            Spacer(Modifier.height(16.dp))
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Surface(shape = CircleShape, color = colors.primary, contentColor = colors.onPrimary) {
+                    Text(
+                        stringResource(R.string.settings_version, BuildConfig.VERSION_NAME),
+                        style = MaterialTheme.typography.labelLarge,
+                        modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp),
+                    )
+                }
+                Surface(shape = CircleShape, color = colors.surface.copy(alpha = 0.5f)) {
+                    Text(
+                        stringResource(if (Versions.isBeta(BuildConfig.VERSION_NAME)) R.string.channel_beta else R.string.channel_release),
+                        style = MaterialTheme.typography.labelLarge,
+                        modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp),
+                    )
+                }
+            }
+            if (released != null) {
+                Spacer(Modifier.height(10.dp))
+                Text(
+                    stringResource(R.string.about_released, released),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = colors.onPrimaryContainer.copy(alpha = 0.7f),
+                )
+            }
+        }
+    }
+}
+
+private val CategoryColors = listOf(
+    Color(0xFFFFB1C8) to Color(0xFF5E1133),
+    Color(0xFFA8C7FA) to Color(0xFF062E6F),
+    Color(0xFFD0BCFF) to Color(0xFF381E72),
+    Color(0xFFFFB68A) to Color(0xFF552100),
+    Color(0xFFA6D6A8) to Color(0xFF0B3913),
+    Color(0xFF80D5D1) to Color(0xFF003735),
+    Color(0xFFF6D776) to Color(0xFF3B2F00),
+    Color(0xFFC5E29A) to Color(0xFF233600),
+    Color(0xFF9ECAFF) to Color(0xFF003258),
+    Color(0xFFE0C3F0) to Color(0xFF3E1F4C),
+)
+
+@Composable
+private fun CategoryIcon(category: SettingsCategory) {
+    val (container, content) = CategoryColors[category.ordinal % CategoryColors.size]
+    val shape = CategoryShapes[category.ordinal % CategoryShapes.size].toShape()
+    Box(Modifier.size(44.dp).clip(shape).background(container), contentAlignment = Alignment.Center) {
+        Icon(category.icon, null, tint = content, modifier = Modifier.size(22.dp))
+    }
+}
+
+@Composable
+private fun CategoryRow(category: SettingsCategory, onClick: () -> Unit) {
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .padding(horizontal = 16.dp, vertical = 14.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        CategoryIcon(category)
+        Spacer(Modifier.width(16.dp))
+        SettingText(stringResource(category.title), stringResource(category.summary), Modifier.weight(1f))
+    }
+}
+
+@Composable
+private fun SearchResults(query: String, onOpen: (SettingsCategory) -> Unit) {
+    val resources = LocalContext.current.resources
+    val needle = query.trim().lowercase(Locale.getDefault())
+    val results = remember(needle, resources) {
+        SettingsIndex.filter { entry ->
+            resources.getString(entry.title).lowercase(Locale.getDefault()).contains(needle) ||
+                resources.getString(entry.category.title).lowercase(Locale.getDefault()).contains(needle)
+        }
+    }
+    if (results.isEmpty()) {
+        Text(
+            stringResource(R.string.settings_search_empty),
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.fillMaxWidth().padding(32.dp),
+        )
+        return
+    }
+    Spacer(Modifier.height(8.dp))
+    SettingsGroup(
+        *results.map { entry ->
+            @Composable {
+                Row(
+                    Modifier
+                        .fillMaxWidth()
+                        .clickable { onOpen(entry.category) }
+                        .padding(horizontal = 16.dp, vertical = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    CategoryIcon(entry.category)
+                    Spacer(Modifier.width(16.dp))
+                    SettingText(stringResource(entry.title), stringResource(entry.category.title), Modifier.weight(1f))
+                }
+            }
+        }.toTypedArray(),
     )
 }
 

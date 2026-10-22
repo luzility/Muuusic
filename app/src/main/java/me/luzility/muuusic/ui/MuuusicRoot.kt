@@ -1,5 +1,6 @@
 package me.luzility.muuusic.ui
 
+import me.luzility.muuusic.ui.settings.SettingsCategory
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.runtime.rememberUpdatedState
 import kotlinx.coroutines.flow.drop
@@ -236,7 +237,19 @@ fun MuuusicRoot(player: PlayerViewModel) {
                         ) {
                             page(Tab.Home.route) { HomeScreen(onOpenSettings = { go("settings") }) }
                             page("settings") {
-                                SettingsScreen(onBack = dropUnlessResumed { nav.popBackStack() }, onOpenEqualizer = { go("equalizer") })
+                                SettingsScreen(
+                                    onBack = dropUnlessResumed { nav.popBackStack() },
+                                    onOpenEqualizer = { go("equalizer") },
+                                    onOpenCategory = { go("settings/${it.name}") },
+                                )
+                            }
+                            page("settings/{category}") { entry ->
+                                SettingsScreen(
+                                    onBack = dropUnlessResumed { nav.popBackStack() },
+                                    onOpenEqualizer = { go("equalizer") },
+                                    onOpenCategory = { go("settings/${it.name}") },
+                                    category = entry.arguments?.getString("category")?.let { name -> SettingsCategory.entries.firstOrNull { it.name == name } },
+                                )
                             }
                             page("equalizer") { EqualizerScreen(onBack = dropUnlessResumed { nav.popBackStack() }) }
                             page("downloads") { DownloadsScreen(onBack = dropUnlessResumed { nav.popBackStack() }) }

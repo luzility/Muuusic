@@ -320,4 +320,18 @@
     <string name="settings_haptics_summary">A light tap when you touch something, and a tick for each cover you swipe past</string>
     <string name="settings_floating_nav">Floating navigation bar</string>
     <string name="settings_floating_nav_summary">A compact bar that floats above the content, with icons only</string>
+    <string name="settings_search">Search settings</string>
+    <string name="settings_search_empty">No matching settings</string>
+    <string name="settings_appearance_summary">Theme, cover colours, navigation bar</string>
+    <string name="settings_playback_summary">Audio quality, autoplay, SponsorBlock</string>
+    <string name="settings_sound_summary">Normalization, crossfade, equalizer</string>
+    <string name="settings_lyrics_summary">Text size, alignment, translation</string>
+    <string name="settings_storage_summary">Cache, downloads, history</string>
+    <string name="settings_backup_summary">Back up and restore your library</string>
+    <string name="settings_language_summary">App language, translations</string>
+    <string name="settings_lab_summary">Karaoke, song recognition</string>
+    <string name="settings_updates_summary">Check for updates, release channel</string>
+    <string name="settings_about_summary">Version, source code, credits</string>
+    <string name="about_tagline">An ad-free YouTube Music client for Android</string>
+    <string name="about_released">Released %1$s</string>
 </resources>

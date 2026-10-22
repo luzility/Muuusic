@@ -16,6 +16,11 @@ fun versionCodeOf(version: String): Int {
     return ((major.toInt() * 100 + minor.toInt()) * 100 + patch.toInt()) * 100 + (beta.toIntOrNull() ?: 99)
 }
 
+val releaseDate: String = providers.exec {
+    commandLine("git", "log", "-1", "--format=%cs")
+    isIgnoreExitValue = true
+}.standardOutput.asText.map { it.trim() }.getOrElse("")
+
 // Weblate adds a language as soon as someone starts it; only ship the ones that are mostly done,
 // so nobody picks a language that turns out to be half English.
 val minTranslated = 0.7
@@ -58,6 +63,7 @@ android {
         targetSdk = 36
         versionCode = versionCodeOf(appVersion)
         versionName = appVersion
+        buildConfigField("String", "RELEASE_DATE", "\"$releaseDate\"")
     }
 
     signingConfigs {

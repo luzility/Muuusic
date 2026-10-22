@@ -319,4 +319,18 @@
     <string name="settings_haptics_summary">Bir şeye dokununca hafif bir titreşim, kapakları kaydırırken her kapakta bir tık</string>
     <string name="settings_floating_nav">Yüzen alt çubuk</string>
     <string name="settings_floating_nav_summary">İçeriğin üstünde duran, sadece simgeli küçük bir çubuk</string>
+    <string name="settings_search">Ayarlarda ara</string>
+    <string name="settings_search_empty">Eşleşen ayar yok</string>
+    <string name="settings_appearance_summary">Tema, kapak renkleri, alt çubuk</string>
+    <string name="settings_playback_summary">Ses kalitesi, otomatik oynatma, SponsorBlock</string>
+    <string name="settings_sound_summary">Ses eşitleme, geçiş, ekolayzır</string>
+    <string name="settings_lyrics_summary">Yazı boyutu, hizalama, çeviri</string>
+    <string name="settings_storage_summary">Önbellek, indirmeler, geçmiş</string>
+    <string name="settings_backup_summary">Kitaplığını yedekle ve geri yükle</string>
+    <string name="settings_language_summary">Uygulama dili, çeviriler</string>
+    <string name="settings_lab_summary">Karaoke, şarkı tanıma</string>
+    <string name="settings_updates_summary">Güncelleme kontrolü, sürüm kanalı</string>
+    <string name="settings_about_summary">Sürüm, kaynak kod, katkıda bulunanlar</string>
+    <string name="about_tagline">Android için reklamsız bir YouTube Music istemcisi</string>
+    <string name="about_released">Yayın tarihi: %1$s</string>
 </resources>
