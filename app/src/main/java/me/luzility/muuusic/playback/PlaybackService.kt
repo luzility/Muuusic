@@ -203,6 +203,7 @@ class PlaybackService : MediaLibraryService() {
                         .add(SessionCommand(SleepTimer.COMMAND, Bundle.EMPTY))
                         .add(SessionCommand(QueueCommands.ENQUEUE, Bundle.EMPTY))
                         .add(SessionCommand(QueueCommands.START_RADIO, Bundle.EMPTY))
+                        .add(SessionCommand(QueueCommands.MOVE, Bundle.EMPTY))
                         .build()
                 )
                 .build()
@@ -220,6 +221,7 @@ class PlaybackService : MediaLibraryService() {
                     val song = songFrom(args) ?: return Futures.immediateFuture(SessionResult(SessionError.ERROR_BAD_VALUE))
                     enqueueShuffled(song, args.getBoolean(QueueCommands.ARG_NEXT))
                 }
+                QueueCommands.MOVE -> moveInPlayOrder(args.getInt(QueueCommands.ARG_FROM), args.getInt(QueueCommands.ARG_TO))
                 QueueCommands.START_RADIO -> {
                     val song = songFrom(args) ?: return Futures.immediateFuture(SessionResult(SessionError.ERROR_BAD_VALUE))
                     fetchRadio(song.id)
@@ -510,6 +512,17 @@ class PlaybackService : MediaLibraryService() {
         if (order.size == player.mediaItemCount) {
             player.setShuffleOrder(DefaultShuffleOrder(order.toIntArray(), Random.nextLong()))
         }
+    }
+
+    private fun moveInPlayOrder(from: Int, to: Int) {
+        val order = playOrder()
+        if (from !in order.indices || to !in order.indices || from == to) return
+        if (!player.shuffleModeEnabled) {
+            player.moveMediaItem(order[from], order[to])
+            return
+        }
+        order.add(to, order.removeAt(from))
+        player.setShuffleOrder(DefaultShuffleOrder(order.toIntArray(), Random.nextLong()))
     }
 
     // Fades out over the last few seconds. The end time goes out via session extras for the UI countdown.

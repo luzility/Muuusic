@@ -342,4 +342,9 @@
     <string name="settings_discord_logout">Çıkış yapmak için dokun</string>
     <string name="discord_login_done">Discord\'a giriş yapıldı</string>
     <string name="discord_login_failed">Discord\'a giriş yapılamadı</string>
+    <plurals name="queue_remaining">
+        <item quantity="one">%d şarkı kaldı</item>
+        <item quantity="other">%d şarkı kaldı</item>
+    </plurals>
+    <string name="reorder">Sırala</string>
 </resources>

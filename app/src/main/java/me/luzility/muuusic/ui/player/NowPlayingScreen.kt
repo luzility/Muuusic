@@ -1,5 +1,12 @@
 package me.luzility.muuusic.ui.player
 
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.runtime.mutableIntStateOf
+import me.luzility.muuusic.ui.components.RemovableRow
+import androidx.compose.material3.Surface
+import androidx.compose.material.icons.rounded.DragHandle
+import sh.calvin.reorderable.rememberReorderableLazyListState
+import sh.calvin.reorderable.ReorderableItem
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.CancellationException
@@ -819,28 +826,101 @@ private fun pressWeight(
     return weight.coerceAtLeast(0.01f)
 }
 
+private class QueueRow(val key: String, val index: Int, val song: Song)
+
 @Composable
 private fun QueueSheet(state: PlayerUiState, onDismiss: () -> Unit) {
     val player = LocalPlayer.current
-    val listState = rememberLazyListState(initialFirstVisibleItemIndex = state.currentIndex.coerceAtLeast(0))
+    val haptics = LocalHapticFeedback.current
+    val fromState = remember(state.queue, state.playOrder) {
+        val seen = HashMap<String, Int>()
+        val keys = state.queue.map { song ->
+            val n = seen.getOrDefault(song.id, 0)
+            seen[song.id] = n + 1
+            "${song.id}#$n"
+        }
+        state.playOrder.filter { it in state.queue.indices }.map { QueueRow(keys[it], it, state.queue[it]) }
+    }
+    var rows by remember { mutableStateOf(fromState) }
+    var dragging by remember { mutableStateOf(false) }
+    var dragKey by remember { mutableStateOf<String?>(null) }
+    var dragFrom by remember { mutableIntStateOf(-1) }
+    LaunchedEffect(fromState, dragging) { if (!dragging) rows = fromState }
+
+    val currentPosition = rows.indexOfFirst { it.index == state.currentIndex }
+    val listState = rememberLazyListState(initialFirstVisibleItemIndex = (currentPosition - 1).coerceAtLeast(0))
+    val reorderState = rememberReorderableLazyListState(listState) { from, to ->
+        val fromIndex = rows.indexOfFirst { it.key == from.key }
+        val toIndex = rows.indexOfFirst { it.key == to.key }
+        if (fromIndex < 0 || toIndex < 0) return@rememberReorderableLazyListState
+        rows = rows.toMutableList().apply { add(toIndex, removeAt(fromIndex)) }
+        haptics.performHapticFeedback(HapticFeedbackType.SegmentFrequentTick)
+    }
+
     ModalBottomSheet(modifier = Modifier.tapHaptics(), onDismissRequest = onDismiss, sheetState = rememberModalBottomSheetState()) {
-        Text(
-            stringResource(R.string.queue),
-            style = MaterialTheme.typography.titleLargeEmphasized,
-            modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp),
-        )
+        Row(Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+            Text(stringResource(R.string.queue), style = MaterialTheme.typography.titleLargeEmphasized, modifier = Modifier.weight(1f))
+            if (currentPosition >= 0) {
+                Text(
+                    pluralStringResource(R.plurals.queue_remaining, rows.size - currentPosition - 1, rows.size - currentPosition - 1),
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        }
         LazyColumn(state = listState, modifier = Modifier.fillMaxWidth()) {
-            itemsIndexed(state.queue) { index, song ->
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    SongListItem(
-                        song = song,
-                        isCurrent = index == state.currentIndex,
-                        onClick = { player.skipTo(index) },
-                        modifier = Modifier.weight(1f).clip(MaterialTheme.shapes.large),
-                    )
-                    if (index != state.currentIndex) {
-                        IconButton(onClick = { player.removeAt(index) }) {
-                            Icon(Icons.Rounded.Close, stringResource(R.string.remove))
+            itemsIndexed(rows, key = { _, row -> row.key }) { position, row ->
+                val isCurrent = row.index == state.currentIndex
+                val played = currentPosition >= 0 && position < currentPosition
+                ReorderableItem(reorderState, key = row.key, enabled = !isCurrent) { isDragging ->
+                    val elevation by animateDpAsState(if (isDragging) 6.dp else 0.dp, label = "queueDrag")
+                    RemovableRow(
+                        onRemove = {
+                            rows = rows.filterNot { it.key == row.key }
+                            player.removeAt(row.index)
+                        },
+                        enabled = !isCurrent,
+                    ) {
+                        Surface(
+                            shadowElevation = elevation,
+                            shape = MaterialTheme.shapes.large,
+                            color = if (isDragging) MaterialTheme.colorScheme.surfaceContainerHigh else MaterialTheme.colorScheme.surfaceContainerLow,
+                        ) {
+                            Row(
+                                Modifier.graphicsLayer { alpha = if (played) 0.55f else 1f },
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                                SongListItem(
+                                    song = row.song,
+                                    isCurrent = isCurrent,
+                                    onClick = { player.skipTo(row.index) },
+                                    modifier = Modifier.weight(1f).clip(MaterialTheme.shapes.large),
+                                )
+                                if (!isCurrent) {
+                                    Icon(
+                                        Icons.Rounded.DragHandle,
+                                        contentDescription = stringResource(R.string.reorder),
+                                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        modifier = Modifier
+                                            .draggableHandle(
+                                                onDragStarted = {
+                                                    dragging = true
+                                                    dragKey = row.key
+                                                    dragFrom = rows.indexOfFirst { it.key == row.key }
+                                                    haptics.performHapticFeedback(HapticFeedbackType.GestureThresholdActivate)
+                                                },
+                                                onDragStopped = {
+                                                    val to = rows.indexOfFirst { it.key == dragKey }
+                                                    if (dragFrom >= 0 && to >= 0 && to != dragFrom) player.moveInPlayOrder(dragFrom, to)
+                                                    dragging = false
+                                                    dragKey = null
+                                                    haptics.performHapticFeedback(HapticFeedbackType.GestureEnd)
+                                                },
+                                            )
+                                            .padding(start = 4.dp, end = 16.dp),
+                                    )
+                                }
+                            }
                         }
                     }
                 }

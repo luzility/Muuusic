@@ -1,5 +1,6 @@
 package me.luzility.muuusic.ui.playlist
 
+import me.luzility.muuusic.ui.components.RemovableRow
 import me.luzility.muuusic.ui.components.DownloadAllButton
 import android.app.Application
 import androidx.compose.animation.core.animateDpAsState
@@ -168,7 +169,12 @@ fun PlaylistScreen(onBack: () -> Unit, vm: PlaylistViewModel = viewModel()) {
         itemsIndexed(rows, key = { _, row -> row.entryId }) { index, row ->
             ReorderableItem(reorderState, key = row.entryId) { isDragging ->
                 val elevation by animateDpAsState(if (isDragging) 6.dp else 0.dp, label = "dragElevation")
-                RemovableRow(onRemove = { vm.remove(row.entryId) }) {
+                RemovableRow(
+                    onRemove = {
+                        rows = rows.filterNot { it.entryId == row.entryId }
+                        vm.remove(row.entryId)
+                    },
+                ) {
                     Surface(
                         shadowElevation = elevation,
                         shape = MaterialTheme.shapes.large,
@@ -228,36 +234,6 @@ fun PlaylistScreen(onBack: () -> Unit, vm: PlaylistViewModel = viewModel()) {
             },
             dismissButton = { TextButton(onClick = { confirmDelete = false }) { Text(stringResource(R.string.cancel)) } },
         )
-    }
-}
-
-@Composable
-private fun RemovableRow(onRemove: () -> Unit, content: @Composable () -> Unit) {
-    val state = rememberSwipeToDismissBoxState()
-    LaunchedEffect(state.currentValue) {
-        if (state.currentValue == SwipeToDismissBoxValue.EndToStart) {
-            onRemove()
-            state.snapTo(SwipeToDismissBoxValue.Settled)
-        }
-    }
-    SwipeToDismissBox(
-        state = state,
-        enableDismissFromStartToEnd = false,
-        backgroundContent = {
-            Box(
-                Modifier
-                    .fillMaxSize()
-                    .padding(horizontal = 8.dp)
-                    .clip(MaterialTheme.shapes.large)
-                    .background(MaterialTheme.colorScheme.errorContainer)
-                    .padding(horizontal = 20.dp),
-                contentAlignment = Alignment.CenterEnd,
-            ) {
-                Icon(Icons.Rounded.Delete, stringResource(R.string.remove), tint = MaterialTheme.colorScheme.onErrorContainer)
-            }
-        },
-    ) {
-        content()
     }
 }
 

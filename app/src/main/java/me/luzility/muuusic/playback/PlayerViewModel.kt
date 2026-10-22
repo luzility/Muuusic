@@ -285,7 +285,15 @@ class PlayerViewModel(app: Application) : AndroidViewModel(app) {
     fun seekTo(positionMs: Long) = controller?.seekTo(positionMs)
     fun skipTo(index: Int) = controller?.seekTo(index, 0)
     fun removeAt(index: Int) = controller?.removeMediaItem(index)
-    fun moveItem(from: Int, to: Int) = controller?.moveMediaItem(from, to)
+    fun moveInPlayOrder(from: Int, to: Int) {
+        controller?.sendCustomCommand(
+            SessionCommand(QueueCommands.MOVE, Bundle.EMPTY),
+            Bundle().apply {
+                putInt(QueueCommands.ARG_FROM, from)
+                putInt(QueueCommands.ARG_TO, to)
+            },
+        )
+    }
 
     fun toggleShuffle() {
         controller?.let { it.shuffleModeEnabled = !it.shuffleModeEnabled }
