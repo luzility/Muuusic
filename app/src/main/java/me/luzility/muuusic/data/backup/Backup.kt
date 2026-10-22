@@ -61,7 +61,7 @@ class Backup(
         val root = runCatching { JSONObject(input.bufferedReader().use { it.readText() }) }.getOrNull()
         if (root == null || root.optString("format") != FORMAT || root.optInt("version") > VERSION) throw InvalidBackupException()
 
-        val songs = root.optJSONArray("songs").objects().map { it.toSongEntity() }
+        val songs = root.optJSONArray("songs").objects().filter { it.has("id") }.map { it.toSongEntity() }
         val byId = songs.associateBy { it.id }
 
         val addedPlaylists = db.withTransaction {

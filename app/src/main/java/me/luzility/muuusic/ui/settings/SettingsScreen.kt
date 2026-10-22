@@ -4,9 +4,6 @@ import me.luzility.muuusic.ui.components.Haptic
 import me.luzility.muuusic.ui.components.LocalHaptics
 import java.time.LocalDate
 import me.luzility.muuusic.data.backup.InvalidBackupException
-import kotlinx.coroutines.flow.asSharedFlow
-import kotlinx.coroutines.flow.MutableSharedFlow
-import androidx.compose.runtime.LaunchedEffect
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -123,30 +120,25 @@ class SettingsViewModel(app: Application) : AndroidViewModel(app) {
         viewModelScope.launch { container.library.clearHistory() }
     }
 
-    private val _messages = MutableSharedFlow<Int>(extraBufferCapacity = 1)
-    val messages = _messages.asSharedFlow()
-
     fun backup(uri: Uri) {
-        viewModelScope.launch {
+        container.appScope.launch {
             val saved = runCatching {
                 withContext(Dispatchers.IO) { resolver.openOutputStream(uri, "wt") }?.use { container.backup.export(it) } ?: error("No stream")
             }.isSuccess
-            _messages.emit(if (saved) R.string.backup_saved else R.string.backup_failed)
+            toast(if (saved) R.string.backup_saved else R.string.backup_failed)
         }
     }
 
     fun restore(uri: Uri) {
-        viewModelScope.launch {
+        container.appScope.launch {
             val result = runCatching {
                 withContext(Dispatchers.IO) { resolver.openInputStream(uri) }?.use { container.backup.restore(it) } ?: error("No stream")
             }
-            if (result.isSuccess) {
-                settings.reload()
-                container.lyricsSettings.reload()
-                container.searchHistory.reload()
-                container.downloads.setWifiOnly(settings.prefs.value.downloadWifiOnly)
-            }
-            _messages.emit(
+            settings.reload()
+            container.lyricsSettings.reload()
+            container.searchHistory.reload()
+            if (result.isSuccess) container.downloads.setWifiOnly(settings.prefs.value.downloadWifiOnly)
+            toast(
                 when (result.exceptionOrNull()) {
                     null -> R.string.backup_restored
                     is InvalidBackupException -> R.string.backup_invalid
@@ -154,6 +146,11 @@ class SettingsViewModel(app: Application) : AndroidViewModel(app) {
                 }
             )
         }
+    }
+
+    private fun toast(message: Int) {
+        val app = getApplication<Application>()
+        Toast.makeText(app, app.getString(message), Toast.LENGTH_SHORT).show()
     }
 
     private val resolver get() = getApplication<Application>().contentResolver
@@ -186,9 +183,6 @@ fun SettingsScreen(onBack: () -> Unit, onOpenEqualizer: () -> Unit, vm: Settings
     }
     val pickBackup = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         confirmRestore = uri
-    }
-    LaunchedEffect(vm) {
-        vm.messages.collect { Toast.makeText(context, context.getString(it), Toast.LENGTH_SHORT).show() }
     }
 
     LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(bottom = 24.dp + LocalMiniPlayerInset.current)) {

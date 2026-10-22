@@ -578,9 +578,23 @@ private fun ArtworkPager(url: String?, shape: Shape, artworkModifier: Modifier, 
     val sideAlpha = if (landscape) 0.45f else 0.6f
     val sideShrink = if (landscape) 0.05f else 0.1f
 
-    LaunchedEffect(position, order.size) {
-        if (pager.currentPage == position || pager.isScrollInProgress) return@LaunchedEffect
-        if (abs(pager.currentPage - position) > 1) pager.scrollToPage(position) else pager.animateScrollToPage(position, animationSpec = spring)
+    val target by rememberUpdatedState(position)
+    var requested by remember { mutableStateOf<Int?>(null) }
+    LaunchedEffect(requested) {
+        if (requested != null) {
+            delay(SkipTimeoutMs)
+            requested = null
+        }
+    }
+    LaunchedEffect(pager) {
+        snapshotFlow { Triple(target, pager.isScrollInProgress, requested) }.collect { (page, scrolling, pending) ->
+            if (pending != null) {
+                if (page == pending) requested = null
+                return@collect
+            }
+            if (scrolling || pager.currentPage == page) return@collect
+            if (abs(pager.currentPage - page) > 1) pager.scrollToPage(page) else pager.animateScrollToPage(page, animationSpec = spring)
+        }
     }
     val currentOrder by rememberUpdatedState(order)
     LaunchedEffect(pager) {
@@ -588,6 +602,7 @@ private fun ArtworkPager(url: String?, shape: Shape, artworkModifier: Modifier, 
             val index = currentOrder.getOrNull(page) ?: return@collect
             if (index != player.state.value.currentIndex) {
                 haptics.performHapticFeedback(HapticFeedbackType.GestureEnd)
+                requested = page
                 player.skipTo(index)
             }
         }
@@ -823,6 +838,7 @@ private fun QueueSheet(state: PlayerUiState, onDismiss: () -> Unit) {
 private val PagerBleed = 48.dp
 private const val PagerSettleMs = 500L
 private const val MaxFlingPages = 5
+private const val SkipTimeoutMs = 1_500L
 private val PagerSpacing = 24.dp
 private val LandscapeBleed = 88.dp
 private val LandscapeSpacing = 16.dp

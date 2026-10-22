@@ -10,31 +10,30 @@ import kotlinx.coroutines.flow.asStateFlow
 
 class Connectivity(context: Context) {
     private val manager = context.getSystemService(ConnectivityManager::class.java)
-    private val networks = mutableMapOf<Network, Boolean>()
+    private var current: Network? = null
 
     private val _online = MutableStateFlow(currentlyOnline())
     val online: StateFlow<Boolean> = _online.asStateFlow()
 
     init {
         manager.registerDefaultNetworkCallback(object : ConnectivityManager.NetworkCallback() {
+            override fun onAvailable(network: Network) {
+                synchronized(this@Connectivity) { current = network }
+                _online.value = manager.getNetworkCapabilities(network)?.hasInternet() == true
+            }
+
             override fun onCapabilitiesChanged(network: Network, capabilities: NetworkCapabilities) {
-                update(network, capabilities.hasInternet())
+                synchronized(this@Connectivity) { current = network }
+                _online.value = capabilities.hasInternet()
             }
 
             override fun onLost(network: Network) {
-                synchronized(networks) { networks.remove(network) }
-                publish()
+                val wasCurrent = synchronized(this@Connectivity) {
+                    (current == network).also { if (it) current = null }
+                }
+                if (wasCurrent) _online.value = false
             }
         })
-    }
-
-    private fun update(network: Network, internet: Boolean) {
-        synchronized(networks) { networks[network] = internet }
-        publish()
-    }
-
-    private fun publish() {
-        _online.value = synchronized(networks) { networks.values.any { it } }
     }
 
     private fun currentlyOnline(): Boolean =

@@ -1,5 +1,6 @@
 package me.luzility.muuusic.ui.player
 
+import androidx.compose.runtime.key
 import androidx.compose.foundation.combinedClickable
 import me.luzility.muuusic.data.settings.Hint
 import me.luzility.muuusic.ui.components.HintAnchor
@@ -138,7 +139,9 @@ fun LyricsPanel(state: PlayerUiState, lyrics: UiState<Lyrics?>, modifier: Modifi
                 val data = lyrics.data!!
                 val synced = data.synced
                 if (synced != null) {
-                    SyncedLyrics(state, synced, prefs, offset, translations, onShare = { lines, index -> sharing = lines to index })
+                    key(state.current?.id) {
+                        SyncedLyrics(state, synced, prefs, offset, translations, onShare = { lines, index -> sharing = lines to index })
+                    }
                 } else {
                     PlainLyrics(data.plain.orEmpty(), prefs, translations, onShare = { lines -> sharing = lines to 0 })
                 }

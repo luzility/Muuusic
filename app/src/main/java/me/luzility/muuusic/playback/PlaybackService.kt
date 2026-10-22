@@ -141,7 +141,7 @@ class PlaybackService : MediaLibraryService() {
             while (true) {
                 crossfader.tick(container.settings.prefs.value.fadeSeconds, player, gain)
                 skipSegment()
-                if (player.playWhenReady) delay(FADE_TICK_MS) else playbackWanted.first { it }
+                if (player.isPlaying) delay(FADE_TICK_MS) else playbackWanted.first { it }
             }
         }
         queueStore = QueueStore(File(filesDir, "queue.json"))
@@ -187,8 +187,9 @@ class PlaybackService : MediaLibraryService() {
     }
 
     private inner class SessionCallback : MediaLibrarySession.Callback {
-        override fun onConnect(session: MediaSession, controller: MediaSession.ControllerInfo): MediaSession.ConnectionResult =
-            MediaSession.ConnectionResult.AcceptedResultBuilder(session)
+        override fun onConnect(session: MediaSession, controller: MediaSession.ControllerInfo): MediaSession.ConnectionResult {
+            if (controller.packageName != packageName) return MediaSession.ConnectionResult.AcceptedResultBuilder(session).build()
+            return MediaSession.ConnectionResult.AcceptedResultBuilder(session)
                 .setAvailableSessionCommands(
                     MediaSession.ConnectionResult.DEFAULT_SESSION_AND_LIBRARY_COMMANDS.buildUpon()
                         .add(SessionCommand(SleepTimer.COMMAND, Bundle.EMPTY))
@@ -197,6 +198,7 @@ class PlaybackService : MediaLibraryService() {
                         .build()
                 )
                 .build()
+        }
 
         override fun onCustomCommand(
             session: MediaSession,
@@ -207,19 +209,20 @@ class PlaybackService : MediaLibraryService() {
             when (customCommand.customAction) {
                 SleepTimer.COMMAND -> setSleepTimer(args.getInt(SleepTimer.ARG_MINUTES))
                 QueueCommands.ENQUEUE -> {
-                    val json = args.getString(QueueCommands.ARG_SONG)
-                        ?: return Futures.immediateFuture(SessionResult(SessionError.ERROR_BAD_VALUE))
-                    enqueueShuffled(SongJson.fromJson(JSONObject(json)), args.getBoolean(QueueCommands.ARG_NEXT))
+                    val song = songFrom(args) ?: return Futures.immediateFuture(SessionResult(SessionError.ERROR_BAD_VALUE))
+                    enqueueShuffled(song, args.getBoolean(QueueCommands.ARG_NEXT))
                 }
                 QueueCommands.START_RADIO -> {
-                    val json = args.getString(QueueCommands.ARG_SONG)
-                        ?: return Futures.immediateFuture(SessionResult(SessionError.ERROR_BAD_VALUE))
-                    fetchRadio(SongJson.fromJson(JSONObject(json)).id)
+                    val song = songFrom(args) ?: return Futures.immediateFuture(SessionResult(SessionError.ERROR_BAD_VALUE))
+                    fetchRadio(song.id)
                 }
                 else -> return Futures.immediateFuture(SessionResult(SessionError.ERROR_NOT_SUPPORTED))
             }
             return Futures.immediateFuture(SessionResult(SessionResult.RESULT_SUCCESS))
         }
+
+        private fun songFrom(args: Bundle): Song? =
+            args.getString(QueueCommands.ARG_SONG)?.let { json -> runCatching { SongJson.fromJson(JSONObject(json)) }.getOrNull() }
 
         override fun onAddMediaItems(
             mediaSession: MediaSession,
@@ -339,7 +342,7 @@ class PlaybackService : MediaLibraryService() {
         }
 
         override fun onEvents(player: Player, events: Player.Events) {
-            playbackWanted.value = this@PlaybackService.player.playWhenReady
+            playbackWanted.value = this@PlaybackService.player.isPlaying
             if (events.contains(Player.EVENT_MEDIA_ITEM_TRANSITION) || !this@PlaybackService.player.playWhenReady) waitingForNetwork = false
             if (events.containsAny(
                     Player.EVENT_MEDIA_ITEM_TRANSITION,

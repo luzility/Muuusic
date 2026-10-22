@@ -66,7 +66,7 @@ class Crossfader(private val startNext: () -> Outgoing?) {
         val player = tail.player
         val length = (player.duration - tail.fadeStartMs).coerceAtLeast(1)
         val progress = ((player.currentPosition - tail.fadeStartMs).toFloat() / length).coerceIn(0f, 1f)
-        if (progress >= 0.99f || player.playbackState == Player.STATE_ENDED) {
+        if (progress >= 0.99f || player.playbackState == Player.STATE_ENDED || player.playbackState == Player.STATE_IDLE || player.playerError != null) {
             release()
             return
         }

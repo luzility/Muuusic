@@ -1,5 +1,8 @@
 package me.luzility.muuusic
 
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.CoroutineScope
 import androidx.media3.exoplayer.offline.Download
 import kotlinx.coroutines.flow.MutableStateFlow
 import me.luzility.muuusic.playback.audio.EqualizerLayout
@@ -71,6 +74,8 @@ class AppContainer(context: Context) {
         .connectTimeout(15, TimeUnit.SECONDS)
         .readTimeout(30, TimeUnit.SECONDS)
         .build()
+
+    val appScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
 
     val settings = AppSettings(appContext)
 

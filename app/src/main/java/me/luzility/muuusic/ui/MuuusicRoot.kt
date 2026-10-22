@@ -1,5 +1,6 @@
 package me.luzility.muuusic.ui
 
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.runtime.rememberUpdatedState
 import kotlinx.coroutines.flow.drop
 import androidx.compose.runtime.snapshotFlow
@@ -169,6 +170,16 @@ fun MuuusicRoot(player: PlayerViewModel) {
                 )
             }
 
+            val haptics by rememberUpdatedState(LocalHaptics.current)
+            LaunchedEffect(sheetProgress) {
+                snapshotFlow { sheetProgress.targetValue > 0.5f }.drop(1).collect { open ->
+                    haptics.perform(if (open) Haptic.Rise else Haptic.Fall)
+                }
+            }
+            TopBackHandler(enabled = sheetProgress.targetValue > 0.5f) {
+                scope.launch { sheetProgress.animateTo(0f, spring) }
+            }
+
             CompositionLocalProvider(LocalNavigator provides navigator) {
             Surface(color = MaterialTheme.colorScheme.surface) {
                 // Test tags double as resource ids so UI Automator (baseline profile journeys) can find them.
@@ -187,7 +198,10 @@ fun MuuusicRoot(player: PlayerViewModel) {
                         }
                     }
                     val floating = appPrefs.floatingNavBar
+                    val playerOpen = sheetProgress.targetValue > 0.5f
+                    val behindPlayer = if (playerOpen) Modifier.clearAndSetSemantics {} else Modifier
                     Scaffold(
+                        modifier = behindPlayer,
                         bottomBar = {
                             if (!floating) {
                                 Column(Modifier.onSizeChanged { navBarHeight = with(density) { it.height.toDp() } }) {
@@ -299,6 +313,7 @@ fun MuuusicRoot(player: PlayerViewModel) {
                         Column(
                             Modifier
                                 .align(Alignment.BottomCenter)
+                                .then(behindPlayer)
                                 .onSizeChanged { navBarHeight = with(density) { it.height.toDp() } }
                                 .navigationBarsPadding()
                                 .padding(bottom = 12.dp),
@@ -323,15 +338,6 @@ fun MuuusicRoot(player: PlayerViewModel) {
                     }
                 }
             }
-            }
-            val haptics by rememberUpdatedState(LocalHaptics.current)
-            LaunchedEffect(sheetProgress) {
-                snapshotFlow { sheetProgress.targetValue > 0.5f }.drop(1).collect { open ->
-                    haptics.perform(if (open) Haptic.Rise else Haptic.Fall)
-                }
-            }
-            TopBackHandler(enabled = sheetProgress.targetValue > 0.5f) {
-                scope.launch { sheetProgress.animateTo(0f, spring) }
             }
 
             val settings = LocalContext.current.container.settings
