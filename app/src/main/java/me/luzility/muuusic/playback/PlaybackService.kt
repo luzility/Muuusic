@@ -1,5 +1,6 @@
 package me.luzility.muuusic.playback
 
+import me.luzility.muuusic.data.discord.ListeningActivity
 import me.luzility.muuusic.R
 import me.luzility.muuusic.data.download.DownloadStatus
 import android.widget.Toast
@@ -122,6 +123,7 @@ class PlaybackService : MediaLibraryService() {
                 effects.apply(prefs)
                 player.playbackParameters = playbackParametersOf(prefs)
                 Karaoke.setStrength(prefs.karaokeStrength)
+                updateDiscord()
                 if (!prefs.karaoke) Karaoke.set(false)
                 normalize(player.currentMediaItem?.mediaId)
                 val current = player.currentMediaItem?.mediaId
@@ -173,6 +175,7 @@ class PlaybackService : MediaLibraryService() {
     }
 
     override fun onDestroy() {
+        container.discord.update(null)
         // Last chance to save the queue; the file is tiny so write inline.
         saveJob?.cancel()
         if (restoreDone) snapshot()?.let(queueStore::save) ?: queueStore.clear()
@@ -357,6 +360,15 @@ class PlaybackService : MediaLibraryService() {
                 )
             ) {
                 updateWidget()
+            }
+            if (events.containsAny(
+                    Player.EVENT_IS_PLAYING_CHANGED,
+                    Player.EVENT_MEDIA_ITEM_TRANSITION,
+                    Player.EVENT_POSITION_DISCONTINUITY,
+                    Player.EVENT_PLAYBACK_PARAMETERS_CHANGED,
+                )
+            ) {
+                updateDiscord()
             }
             if (restoring) return
             if (events.containsAny(
@@ -556,6 +568,22 @@ class PlaybackService : MediaLibraryService() {
             }
             if (next != null && container.loudness.get(next) == null) lookupLoudness(next)
         }
+    }
+
+    private fun updateDiscord() {
+        val discord = container.discord
+        val item = player.currentMediaItem
+        if (!container.settings.prefs.value.discordPresence || item == null || !player.isPlaying) {
+            discord.update(null)
+            return
+        }
+        val song = item.toSong()
+        val speed = player.playbackParameters.speed.coerceAtLeast(0.1f)
+        val start = (System.currentTimeMillis() - (player.currentPosition / speed).toLong()) / 1000 * 1000
+        val duration = player.duration.takeIf { it != C.TIME_UNSET && it > 0 }
+        discord.update(
+            ListeningActivity(song.id, song.title, song.artist, song.thumbnailUrl, start, duration?.let { start + (it / speed).toLong() }),
+        )
     }
 
     private fun updateWidget() {

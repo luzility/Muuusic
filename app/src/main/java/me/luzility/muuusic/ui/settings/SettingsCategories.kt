@@ -70,6 +70,7 @@ val SettingsIndex = listOf(
     SettingEntry(R.string.settings_karaoke, SettingsCategory.Lab),
     SettingEntry(R.string.settings_karaoke_strength, SettingsCategory.Lab),
     SettingEntry(R.string.settings_song_recognition, SettingsCategory.Lab),
+    SettingEntry(R.string.settings_discord, SettingsCategory.Lab),
     SettingEntry(R.string.settings_check_updates, SettingsCategory.Updates),
     SettingEntry(R.string.settings_update_channel, SettingsCategory.Updates),
     SettingEntry(R.string.settings_tour, SettingsCategory.About),

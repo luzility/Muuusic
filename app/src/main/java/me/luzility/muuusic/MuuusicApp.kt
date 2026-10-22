@@ -1,5 +1,6 @@
 package me.luzility.muuusic
 
+import me.luzility.muuusic.data.discord.DiscordPresence
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.CoroutineScope
@@ -95,6 +96,7 @@ class AppContainer(context: Context) {
 
     val loudness by lazy { LoudnessStore(appContext) }
     val sponsorBlock by lazy { SponsorBlock(okHttp) }
+    val discord by lazy { DiscordPresence(appContext, okHttp) }
     val updates by lazy { Updates(appContext, okHttp) }
     val hints by lazy { Hints(appContext) }
 

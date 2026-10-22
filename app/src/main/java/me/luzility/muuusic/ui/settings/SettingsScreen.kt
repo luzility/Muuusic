@@ -1,5 +1,6 @@
 package me.luzility.muuusic.ui.settings
 
+import androidx.compose.runtime.LaunchedEffect
 import me.luzility.muuusic.data.update.Versions
 import java.time.format.FormatStyle
 import java.time.format.DateTimeFormatter
@@ -565,6 +566,10 @@ fun SettingsScreen(
                     },
                 )
             }
+            item {
+                Spacer(Modifier.height(16.dp))
+                DiscordSettings(prefs.discordPresence, onEnabledChange = { on -> vm.update { it.copy(discordPresence = on) } })
+            }
             }
             SettingsCategory.Updates -> {
             item {
@@ -744,6 +749,48 @@ private val CategoryShapes = listOf(
     MaterialShapes.Cookie7Sided,
     MaterialShapes.SoftBurst,
 )
+
+@Composable
+private fun DiscordSettings(enabled: Boolean, onEnabledChange: (Boolean) -> Unit) {
+    val context = LocalContext.current
+    val discord = context.container.discord
+    val signedIn by discord.signedIn.collectAsStateWithLifecycle()
+    val user by discord.user.collectAsStateWithLifecycle()
+    LaunchedEffect(discord) {
+        discord.loginResults.collect { ok ->
+            Toast.makeText(context, if (ok) R.string.discord_login_done else R.string.discord_login_failed, Toast.LENGTH_SHORT).show()
+        }
+    }
+    SettingsGroup(
+        {
+            if (signedIn) {
+                ActionSetting(
+                    title = user?.let { stringResource(R.string.settings_discord_signed_in, it) } ?: stringResource(R.string.settings_discord_signed_in_unknown),
+                    summary = stringResource(R.string.settings_discord_logout),
+                    onClick = discord::logout,
+                )
+            } else {
+                ActionSetting(
+                    title = stringResource(R.string.settings_discord_login),
+                    summary = stringResource(R.string.settings_discord_login_summary),
+                    onClick = {
+                        runCatching {
+                            context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(discord.loginUrl())).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+                        }
+                    },
+                )
+            }
+        },
+        {
+            SwitchSetting(
+                title = stringResource(R.string.settings_discord),
+                summary = stringResource(R.string.settings_discord_summary),
+                checked = enabled,
+                onCheckedChange = onEnabledChange,
+            )
+        },
+    )
+}
 
 @Composable
 private fun AboutCard() {

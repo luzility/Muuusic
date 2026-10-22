@@ -328,9 +328,18 @@
     <string name="settings_storage_summary">Önbellek, indirmeler, geçmiş</string>
     <string name="settings_backup_summary">Kitaplığını yedekle ve geri yükle</string>
     <string name="settings_language_summary">Uygulama dili, çeviriler</string>
-    <string name="settings_lab_summary">Karaoke, şarkı tanıma</string>
+    <string name="settings_lab_summary">Karaoke, şarkı tanıma, Discord</string>
     <string name="settings_updates_summary">Güncelleme kontrolü, sürüm kanalı</string>
     <string name="settings_about_summary">Sürüm, kaynak kod, katkıda bulunanlar</string>
     <string name="about_tagline">Android için reklamsız bir YouTube Music istemcisi</string>
     <string name="about_released">Yayın tarihi: %1$s</string>
+    <string name="settings_discord">Discord\'da göster</string>
+    <string name="settings_discord_summary">Dinlediğin şarkıyı Discord profilinde gösterir</string>
+    <string name="settings_discord_login">Discord ile giriş yap</string>
+    <string name="settings_discord_login_summary">Discord\'un resmi girişini kullanır, sadece etkinliğini gösterme izni ister</string>
+    <string name="settings_discord_signed_in">%1$s olarak giriş yapıldı</string>
+    <string name="settings_discord_signed_in_unknown">Discord\'a giriş yapıldı</string>
+    <string name="settings_discord_logout">Çıkış yapmak için dokun</string>
+    <string name="discord_login_done">Discord\'a giriş yapıldı</string>
+    <string name="discord_login_failed">Discord\'a giriş yapılamadı</string>
 </resources>

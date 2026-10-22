@@ -329,9 +329,18 @@
     <string name="settings_storage_summary">Cache, downloads, history</string>
     <string name="settings_backup_summary">Back up and restore your library</string>
     <string name="settings_language_summary">App language, translations</string>
-    <string name="settings_lab_summary">Karaoke, song recognition</string>
+    <string name="settings_lab_summary">Karaoke, song recognition, Discord</string>
     <string name="settings_updates_summary">Check for updates, release channel</string>
     <string name="settings_about_summary">Version, source code, credits</string>
     <string name="about_tagline">An ad-free YouTube Music client for Android</string>
     <string name="about_released">Released %1$s</string>
+    <string name="settings_discord">Show on Discord</string>
+    <string name="settings_discord_summary">Shows the song you\'re listening to on your Discord profile</string>
+    <string name="settings_discord_login">Sign in with Discord</string>
+    <string name="settings_discord_login_summary">Uses Discord\'s official sign-in and only asks to show your activity</string>
+    <string name="settings_discord_signed_in">Signed in as %1$s</string>
+    <string name="settings_discord_signed_in_unknown">Signed in to Discord</string>
+    <string name="settings_discord_logout">Tap to sign out</string>
+    <string name="discord_login_done">Signed in to Discord</string>
+    <string name="discord_login_failed">Couldn\'t sign in to Discord</string>
 </resources>

@@ -27,6 +27,7 @@ data class AppPrefs(
     val sponsorBlock: Boolean = true,
     val haptics: Boolean = true,
     val floatingNavBar: Boolean = true,
+    val discordPresence: Boolean = true,
     val onboarded: Boolean = false,
     val playbackSpeed: Float = 1f,
     val pitchSemitones: Float = 0f,
@@ -69,6 +70,7 @@ class AppSettings(context: Context) {
             putBoolean(KEY_SPONSOR_BLOCK, next.sponsorBlock)
             putBoolean(KEY_HAPTICS, next.haptics)
             putBoolean(KEY_FLOATING_NAV, next.floatingNavBar)
+            putBoolean(KEY_DISCORD, next.discordPresence)
             putBoolean(KEY_ONBOARDED, next.onboarded)
             putFloat(KEY_SPEED, next.playbackSpeed)
             putFloat(KEY_PITCH, next.pitchSemitones)
@@ -101,6 +103,7 @@ class AppSettings(context: Context) {
         sponsorBlock = store.getBoolean(KEY_SPONSOR_BLOCK, true),
         haptics = store.getBoolean(KEY_HAPTICS, true),
         floatingNavBar = store.getBoolean(KEY_FLOATING_NAV, true),
+        discordPresence = store.getBoolean(KEY_DISCORD, true),
         onboarded = store.getBoolean(KEY_ONBOARDED, false),
         playbackSpeed = store.getFloat(KEY_SPEED, 1f),
         pitchSemitones = store.getFloat(KEY_PITCH, 0f),
@@ -134,6 +137,7 @@ class AppSettings(context: Context) {
         private const val KEY_SPONSOR_BLOCK = "sponsor_block"
         private const val KEY_HAPTICS = "haptics"
         private const val KEY_FLOATING_NAV = "floating_nav_bar"
+        private const val KEY_DISCORD = "discord_presence"
         private const val KEY_ONBOARDED = "onboarded"
         private const val KEY_SPEED = "playback_speed"
         private const val KEY_PITCH = "pitch_semitones"
