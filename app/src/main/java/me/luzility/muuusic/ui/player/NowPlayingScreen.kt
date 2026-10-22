@@ -1,5 +1,8 @@
 package me.luzility.muuusic.ui.player
 
+import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.CancellationException
 import me.luzility.muuusic.ui.components.Haptic
 import me.luzility.muuusic.ui.components.LocalHaptics
 import androidx.compose.foundation.pager.PagerSnapDistance
@@ -579,7 +582,11 @@ private fun ArtworkPager(url: String?, shape: Shape, artworkModifier: Modifier, 
     val sideShrink = if (landscape) 0.05f else 0.1f
 
     val target by rememberUpdatedState(position)
+    val currentOrder by rememberUpdatedState(order)
     var requested by remember { mutableStateOf<Int?>(null) }
+    var userMoved by remember { mutableStateOf(false) }
+    val dragging by pager.interactionSource.collectIsDraggedAsState()
+    LaunchedEffect(dragging) { if (dragging) userMoved = true }
     LaunchedEffect(requested) {
         if (requested != null) {
             delay(SkipTimeoutMs)
@@ -587,23 +594,31 @@ private fun ArtworkPager(url: String?, shape: Shape, artworkModifier: Modifier, 
         }
     }
     LaunchedEffect(pager) {
-        snapshotFlow { Triple(target, pager.isScrollInProgress, requested) }.collect { (page, scrolling, pending) ->
-            if (pending != null) {
-                if (page == pending) requested = null
+        snapshotFlow { PagerSync(target, pager.isScrollInProgress, pager.settledPage, requested, userMoved) }.collect { sync ->
+            if (sync.scrolling) return@collect
+            if (sync.userMoved) {
+                userMoved = false
+                val index = currentOrder.getOrNull(sync.settled) ?: return@collect
+                if (index != player.state.value.currentIndex) {
+                    haptics.performHapticFeedback(HapticFeedbackType.GestureEnd)
+                    requested = sync.settled
+                    player.skipTo(index)
+                }
                 return@collect
             }
-            if (scrolling || pager.currentPage == page) return@collect
-            if (abs(pager.currentPage - page) > 1) pager.scrollToPage(page) else pager.animateScrollToPage(page, animationSpec = spring)
-        }
-    }
-    val currentOrder by rememberUpdatedState(order)
-    LaunchedEffect(pager) {
-        snapshotFlow { pager.settledPage }.collect { page ->
-            val index = currentOrder.getOrNull(page) ?: return@collect
-            if (index != player.state.value.currentIndex) {
-                haptics.performHapticFeedback(HapticFeedbackType.GestureEnd)
-                requested = page
-                player.skipTo(index)
+            if (sync.pending != null) {
+                if (sync.target == sync.pending) requested = null
+                return@collect
+            }
+            if (pager.currentPage == sync.target) return@collect
+            try {
+                if (abs(pager.currentPage - sync.target) > 1) {
+                    pager.scrollToPage(sync.target)
+                } else {
+                    pager.animateScrollToPage(sync.target, animationSpec = spring)
+                }
+            } catch (interrupted: CancellationException) {
+                currentCoroutineContext().ensureActive()
             }
         }
     }
@@ -647,7 +662,6 @@ private fun ArtworkPager(url: String?, shape: Shape, artworkModifier: Modifier, 
         contentPadding = PaddingValues(horizontal = bleed),
         pageSpacing = spacing,
         flingBehavior = PagerDefaults.flingBehavior(pager, pagerSnapDistance = PagerSnapDistance.atMost(MaxFlingPages)),
-        key = { page -> order.getOrNull(page)?.let { state.queue[it].id + "@" + it } ?: page },
         beyondViewportPageCount = 1,
     ) { page ->
         val song = state.queue.getOrNull(order[page])
@@ -842,3 +856,5 @@ private const val SkipTimeoutMs = 1_500L
 private val PagerSpacing = 24.dp
 private val LandscapeBleed = 88.dp
 private val LandscapeSpacing = 16.dp
+
+private data class PagerSync(val target: Int, val scrolling: Boolean, val settled: Int, val pending: Int?, val userMoved: Boolean)
