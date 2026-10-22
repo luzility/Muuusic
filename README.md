@@ -6,8 +6,11 @@
 
 - No ads, no account needed
 - Background playback
-- Synced lyrics from LRCLIB
+- Synced lyrics from LRCLIB, with a full-screen view and an optional translation line
+- Share lyrics as an image card
+- Karaoke mode that turns down the vocals (experimental)
 - Likes, history and playlists, stored on the device
+- Back up and restore your library and settings
 - Import YouTube / YouTube Music playlists from a link
 - YouTube Music home feed with moods, and full artist pages
 - Voice search and song recognition (experimental)
@@ -22,7 +25,7 @@
 
 ## Download
 
-Get the APK from [Releases](https://github.com/luzility/Muuusic/releases). Betas are marked as pre-releases.
+Get the APK from [Releases](https://github.com/luzility/Muuusic/releases). Betas are marked as pre-releases. Needs Android 8.0 or newer.
 
 ## Translations
 
