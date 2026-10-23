@@ -566,8 +566,9 @@ fun SettingsScreen(
                     },
                 )
             }
+            }
+            SettingsCategory.Integrations -> {
             item {
-                Spacer(Modifier.height(16.dp))
                 DiscordSettings(prefs.discordPresence, onEnabledChange = { on -> vm.update { it.copy(discordPresence = on) } })
             }
             }

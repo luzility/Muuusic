@@ -4,6 +4,7 @@ import android.os.Build
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Backup
 import androidx.compose.material.icons.rounded.GraphicEq
+import androidx.compose.material.icons.rounded.Hub
 import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material.icons.rounded.Language
 import androidx.compose.material.icons.rounded.Lyrics
@@ -26,6 +27,7 @@ enum class SettingsCategory(val title: Int, val summary: Int, val icon: ImageVec
     Lab(R.string.settings_lab, R.string.settings_lab_summary, Icons.Rounded.Science),
     Updates(R.string.settings_updates, R.string.settings_updates_summary, Icons.Rounded.SystemUpdate),
     About(R.string.settings_about, R.string.settings_about_summary, Icons.Rounded.Info),
+    Integrations(R.string.settings_integrations, R.string.settings_integrations_summary, Icons.Rounded.Hub),
     ;
 
     val available: Boolean get() = this != Language || Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
@@ -34,7 +36,8 @@ enum class SettingsCategory(val title: Int, val summary: Int, val icon: ImageVec
         val sections = listOf(
             listOf(Appearance, Playback, Sound, Lyrics),
             listOf(Storage, Backup, Language),
-            listOf(Lab, Updates, About),
+            listOf(Integrations, Lab),
+            listOf(Updates, About),
         )
     }
 }
@@ -70,7 +73,7 @@ val SettingsIndex = listOf(
     SettingEntry(R.string.settings_karaoke, SettingsCategory.Lab),
     SettingEntry(R.string.settings_karaoke_strength, SettingsCategory.Lab),
     SettingEntry(R.string.settings_song_recognition, SettingsCategory.Lab),
-    SettingEntry(R.string.settings_discord, SettingsCategory.Lab),
+    SettingEntry(R.string.settings_discord, SettingsCategory.Integrations),
     SettingEntry(R.string.settings_check_updates, SettingsCategory.Updates),
     SettingEntry(R.string.settings_update_channel, SettingsCategory.Updates),
     SettingEntry(R.string.settings_tour, SettingsCategory.About),

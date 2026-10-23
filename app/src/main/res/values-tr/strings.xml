@@ -328,7 +328,9 @@
     <string name="settings_storage_summary">Önbellek, indirmeler, geçmiş</string>
     <string name="settings_backup_summary">Kitaplığını yedekle ve geri yükle</string>
     <string name="settings_language_summary">Uygulama dili, çeviriler</string>
-    <string name="settings_lab_summary">Karaoke, şarkı tanıma, Discord</string>
+    <string name="settings_lab_summary">Karaoke, şarkı tanıma</string>
+    <string name="settings_integrations">Entegrasyonlar</string>
+    <string name="settings_integrations_summary">Discord</string>
     <string name="settings_updates_summary">Güncelleme kontrolü, sürüm kanalı</string>
     <string name="settings_about_summary">Sürüm, kaynak kod, katkıda bulunanlar</string>
     <string name="about_tagline">Android için reklamsız bir YouTube Music istemcisi</string>
