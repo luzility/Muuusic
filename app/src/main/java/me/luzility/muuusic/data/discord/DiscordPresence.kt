@@ -138,6 +138,7 @@ class DiscordPresence(context: Context, private val client: OkHttpClient) {
             val entry = JSONObject()
                 .put("name", "Muuusic")
                 .put("type", LISTENING)
+                .put("status_display_type", STATUS_SHOWS_DETAILS)
                 .put("details", activity.title.take(128))
                 .put("state", activity.artist.ifBlank { "Muuusic" }.take(128))
                 .put("timestamps", JSONObject().put("start", activity.startMs).apply { activity.endMs?.let { put("end", it) } })
@@ -295,6 +296,7 @@ class DiscordPresence(context: Context, private val client: OkHttpClient) {
         const val INVALID_SESSION = 9
         const val HELLO = 10
         const val LISTENING = 2
+        const val STATUS_SHOWS_DETAILS = 2
         const val AUTH_FAILED = 4004
         val FATAL_CODES = setOf(4010, 4011, 4012, 4013, 4014)
         const val DEFAULT_HEARTBEAT_MS = 41_250L
