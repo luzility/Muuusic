@@ -10,6 +10,10 @@
     <string name="greeting_evening">Good evening</string>
     <string name="greeting_night">Good night</string>
     <string name="home_subtitle">What are we listening to?</string>
+    <string name="for_you">For you</string>
+    <string name="your_mixes">Your mixes</string>
+    <string name="favorite_artists">Artists you love</string>
+    <string name="mix_title">%1$s Mix</string>
     <string name="quick_picks">Quick picks</string>
     <string name="recently_played">Recently played</string>
     <string name="most_played">On repeat</string>

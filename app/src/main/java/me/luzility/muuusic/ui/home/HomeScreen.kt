@@ -82,9 +82,29 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.withTimeoutOrNull
+import me.luzility.muuusic.data.model.MusicCollection
 import java.time.LocalTime
 
 // Top 100 Global chart, used until there is listening history.
+data class Personal(
+    val forYou: BrowseSection? = null,
+    val mixes: BrowseSection? = null,
+    val artists: BrowseSection? = null,
+)
+
+private const val FAVORITE_SEEDS = 5
+private const val MIX_COUNT = 6
+private const val FOR_YOU_SIZE = 20
+private const val ARTIST_COUNT = 8
+private const val MIN_ARTISTS = 3
+private const val HISTORY_WEIGHT = 1
+private const val AVATAR_TIMEOUT_MS = 8_000L
+private val avatars = java.util.concurrent.ConcurrentHashMap<String, String>()
+
 private const val GLOBAL_CHART_URL = "https://music.youtube.com/playlist?list=PL4fGSI1pDJn6puJdseH2Rt9sMvt9E2M4i"
 
 class HomeViewModel(app: Application) : AndroidViewModel(app) {
@@ -107,7 +127,11 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
     private val _mood = MutableStateFlow<Mood?>(null)
     val mood = _mood.asStateFlow()
 
+    private val _personal = MutableStateFlow(Personal())
+    val personal = _personal.asStateFlow()
+
     private var loadJob: Job? = null
+    private var personalJob: Job? = null
 
     init {
         load()
@@ -120,6 +144,7 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
 
     // Falls back to quick picks from the last song's radio, or popular songs on first launch.
     fun load() {
+        if (_mood.value == null) loadPersonal()
         loadJob?.cancel()
         loadJob = viewModelScope.launch {
             _feed.value = UiState.Loading
@@ -135,6 +160,65 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
             }
         }
     }
+
+    private fun loadPersonal() {
+        personalJob?.cancel()
+        personalJob = viewModelScope.launch {
+            val history = library.history.first()
+            if (history.isEmpty()) return@launch
+            val favorites = library.mostPlayed.first().ifEmpty { history.take(FAVORITE_SEEDS) }
+            val app = getApplication<Application>()
+            val heard = history.map { it.id }.toSet()
+
+            val mixes = favorites.distinctBy { primaryArtist(it) }.take(MIX_COUNT).map { seed ->
+                BrowseItem.CollectionItem(
+                    MusicCollection(
+                        url = "https://www.youtube.com/watch?v=${seed.id}&list=RDAMVM${seed.id}",
+                        title = app.getString(R.string.mix_title, primaryArtist(seed)),
+                        subtitle = seed.title,
+                        thumbnailUrl = seed.thumbnailUrl,
+                        type = CollectionType.Playlist,
+                    ),
+                )
+            }
+            _personal.value = _personal.value.copy(
+                mixes = BrowseSection(app.getString(R.string.your_mixes), mixes).takeIf { mixes.isNotEmpty() },
+            )
+
+            launch {
+                val seed = favorites.take(FAVORITE_SEEDS).random()
+                val fresh = runCatching { youtube.radio(seed.id) }.getOrDefault(emptyList())
+                    .filter { it.id !in heard }
+                    .take(FOR_YOU_SIZE)
+                if (fresh.isNotEmpty()) {
+                    _personal.value = _personal.value.copy(
+                        forYou = BrowseSection(app.getString(R.string.for_you), fresh.map { BrowseItem.SongItem(it) }),
+                    )
+                }
+            }
+
+            val scores = HashMap<String, Int>()
+            val sample = HashMap<String, Song>()
+            favorites.forEachIndexed { rank, song -> scores.merge(primaryArtist(song), favorites.size - rank + HISTORY_WEIGHT, Int::plus) }
+            history.forEach { scores.merge(primaryArtist(it), HISTORY_WEIGHT, Int::plus) }
+            (favorites + history).forEach { song -> if (song.artistUrl != null) sample.putIfAbsent(primaryArtist(song), song) }
+            val top = scores.entries.filter { it.key in sample }.sortedByDescending { it.value }.take(ARTIST_COUNT).map { sample.getValue(it.key) }
+            if (top.size < MIN_ARTISTS) return@launch
+            val artists = top.map { song ->
+                async {
+                    val name = primaryArtist(song)
+                    val url = song.artistUrl!!
+                    val avatar = avatars[url] ?: withTimeoutOrNull(AVATAR_TIMEOUT_MS) {
+                        runCatching { youtube.artist(url).avatarUrl }.getOrNull()
+                    }?.also { avatars[url] = it }
+                    BrowseItem.ArtistItem(name, url, avatar ?: song.thumbnailUrl, "")
+                }
+            }.awaitAll()
+            _personal.value = _personal.value.copy(artists = BrowseSection(app.getString(R.string.favorite_artists), artists))
+        }
+    }
+
+    private fun primaryArtist(song: Song) = song.artist.substringBefore(", ").ifBlank { song.artist }
 
     private suspend fun fallbackQuickPicks(): List<Song> {
         val seed = library.lastPlayed()
@@ -155,6 +239,7 @@ fun HomeScreen(onOpenSettings: () -> Unit, vm: HomeViewModel = viewModel()) {
     val feed by vm.feed.collectAsStateWithLifecycle()
     val moods by vm.moods.collectAsStateWithLifecycle()
     val selectedMood by vm.mood.collectAsStateWithLifecycle()
+    val personal by vm.personal.collectAsStateWithLifecycle()
 
     LazyColumn(
         modifier = Modifier.fillMaxSize().testTag("home_list"),
@@ -187,7 +272,11 @@ fun HomeScreen(onOpenSettings: () -> Unit, vm: HomeViewModel = viewModel()) {
                 Box(Modifier.fillMaxWidth().height(320.dp), Alignment.Center) { LoadingIndicator() }
             }
             is UiState.Error -> item(key = "error") { ErrorState(onRetry = vm::load) }
-            is UiState.Success -> state.data.forEachIndexed { index, section ->
+            is UiState.Success -> {
+            state.data.forEachIndexed { index, section ->
+                if (index == 0 && selectedMood == null) {
+                    personal.forYou?.let { forYou -> item(key = "forYou") { BrowseSectionView(forYou) } }
+                }
                 item(key = "section-$index-${section.title}") { BrowseSectionView(section) }
                 // The user's own listening sits between YouTube Music's first shelves.
                 if (index == 0 && recent.isNotEmpty() && selectedMood == null) {
@@ -195,6 +284,12 @@ fun HomeScreen(onOpenSettings: () -> Unit, vm: HomeViewModel = viewModel()) {
                         SectionTitle(stringResource(R.string.recently_played))
                         RecentCarousel(recent) { i -> player.play(recent, i) }
                     }
+                }
+                if (index == 2 && selectedMood == null) {
+                    personal.mixes?.let { mixes -> item(key = "mixes") { BrowseSectionView(mixes) } }
+                }
+                if (index == 3 && selectedMood == null) {
+                    personal.artists?.let { artists -> item(key = "artists") { BrowseSectionView(artists) } }
                 }
                 if (index == 1 && mostPlayed.isNotEmpty() && selectedMood == null) {
                     item(key = "mostPlayed") {
@@ -209,6 +304,13 @@ fun HomeScreen(onOpenSettings: () -> Unit, vm: HomeViewModel = viewModel()) {
                         }
                     }
                 }
+            }
+            if (selectedMood == null && state.data.size <= 2) {
+                personal.mixes?.let { mixes -> item(key = "mixes") { BrowseSectionView(mixes) } }
+            }
+            if (selectedMood == null && state.data.size <= 3) {
+                personal.artists?.let { artists -> item(key = "artists") { BrowseSectionView(artists) } }
+            }
             }
         }
     }

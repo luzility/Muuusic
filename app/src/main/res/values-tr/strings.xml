@@ -9,6 +9,10 @@
     <string name="greeting_evening">İyi akşamlar</string>
     <string name="greeting_night">İyi geceler</string>
     <string name="home_subtitle">Bugün ne dinliyoruz?</string>
+    <string name="for_you">Senin için</string>
+    <string name="your_mixes">Karışımların</string>
+    <string name="favorite_artists">Sevdiğin sanatçılar</string>
+    <string name="mix_title">%1$s Mix</string>
     <string name="quick_picks">Hızlı seçimler</string>
     <string name="recently_played">Son çalınanlar</string>
     <string name="most_played">Tekrar tekrar</string>
