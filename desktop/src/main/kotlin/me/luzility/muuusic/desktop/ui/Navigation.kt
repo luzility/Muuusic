@@ -9,6 +9,8 @@ import me.luzility.muuusic.data.model.MusicCollection
 import me.luzility.muuusic.desktop.DesktopServices
 import me.luzility.muuusic.desktop.playback.DesktopPlayer
 
+enum class Panel { Queue, Lyrics }
+
 sealed interface Route {
     data object Home : Route
     data object Search : Route
@@ -21,7 +23,11 @@ sealed interface Route {
 
 class Navigator {
     val stack = mutableStateListOf<Route>(Route.Home)
-    var queueOpen by mutableStateOf(false)
+    var panel by mutableStateOf<Panel?>(null)
+
+    fun togglePanel(target: Panel) {
+        panel = if (panel == target) null else target
+    }
 
     val current: Route get() = stack.last()
     val tab: Route get() = stack.first()

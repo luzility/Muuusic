@@ -6,6 +6,9 @@ import androidx.compose.foundation.hoverable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.material3.ButtonGroupDefaults
+import androidx.compose.material3.ToggleButton
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -38,10 +41,36 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import me.luzility.muuusic.data.model.Song
 
-val QueuePanelWidth = 360.dp
+val SidePanelWidth = 400.dp
 
 @Composable
-fun QueuePanel(onClose: () -> Unit) {
+fun SidePanel(panel: Panel, onSelect: (Panel) -> Unit, onClose: () -> Unit) {
+    Surface(color = MaterialTheme.colorScheme.surfaceContainerLow, modifier = Modifier.width(SidePanelWidth).fillMaxHeight()) {
+        Column {
+            Row(Modifier.fillMaxWidth().padding(start = 16.dp, end = 8.dp, top = 12.dp, bottom = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+                Row(Modifier.weight(1f), horizontalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween)) {
+                    Panel.entries.forEachIndexed { index, entry ->
+                        ToggleButton(
+                            checked = panel == entry,
+                            onCheckedChange = { onSelect(entry) },
+                            shapes = if (index == 0) ButtonGroupDefaults.connectedLeadingButtonShapes() else ButtonGroupDefaults.connectedTrailingButtonShapes(),
+                        ) {
+                            Text(str(if (entry == Panel.Queue) "queue" else "lyrics"))
+                        }
+                    }
+                }
+                IconButton(onClick = onClose) { Icon(Icons.Rounded.Close, str("close")) }
+            }
+            when (panel) {
+                Panel.Queue -> QueueList()
+                Panel.Lyrics -> LyricsPanel()
+            }
+        }
+    }
+}
+
+@Composable
+private fun QueueList() {
     val player = LocalPlayer.current
     val state by player.state.collectAsState()
     val order = state.playOrder.filter { it in state.queue.indices }
@@ -49,12 +78,6 @@ fun QueuePanel(onClose: () -> Unit) {
     val list = rememberLazyListState()
     LaunchedEffect(state.current?.id) { if (order.isNotEmpty()) list.animateScrollToItem(position) }
 
-    Surface(color = MaterialTheme.colorScheme.surfaceContainerLow, modifier = Modifier.width(QueuePanelWidth).fillMaxHeight()) {
-        Column {
-            Row(Modifier.fillMaxWidth().padding(start = 20.dp, end = 8.dp, top = 16.dp, bottom = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-                Text(str("queue"), style = MaterialTheme.typography.titleLargeEmphasized, modifier = Modifier.weight(1f))
-                IconButton(onClick = onClose) { Icon(Icons.Rounded.Close, str("close")) }
-            }
             LazyColumn(state = list, contentPadding = PaddingValues(start = 8.dp, end = 8.dp, bottom = 16.dp)) {
                 items(order, key = { "${it}_${state.queue[it].id}" }) { index ->
                     QueueRow(
@@ -66,8 +89,6 @@ fun QueuePanel(onClose: () -> Unit) {
                     )
                 }
             }
-        }
-    }
 }
 
 @Composable

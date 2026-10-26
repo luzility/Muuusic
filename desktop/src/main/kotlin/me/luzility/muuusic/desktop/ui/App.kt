@@ -57,11 +57,14 @@ import me.luzility.muuusic.desktop.ui.pages.LibraryPage
 import me.luzility.muuusic.desktop.ui.pages.PlaylistPage
 import me.luzility.muuusic.desktop.ui.pages.SearchModel
 import me.luzility.muuusic.desktop.ui.pages.SearchPage
+import me.luzility.muuusic.desktop.ui.pages.SettingsPage
+import androidx.compose.material.icons.rounded.Settings
 
 private enum class Tab(val route: Route, val label: String, val icon: ImageVector) {
     Home(Route.Home, "nav_home", Icons.Rounded.Home),
     Search(Route.Search, "nav_search", Icons.Rounded.Search),
     Library(Route.Library, "nav_library", Icons.Rounded.LibraryMusic),
+    Settings(Route.Settings, "settings", Icons.Rounded.Settings),
 }
 
 @Composable
@@ -99,7 +102,7 @@ fun App(services: DesktopServices, player: DesktopPlayer, navigator: Navigator) 
                                         Route.Home -> HomePage(home)
                                         Route.Search -> SearchPage(search)
                                         Route.Library -> LibraryPage()
-                                        Route.Settings -> Unit
+                                        Route.Settings -> SettingsPage()
                                         is Route.Collection -> CollectionPage(route.collection)
                                         is Route.Artist -> ArtistPage(route.name, route.url)
                                         is Route.Playlist -> PlaylistPage(route.id)
@@ -116,11 +119,15 @@ fun App(services: DesktopServices, player: DesktopPlayer, navigator: Navigator) 
                                 }
                             }
                             AnimatedVisibility(
-                                visible = navigator.queueOpen && state.current != null,
+                                visible = navigator.panel != null && state.current != null,
                                 enter = expandHorizontally(MaterialTheme.motionScheme.defaultSpatialSpec()) + fadeIn(),
                                 exit = shrinkHorizontally(MaterialTheme.motionScheme.fastSpatialSpec()) + fadeOut(),
                             ) {
-                                QueuePanel(onClose = { navigator.queueOpen = false })
+                                SidePanel(
+                                    panel = navigator.panel ?: Panel.Queue,
+                                    onSelect = { navigator.panel = it },
+                                    onClose = { navigator.panel = null },
+                                )
                             }
                         }
                         AnimatedVisibility(

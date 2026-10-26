@@ -21,6 +21,7 @@ import androidx.compose.material.icons.automirrored.rounded.VolumeDown
 import androidx.compose.material.icons.automirrored.rounded.VolumeOff
 import androidx.compose.material.icons.automirrored.rounded.VolumeUp
 import androidx.compose.material.icons.rounded.Favorite
+import androidx.compose.material.icons.rounded.Lyrics
 import androidx.compose.material.icons.rounded.FavoriteBorder
 import androidx.compose.material.icons.rounded.Pause
 import androidx.compose.material.icons.rounded.PlayArrow
@@ -69,12 +70,12 @@ import me.luzility.muuusic.desktop.playback.RepeatMode
 val PlayerBarHeight = 96.dp
 
 @Composable
-fun rememberPlaybackPosition(player: DesktopPlayer, state: PlayerState): State<Long> {
+fun rememberPlaybackPosition(player: DesktopPlayer, state: PlayerState, intervalMs: Long = 200): State<Long> {
     val position = remember { mutableLongStateOf(player.position()) }
     LaunchedEffect(state.isPlaying, state.current?.id) {
         while (true) {
             position.longValue = player.position()
-            delay(if (state.isPlaying) 200 else 500)
+            delay(if (state.isPlaying) intervalMs else 500)
         }
     }
     return position
@@ -125,9 +126,19 @@ fun PlayerBar(state: PlayerState, modifier: Modifier = Modifier) {
             }
 
             Row(Modifier.weight(0.3f), horizontalArrangement = Arrangement.End, verticalAlignment = Alignment.CenterVertically) {
+                SpeedButton()
+                KaraokeButton()
+                SleepTimerButton()
                 IconToggleButton(
-                    checked = navigator.queueOpen,
-                    onCheckedChange = { navigator.queueOpen = it },
+                    checked = navigator.panel == Panel.Lyrics,
+                    onCheckedChange = { navigator.togglePanel(Panel.Lyrics) },
+                    shapes = IconButtonDefaults.toggleableShapes(),
+                ) {
+                    Icon(Icons.Rounded.Lyrics, str("lyrics"))
+                }
+                IconToggleButton(
+                    checked = navigator.panel == Panel.Queue,
+                    onCheckedChange = { navigator.togglePanel(Panel.Queue) },
                     shapes = IconButtonDefaults.toggleableShapes(),
                 ) {
                     Icon(Icons.AutoMirrored.Rounded.QueueMusic, str("queue"))

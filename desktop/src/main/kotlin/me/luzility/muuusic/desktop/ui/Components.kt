@@ -29,6 +29,7 @@ import androidx.compose.material.icons.automirrored.rounded.QueueMusic
 import androidx.compose.material.icons.rounded.Favorite
 import androidx.compose.material.icons.rounded.FavoriteBorder
 import androidx.compose.material.icons.rounded.GraphicEq
+import androidx.compose.material.icons.rounded.LibraryAdd
 import androidx.compose.material.icons.rounded.MoreHoriz
 import androidx.compose.material.icons.rounded.MusicNote
 import androidx.compose.material.icons.rounded.Person
@@ -185,11 +186,13 @@ fun SongRow(
 }
 
 @Composable
-fun SongMenu(song: Song, open: androidx.compose.runtime.MutableState<Boolean>) {
+fun SongMenu(song: Song, open: androidx.compose.runtime.MutableState<Boolean>, showButton: Boolean = true) {
     val player = LocalPlayer.current
     val navigator = LocalNavigator.current
     val snackbar = LocalSnackbar.current
     val scope = rememberCoroutineScope()
+    var adding by remember { mutableStateOf(false) }
+    if (adding) AddToPlaylistDialog(listOf(song), onDismiss = { adding = false })
     fun report(result: QueueResult, next: Boolean) {
         val message = when (result) {
             QueueResult.AlreadyPlaying -> str("queue_already_playing")
@@ -199,8 +202,10 @@ fun SongMenu(song: Song, open: androidx.compose.runtime.MutableState<Boolean>) {
         scope.launch { snackbar.showSnackbar(message) }
     }
     Box {
-        IconButton(onClick = { open.value = true }, modifier = Modifier.size(36.dp)) {
-            Icon(Icons.Rounded.MoreHoriz, str("more"), modifier = Modifier.size(20.dp))
+        if (showButton) {
+            IconButton(onClick = { open.value = true }, modifier = Modifier.size(36.dp)) {
+                Icon(Icons.Rounded.MoreHoriz, str("more"), modifier = Modifier.size(20.dp))
+            }
         }
         DropdownMenu(expanded = open.value, onDismissRequest = { open.value = false }, shape = MaterialTheme.shapes.large) {
             DropdownMenuItem(
@@ -212,6 +217,11 @@ fun SongMenu(song: Song, open: androidx.compose.runtime.MutableState<Boolean>) {
                 text = { Text(str("add_to_queue")) },
                 leadingIcon = { Icon(Icons.AutoMirrored.Rounded.PlaylistAdd, null) },
                 onClick = { report(player.enqueue(song, next = false), next = false); open.value = false },
+            )
+            DropdownMenuItem(
+                text = { Text(str("add_to_playlist")) },
+                leadingIcon = { Icon(Icons.Rounded.LibraryAdd, null) },
+                onClick = { adding = true; open.value = false },
             )
             DropdownMenuItem(
                 text = { Text(str("start_radio")) },
@@ -286,7 +296,7 @@ fun BrowseShelf(section: BrowseSection) {
                             onSecondaryClick = { menuOpen.value = true },
                         )
                         Box(Modifier.align(Alignment.TopEnd).padding(12.dp)) {
-                            if (menuOpen.value) SongMenu(item.song, menuOpen)
+                            SongMenu(item.song, menuOpen, showButton = false)
                         }
                     }
                 }

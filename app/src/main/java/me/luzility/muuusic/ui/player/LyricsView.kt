@@ -33,7 +33,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.animateScrollBy
 import androidx.compose.foundation.gestures.scrollBy
-import androidx.compose.foundation.interaction.collectIsDraggedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -157,6 +156,21 @@ fun LyricsPanel(state: PlayerUiState, lyrics: UiState<Lyrics?>, modifier: Modifi
     }
 }
 
+private class AutoScrollGuard {
+    var active = false
+        private set
+
+    suspend fun run(scroll: suspend () -> Unit) {
+        active = true
+        try {
+            scroll()
+            withFrameMillis { }
+        } finally {
+            active = false
+        }
+    }
+}
+
 @Stable
 private class LyricsWave {
     private class Kick(val anchor: Int, val shift: Float, val startMs: Long)
@@ -226,10 +240,14 @@ private fun SyncedLyrics(
     val listState = rememberLazyListState()
     val wave = remember { LyricsWave() }
     LaunchedEffect(wave) { wave.tick() }
-    val dragged by listState.interactionSource.collectIsDraggedAsState()
     var browsing by remember { mutableStateOf(false) }
     var resyncing by remember { mutableStateOf(false) }
-    LaunchedEffect(dragged) { if (dragged) browsing = true }
+    val autoScroll = remember { AutoScrollGuard() }
+    LaunchedEffect(listState) {
+        snapshotFlow { listState.isScrollInProgress }.collect { scrolling ->
+            if (scrolling && !autoScroll.active) browsing = true
+        }
+    }
 
     LaunchedEffect(current, browsing) {
         if (browsing || current < 0) return@LaunchedEffect
@@ -239,18 +257,18 @@ private fun SyncedLyrics(
         val anchor = (layout.viewportSize.height * ActiveLineAnchor).toInt() - padding
         val item = layout.visibleItemsInfo.firstOrNull { it.index == current }
         if (item == null) {
-            listState.scrollToItem(current, -anchor)
+            autoScroll.run { listState.scrollToItem(current, -anchor) }
             resyncing = false
             return@LaunchedEffect
         }
         val delta = (item.offset - anchor).toFloat()
         if (abs(delta) < 1f) return@LaunchedEffect
         if (resyncing || abs(delta) > layout.viewportSize.height / 2) {
-            listState.animateScrollBy(delta, motion.slowSpatialSpec())
+            autoScroll.run { listState.animateScrollBy(delta, motion.slowSpatialSpec()) }
             resyncing = false
         } else {
             wave.start(current, delta)
-            listState.scrollBy(delta)
+            autoScroll.run { listState.scrollBy(delta) }
         }
     }
 
