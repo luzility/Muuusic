@@ -99,7 +99,7 @@ class AppContainer(context: Context) {
 
     val innerTube by lazy { InnerTubeClient(okHttp) }
 
-    val loudness by lazy { LoudnessStore(appContext) }
+    val loudness by lazy { LoudnessStore(stores) }
     val sponsorBlock by lazy { SponsorBlock(okHttp) }
     val discord by lazy { DiscordPresence(appContext, okHttp) }
     val updates by lazy { Updates(stores, okHttp) }

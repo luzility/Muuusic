@@ -1,10 +1,9 @@
 package me.luzility.muuusic.playback.audio
 
-import android.content.Context
-import androidx.core.content.edit
+import me.luzility.muuusic.data.storage.KeyValueStores
 
-class LoudnessStore(context: Context) {
-    private val store = context.getSharedPreferences("loudness", Context.MODE_PRIVATE)
+class LoudnessStore(stores: KeyValueStores) {
+    private val store = stores.open("loudness")
 
     fun get(videoId: String): Float? = if (store.contains(videoId)) store.getFloat(videoId, 0f) else null
 
