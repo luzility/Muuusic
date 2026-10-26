@@ -68,8 +68,6 @@
     <string name="artist_releases">Albümler ve single\'lar</string>
     <string name="artist_about">Hakkında</string>
     <string name="artist_subscribers">%1$s abone</string>
-    <string name="show_more">Daha fazla göster</string>
-    <string name="show_less">Daha az göster</string>
     <string name="settings">Ayarlar</string>
     <string name="settings_playback">Oynatma</string>
     <string name="settings_audio_quality">Ses kalitesi</string>

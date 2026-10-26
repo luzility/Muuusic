@@ -2,12 +2,16 @@ package me.luzility.muuusic.ui.artist
 
 import android.app.Application
 import android.icu.text.CompactDecimalFormat
-import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.width
+import androidx.activity.compose.BackHandler
+import androidx.compose.material3.ToggleButton
+import androidx.compose.material3.ToggleButtonDefaults
+import androidx.compose.material.icons.rounded.Info
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -23,7 +27,6 @@ import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialShapes
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.toShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -56,7 +59,6 @@ import me.luzility.muuusic.data.model.BrowseSection
 import me.luzility.muuusic.data.youtube.YouTubeRepository
 import me.luzility.muuusic.ui.UiState
 import me.luzility.muuusic.ui.browse.BrowseSectionView
-import me.luzility.muuusic.ui.browse.SectionHeader
 import me.luzility.muuusic.ui.components.Artwork
 import me.luzility.muuusic.ui.components.CenteredLoading
 import me.luzility.muuusic.ui.components.ErrorState
@@ -114,13 +116,28 @@ class ArtistViewModel(app: Application, savedState: SavedStateHandle) : AndroidV
 @Composable
 fun ArtistScreen(onBack: () -> Unit, vm: ArtistViewModel = viewModel()) {
     val state by vm.state.collectAsStateWithLifecycle()
+    var showAbout by rememberSaveable { mutableStateOf(false) }
+    BackHandler(enabled = showAbout) { showAbout = false }
     Box(Modifier.fillMaxSize()) {
         when (val s = state) {
             UiState.Loading -> CenteredLoading()
             is UiState.Error -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 ErrorState(onRetry = vm::load)
             }
-            is UiState.Success -> ArtistContent(s.data)
+            is UiState.Success -> {
+                ArtistContent(s.data, showAbout)
+                if (s.data.description != null) {
+                    ToggleButton(
+                        checked = showAbout,
+                        onCheckedChange = { showAbout = it },
+                        modifier = Modifier.align(Alignment.TopEnd).statusBarsPadding().padding(end = 12.dp, top = 8.dp),
+                    ) {
+                        Icon(Icons.Rounded.Info, null, Modifier.size(ToggleButtonDefaults.IconSize))
+                        Spacer(Modifier.width(ToggleButtonDefaults.IconSpacing))
+                        Text(stringResource(R.string.artist_about))
+                    }
+                }
+            }
         }
         FilledTonalIconButton(
             onClick = onBack,
@@ -133,7 +150,7 @@ fun ArtistScreen(onBack: () -> Unit, vm: ArtistViewModel = viewModel()) {
 }
 
 @Composable
-private fun ArtistContent(artist: ArtistPage) {
+private fun ArtistContent(artist: ArtistPage, showAbout: Boolean) {
     val player = LocalPlayer.current
     // The first song shelf (top songs) is what Play and Shuffle play.
     val topSongs = artist.sections.firstOrNull { section ->
@@ -142,18 +159,23 @@ private fun ArtistContent(artist: ArtistPage) {
     val songs = topSongs?.items?.map { (it as BrowseItem.SongItem).song }.orEmpty()
 
     LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(bottom = 24.dp + LocalMiniPlayerInset.current)) {
-        item { ArtistHeader(artist) }
+        item(key = "header") { ArtistHeader(artist) }
+        val bio = artist.description
+        if (showAbout && bio != null) {
+            item(key = "about") { About(bio, Modifier.animateItem()) }
+            return@LazyColumn
+        }
         if (songs.isNotEmpty()) {
-            item {
-                PlayButtons(onPlay = { player.play(songs) }, onShuffle = { player.play(songs, shuffle = true) })
+            item(key = "play") {
+                Box(Modifier.animateItem()) {
+                    PlayButtons(onPlay = { player.play(songs) }, onShuffle = { player.play(songs, shuffle = true) })
+                }
             }
         }
         artist.sections.forEachIndexed { index, section ->
-            item(key = "section-$index") { BrowseSectionView(section, songsAsList = section === topSongs) }
-        }
-        artist.description?.let { bio ->
-            item { SectionHeader(stringResource(R.string.artist_about)) }
-            item { About(bio) }
+            item(key = "section-$index") {
+                Box(Modifier.animateItem()) { BrowseSectionView(section, songsAsList = section === topSongs) }
+            }
         }
     }
 }
@@ -197,25 +219,13 @@ private fun ArtistHeader(artist: ArtistPage) {
 }
 
 @Composable
-private fun About(bio: String) {
-    var expanded by rememberSaveable { mutableStateOf(false) }
-    Column(
-        Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 20.dp)
-            .animateContentSize(MaterialTheme.motionScheme.defaultSpatialSpec()),
-    ) {
-        Text(
-            bio,
-            style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            maxLines = if (expanded) Int.MAX_VALUE else 4,
-            overflow = TextOverflow.Ellipsis,
-        )
-        TextButton(onClick = { expanded = !expanded }) {
-            Text(stringResource(if (expanded) R.string.show_less else R.string.show_more))
-        }
-    }
+private fun About(bio: String, modifier: Modifier = Modifier) {
+    Text(
+        bio,
+        style = MaterialTheme.typography.bodyLarge,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 8.dp),
+    )
 }
 
 private fun compactNumber(value: Long): String =
