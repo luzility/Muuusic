@@ -18,6 +18,7 @@ import me.luzility.muuusic.data.youtube.NewPipeDownloader
 import me.luzility.muuusic.desktop.playback.DesktopPlayer
 import me.luzility.muuusic.desktop.ui.App
 import me.luzility.muuusic.desktop.ui.Navigator
+import me.luzility.muuusic.desktop.ui.logoPainter
 import org.schabi.newpipe.extractor.NewPipe
 import org.schabi.newpipe.extractor.localization.ContentCountry
 import org.schabi.newpipe.extractor.localization.Localization
@@ -40,6 +41,7 @@ fun main() {
                 exitApplication()
             },
             title = "Muuusic",
+            icon = logoPainter(),
             state = rememberWindowState(size = DpSize(1280.dp, 820.dp)),
             onKeyEvent = { event -> event.type == KeyEventType.KeyDown && handleKey(event, player, navigator) },
         ) {

@@ -26,6 +26,11 @@ val sharedResources = tasks.register<Sync>("sharedResources") {
     from(rootProject.file("app/src/main/assets/fonts")) {
         into("fonts")
     }
+    from(rootProject.file("app/src/main/res/drawable/ic_launcher_foreground.xml")) {
+        into("drawable")
+        rename { "logo.xml" }
+        filter { line -> line.replace("@color/brand_light", "#FFE9DDFF").replace("@color/brand", "#FF7C4DFF") }
+    }
     into(layout.buildDirectory.dir("generated/sharedResources"))
 }
 

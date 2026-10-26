@@ -352,3 +352,14 @@ sealed interface Loadable<out T> {
     data object Failed : Loadable<Nothing>
     data class Ready<T>(val data: T) : Loadable<T>
 }
+
+@Composable
+fun logoPainter(): androidx.compose.ui.graphics.painter.Painter {
+    val density = androidx.compose.ui.platform.LocalDensity.current
+    val vector = remember(density) {
+        LocalSnackbar::class.java.classLoader.getResourceAsStream("drawable/logo.xml")!!.use {
+            androidx.compose.ui.res.loadXmlImageVector(org.xml.sax.InputSource(it), density)
+        }
+    }
+    return androidx.compose.ui.graphics.vector.rememberVectorPainter(vector)
+}
