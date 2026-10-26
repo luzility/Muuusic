@@ -2,7 +2,7 @@ package me.luzility.muuusic.data.lyrics
 
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import me.luzility.muuusic.BuildConfig
+import me.luzility.muuusic.AppInfo
 import me.luzility.muuusic.data.model.Song
 import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrl
@@ -105,6 +105,6 @@ class LyricsRepository(private val client: OkHttpClient) {
         const val BASE = "https://lrclib.net/api"
         val RETRY_DELAYS_MS = longArrayOf(400, 1_200, 2_500)
         // LRCLIB asks clients to identify themselves.
-        val USER_AGENT = "Muuusic ${BuildConfig.VERSION_NAME} (open-source Android music player)"
+        val USER_AGENT get() = "Muuusic ${AppInfo.versionName} (open-source music player)"
     }
 }

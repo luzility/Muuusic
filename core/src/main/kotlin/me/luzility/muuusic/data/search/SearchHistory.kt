@@ -1,15 +1,14 @@
 package me.luzility.muuusic.data.search
 
-import android.content.Context
-import androidx.core.content.edit
+import me.luzility.muuusic.data.storage.KeyValueStores
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import org.json.JSONArray
 import java.util.Locale
 
-class SearchHistory(context: Context) {
-    private val store = context.getSharedPreferences("search", Context.MODE_PRIVATE)
+class SearchHistory(stores: KeyValueStores) {
+    private val store = stores.open("search")
 
     private val _queries = MutableStateFlow(read())
     val queries: StateFlow<List<String>> = _queries.asStateFlow()

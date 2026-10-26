@@ -1,11 +1,9 @@
 package me.luzility.muuusic.data.settings
 
-import me.luzility.muuusic.BuildConfig
+import me.luzility.muuusic.AppInfo
 import me.luzility.muuusic.data.update.UpdateChannel
 import me.luzility.muuusic.data.update.Versions
-import android.content.Context
-import androidx.compose.runtime.Immutable
-import androidx.core.content.edit
+import me.luzility.muuusic.data.storage.KeyValueStores
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -14,7 +12,6 @@ enum class AudioQuality { High, Normal, Low }
 
 enum class ThemeMode { System, Light, Dark }
 
-@Immutable
 data class AppPrefs(
     val audioQuality: AudioQuality = AudioQuality.High,
     val autoplay: Boolean = true,
@@ -34,7 +31,7 @@ data class AppPrefs(
     val linkPitch: Boolean = false,
     val karaoke: Boolean = true,
     val karaokeStrength: Float = 1f,
-    val updateChannel: UpdateChannel = if (Versions.isBeta(BuildConfig.VERSION_NAME)) UpdateChannel.Beta else UpdateChannel.Release,
+    val updateChannel: UpdateChannel = if (Versions.isBeta(AppInfo.versionName)) UpdateChannel.Beta else UpdateChannel.Release,
     val normalizeVolume: Boolean = true,
     val fadeSeconds: Int = 0,
     val equalizerEnabled: Boolean = false,
@@ -46,8 +43,8 @@ data class AppPrefs(
     val bassBoost: Int = 0,
 )
 
-class AppSettings(context: Context) {
-    private val store = context.getSharedPreferences("settings", Context.MODE_PRIVATE)
+class AppSettings(stores: KeyValueStores) {
+    private val store = stores.open("settings")
 
     private val _prefs = MutableStateFlow(read())
     val prefs: StateFlow<AppPrefs> = _prefs.asStateFlow()

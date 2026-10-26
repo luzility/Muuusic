@@ -1,7 +1,6 @@
 package me.luzility.muuusic.data.update
 
-import android.content.Context
-import androidx.core.content.edit
+import me.luzility.muuusic.data.storage.KeyValueStores
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
@@ -25,9 +24,9 @@ object Versions {
     fun isBeta(version: String) = "-beta." in version
 }
 
-class Updates(context: Context, private val client: OkHttpClient) {
+class Updates(stores: KeyValueStores, private val client: OkHttpClient) {
 
-    private val store = context.getSharedPreferences("updates", Context.MODE_PRIVATE)
+    private val store = stores.open("updates")
 
     /** Version the user chose to skip in the startup prompt. */
     var skipped: String?

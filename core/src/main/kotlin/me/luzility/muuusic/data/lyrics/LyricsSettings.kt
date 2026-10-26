@@ -1,8 +1,6 @@
 package me.luzility.muuusic.data.lyrics
 
-import android.content.Context
-import androidx.compose.runtime.Immutable
-import androidx.core.content.edit
+import me.luzility.muuusic.data.storage.KeyValueStores
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -15,7 +13,6 @@ enum class LyricsTextSize { Small, Medium, Large }
 
 enum class LyricsAlign { Start, Center }
 
-@Immutable
 data class LyricsPrefs(
     val textSize: LyricsTextSize = LyricsTextSize.Medium,
     val align: LyricsAlign = LyricsAlign.Start,
@@ -23,9 +20,9 @@ data class LyricsPrefs(
     val translate: Boolean = false,
 )
 
-class LyricsSettings(context: Context) {
-    private val prefsStore = context.getSharedPreferences("lyrics", Context.MODE_PRIVATE)
-    private val offsetStore = context.getSharedPreferences("lyrics_offsets", Context.MODE_PRIVATE)
+class LyricsSettings(stores: KeyValueStores) {
+    private val prefsStore = stores.open("lyrics")
+    private val offsetStore = stores.open("lyrics_offsets")
 
     private val _prefs = MutableStateFlow(readPrefs())
     val prefs: StateFlow<LyricsPrefs> = _prefs.asStateFlow()

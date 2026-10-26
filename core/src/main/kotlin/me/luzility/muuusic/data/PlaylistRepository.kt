@@ -1,7 +1,6 @@
 package me.luzility.muuusic.data
 
-import androidx.compose.runtime.Immutable
-import androidx.room.withTransaction
+import me.luzility.muuusic.data.db.writeTransaction
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import me.luzility.muuusic.data.db.MuuusicDatabase
@@ -12,10 +11,8 @@ import me.luzility.muuusic.data.db.SongDao
 import me.luzility.muuusic.data.db.toEntity
 import me.luzility.muuusic.data.model.Song
 
-@Immutable
 data class PlaylistSummary(val id: Long, val name: String, val songCount: Int, val thumbnailUrl: String?)
 
-@Immutable
 data class PlaylistItem(val entryId: Long, val song: Song)
 
 class PlaylistRepository(
@@ -33,21 +30,21 @@ class PlaylistRepository(
         rows.map { PlaylistItem(it.entryId, it.song.toSong()) }
     }
 
-    suspend fun create(name: String, songs: List<Song> = emptyList()): Long = db.withTransaction {
+    suspend fun create(name: String, songs: List<Song> = emptyList()): Long = db.writeTransaction {
         val now = System.currentTimeMillis()
         val id = dao.insertPlaylist(PlaylistEntity(name = name.trim(), createdAt = now, updatedAt = now))
         addSongsInTransaction(id, songs)
         id
     }
 
-    suspend fun addSongs(id: Long, songs: List<Song>) = db.withTransaction {
+    suspend fun addSongs(id: Long, songs: List<Song>) = db.writeTransaction {
         addSongsInTransaction(id, songs)
         dao.touch(id, System.currentTimeMillis())
     }
 
     suspend fun rename(id: Long, name: String) = dao.rename(id, name.trim(), System.currentTimeMillis())
 
-    suspend fun delete(id: Long) = db.withTransaction {
+    suspend fun delete(id: Long) = db.writeTransaction {
         // Explicit, rather than relying on SQLite foreign keys being switched on.
         dao.deleteEntriesOf(id)
         dao.delete(id)
@@ -55,7 +52,7 @@ class PlaylistRepository(
 
     suspend fun remove(entryId: Long) = dao.deleteEntry(entryId)
 
-    suspend fun reorder(id: Long, entryIds: List<Long>) = db.withTransaction {
+    suspend fun reorder(id: Long, entryIds: List<Long>) = db.writeTransaction {
         entryIds.forEachIndexed { index, entryId -> dao.setPosition(entryId, index) }
         dao.touch(id, System.currentTimeMillis())
     }

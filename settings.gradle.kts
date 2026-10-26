@@ -19,4 +19,5 @@ dependencyResolutionManagement {
 
 rootProject.name = "Muuusic"
 include(":app")
+include(":core")
 include(":baselineprofile")

@@ -1,7 +1,6 @@
 package me.luzility.muuusic.data.settings
 
-import android.content.Context
-import androidx.core.content.edit
+import me.luzility.muuusic.data.storage.KeyValueStores
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -9,8 +8,8 @@ import kotlinx.coroutines.flow.asStateFlow
 enum class Hint { MiniPlayer, Lyrics, Recognition, LyricsShare }
 
 /** One-time tips; each shows until the user dismisses it once. */
-class Hints(context: Context) {
-    private val store = context.getSharedPreferences("hints", Context.MODE_PRIVATE)
+class Hints(stores: KeyValueStores) {
+    private val store = stores.open("hints")
 
     private val _seen = MutableStateFlow(store.getStringSet(KEY, emptySet()).orEmpty().toSet())
     val seen: StateFlow<Set<String>> = _seen.asStateFlow()

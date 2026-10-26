@@ -1,8 +1,6 @@
 package me.luzility.muuusic.data.model
 
-import androidx.compose.runtime.Immutable
 
-@Immutable
 data class Song(
     val id: String,
     val title: String,
@@ -14,7 +12,6 @@ data class Song(
 
 enum class CollectionType { Album, Playlist }
 
-@Immutable
 data class MusicCollection(
     val url: String,
     val title: String,
@@ -24,7 +21,6 @@ data class MusicCollection(
     val type: CollectionType,
 )
 
-@Immutable
 data class CollectionDetail(
     val collection: MusicCollection,
     val songs: List<Song>,
@@ -37,7 +33,6 @@ sealed interface SearchResult {
 
 enum class SearchFilter { Songs, Videos, Albums, Playlists }
 
-@Immutable
 data class ArtistDetail(
     val url: String,
     val name: String,
@@ -58,16 +53,12 @@ sealed interface BrowseItem {
     data class ArtistItem(val name: String, val url: String, val thumbnailUrl: String?, val subtitle: String) : BrowseItem
 }
 
-@Immutable
 data class BrowseSection(val title: String, val items: List<BrowseItem>, val more: MusicCollection? = null)
 
-@Immutable
 data class Mood(val title: String, val params: String)
 
-@Immutable
 data class HomeFeed(val moods: List<Mood>, val sections: List<BrowseSection>)
 
-@Immutable
 data class ArtistPage(
     val name: String,
     val url: String,

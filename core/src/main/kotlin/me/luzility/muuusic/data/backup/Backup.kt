@@ -1,12 +1,11 @@
 package me.luzility.muuusic.data.backup
 
-import android.content.Context
-import android.content.SharedPreferences
-import androidx.core.content.edit
-import androidx.room.withTransaction
+import me.luzility.muuusic.data.db.writeTransaction
+import me.luzility.muuusic.data.storage.KeyValueStore
+import me.luzility.muuusic.data.storage.KeyValueStores
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import me.luzility.muuusic.BuildConfig
+import me.luzility.muuusic.AppInfo
 import me.luzility.muuusic.data.PlaylistRepository
 import me.luzility.muuusic.data.db.MuuusicDatabase
 import me.luzility.muuusic.data.db.SongEntity
@@ -20,7 +19,7 @@ data class RestoreResult(val songs: Int, val playlists: Int)
 class InvalidBackupException : Exception()
 
 class Backup(
-    private val context: Context,
+    private val stores: KeyValueStores,
     private val db: MuuusicDatabase,
     private val playlists: PlaylistRepository,
 ) {
@@ -49,7 +48,7 @@ class Backup(
         val root = JSONObject()
             .put("format", FORMAT)
             .put("version", VERSION)
-            .put("appVersion", BuildConfig.VERSION_NAME)
+            .put("appVersion", AppInfo.versionName)
             .put("createdAt", System.currentTimeMillis())
             .put("songs", songs)
             .put("playlists", lists)
@@ -64,7 +63,7 @@ class Backup(
         val songs = root.optJSONArray("songs").objects().filter { it.has("id") }.map { it.toSongEntity() }
         val byId = songs.associateBy { it.id }
 
-        val addedPlaylists = db.withTransaction {
+        val addedPlaylists = db.writeTransaction {
             songs.forEach { incoming ->
                 val existing = songDao.get(incoming.id)
                 songDao.put(if (existing == null) incoming else merge(existing, incoming))
@@ -101,9 +100,9 @@ class Backup(
         playCount = maxOf(old.playCount, new.playCount),
     )
 
-    private fun store(name: String): SharedPreferences = context.getSharedPreferences(name, Context.MODE_PRIVATE)
+    private fun store(name: String): KeyValueStore = stores.open(name)
 
-    private fun SharedPreferences.toJson(): JSONObject {
+    private fun KeyValueStore.toJson(): JSONObject {
         val json = JSONObject()
         all.forEach { (key, value) ->
             val typed = when (value) {
@@ -119,7 +118,7 @@ class Backup(
         return json
     }
 
-    private fun SharedPreferences.replaceWith(json: JSONObject) = edit(commit = true) {
+    private fun KeyValueStore.replaceWith(json: JSONObject) = edit(commit = true) {
         clear()
         json.keys().forEach { key ->
             val value = json.optJSONObject(key) ?: return@forEach

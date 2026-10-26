@@ -1,12 +1,9 @@
 package me.luzility.muuusic.data.lyrics
 
-import androidx.compose.runtime.Immutable
 import java.util.Locale
 
-@Immutable
 data class LyricLine(val timeMs: Long, val text: String)
 
-@Immutable
 data class Lyrics(val synced: List<LyricLine>?, val plain: String?) {
     val isEmpty get() = synced.isNullOrEmpty() && plain.isNullOrBlank()
 }

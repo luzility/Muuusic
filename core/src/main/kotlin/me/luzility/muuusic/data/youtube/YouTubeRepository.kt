@@ -1,6 +1,6 @@
 package me.luzility.muuusic.data.youtube
 
-import android.net.Uri
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import me.luzility.muuusic.data.model.ArtistDetail
 import me.luzility.muuusic.data.settings.AudioQuality
 import me.luzility.muuusic.data.model.CollectionDetail
@@ -172,7 +172,7 @@ class YouTubeRepository(private val audioQuality: () -> AudioQuality = { AudioQu
         } ?: throw IOException("No playable audio stream for $videoId")
 
         val url = best.content
-        val expire = Uri.parse(url).getQueryParameter("expire")?.toLongOrNull()
+        val expire = url.toHttpUrlOrNull()?.queryParameter("expire")?.toLongOrNull()
         // Refresh a bit before YouTube's expiry; default to 5 hours when the param is missing.
         val expiresAt = expire?.let { it * 1000 - 30 * 60 * 1000 }
             ?: (System.currentTimeMillis() + 5 * 60 * 60 * 1000)
