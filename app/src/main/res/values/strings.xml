@@ -347,6 +347,7 @@
     <string name="settings_discord_logout">Tap to sign out</string>
     <string name="discord_login_done">Signed in to Discord</string>
     <string name="discord_login_failed">Couldn\'t sign in to Discord</string>
+    <string name="volume">Volume</string>
     <plurals name="queue_remaining">
         <item quantity="one">%d song left</item>
         <item quantity="other">%d songs left</item>

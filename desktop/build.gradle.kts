@@ -18,6 +18,21 @@ kotlin {
     }
 }
 
+val sharedResources = tasks.register<Sync>("sharedResources") {
+    from(rootProject.file("app/src/main/res")) {
+        include("values*/strings.xml")
+        into("strings")
+    }
+    from(rootProject.file("app/src/main/assets/fonts")) {
+        into("fonts")
+    }
+    into(layout.buildDirectory.dir("generated/sharedResources"))
+}
+
+sourceSets.main {
+    resources.srcDir(sharedResources)
+}
+
 dependencies {
     implementation(project(":core"))
     implementation(compose.desktop.currentOs)
