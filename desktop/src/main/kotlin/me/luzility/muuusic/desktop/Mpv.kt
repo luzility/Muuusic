@@ -12,6 +12,8 @@ class Mpv(private val onEvent: (MpvEvent) -> Unit) {
     @Volatile
     private var running = true
 
+    private val events = Thread({ loop() }, "mpv-events").apply { isDaemon = true }
+
     init {
         setOption("vid", "no")
         setOption("video", "no")
@@ -24,7 +26,7 @@ class Mpv(private val onEvent: (MpvEvent) -> Unit) {
         observe("pause", FORMAT_FLAG)
         observe("duration", FORMAT_DOUBLE)
         observe("paused-for-cache", FORMAT_FLAG)
-        Thread({ loop() }, "mpv-events").apply { isDaemon = true }.start()
+        events.start()
     }
 
     fun setOption(name: String, value: String) {
@@ -42,6 +44,8 @@ class Mpv(private val onEvent: (MpvEvent) -> Unit) {
 
     fun destroy() {
         running = false
+        lib.mpv_wakeup(handle)
+        events.join(EVENT_JOIN_MS)
         lib.mpv_terminate_destroy(handle)
     }
 
@@ -86,6 +90,7 @@ class Mpv(private val onEvent: (MpvEvent) -> Unit) {
         fun mpv_command(handle: Pointer, args: StringArray): Int
         fun mpv_observe_property(handle: Pointer, userdata: Long, name: String, format: Int): Int
         fun mpv_wait_event(handle: Pointer, timeout: Double): Pointer?
+        fun mpv_wakeup(handle: Pointer)
     }
 
     private interface LibC : Library {
@@ -104,6 +109,7 @@ class Mpv(private val onEvent: (MpvEvent) -> Unit) {
         private const val EVENT_PLAYBACK_RESTART = 21
         private const val EVENT_PROPERTY_CHANGE = 22
         private const val LC_NUMERIC_LINUX = 1
+        private const val EVENT_JOIN_MS = 1_000L
         private const val LC_NUMERIC_MAC = 4
 
         private val library: LibMpv by lazy {

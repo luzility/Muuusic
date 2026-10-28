@@ -1,13 +1,19 @@
 package me.luzility.muuusic.desktop.playback
 
+import java.io.File
+import java.util.Locale
+import kotlin.math.pow
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -16,15 +22,12 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
 import me.luzility.muuusic.data.model.Song
 import me.luzility.muuusic.data.sponsorblock.Segment
+import me.luzility.muuusic.data.youtube.NewPipeDownloader
 import me.luzility.muuusic.desktop.DesktopServices
 import me.luzility.muuusic.desktop.Mpv
 import me.luzility.muuusic.desktop.MpvEvent
-import me.luzility.muuusic.data.youtube.NewPipeDownloader
 import me.luzility.muuusic.playback.SleepTimer
 import me.luzility.muuusic.playback.audio.Karaoke
-import java.io.File
-import java.util.Locale
-import kotlin.math.pow
 
 enum class RepeatMode { Off, All, One }
 
@@ -82,6 +85,9 @@ class DesktopPlayer(
 
     private val _sleepEndsAt = MutableStateFlow(0L)
     val sleepEndsAt: StateFlow<Long> = _sleepEndsAt.asStateFlow()
+
+    private val _seeks = MutableSharedFlow<Long>(extraBufferCapacity = 1)
+    val seeks: SharedFlow<Long> = _seeks.asSharedFlow()
 
     private val _volume = MutableStateFlow(1f)
     val volume: StateFlow<Float> = _volume.asStateFlow()
@@ -238,6 +244,7 @@ class DesktopPlayer(
     fun seekTo(positionMs: Long) {
         cancelFade()
         if (active.hasFile) active.mpv.command("seek", (positionMs / 1000.0).toString(), "absolute")
+        _seeks.tryEmit(positionMs)
         publish()
     }
 
@@ -336,6 +343,9 @@ class DesktopPlayer(
     fun release() {
         store.save(snapshot())
         scope.cancel()
+    }
+
+    fun destroy() {
         active.mpv.destroy()
         standby.mpv.destroy()
     }

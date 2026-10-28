@@ -50,6 +50,8 @@ dependencies {
     implementation(libs.sqlite.bundled)
     implementation(libs.org.json)
     implementation(libs.jna)
+    implementation(libs.dbus.java.core)
+    implementation(libs.dbus.java.transport)
 }
 
 compose.desktop {
