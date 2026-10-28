@@ -162,9 +162,13 @@
     <string name="recognize_no_permission">Microphone access needed</string>
     <string name="recognize_no_permission_hint">Muuusic needs the microphone to hear the song that\'s playing.</string>
     <string name="recognize_allow">Allow</string>
+    <string name="recognize_listening_hint_desktop">Play the song on your computer</string>
+    <string name="recognize_no_capture">Can\'t hear your computer</string>
+    <string name="recognize_no_capture_hint">Muuusic listens through PulseAudio or PipeWire. Install pulseaudio-utils or pipewire to use this.</string>
     <string name="settings_lab">Labs</string>
     <string name="settings_song_recognition">Song recognition</string>
     <string name="settings_song_recognition_summary">Identify what\'s playing with the microphone. Uses an unofficial service and may stop working.</string>
+    <string name="settings_song_recognition_summary_desktop">Identify what\'s playing on your computer, like a video in your browser. Uses an unofficial service and may stop working.</string>
     <string-array name="search_genres">
         <item>Pop</item>
         <item>Hip-Hop</item>

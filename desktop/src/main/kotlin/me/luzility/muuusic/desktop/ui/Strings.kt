@@ -7,6 +7,7 @@ import javax.xml.parsers.DocumentBuilderFactory
 object Strings {
     private val strings = HashMap<String, String>()
     private val plurals = HashMap<String, Map<String, String>>()
+    private val arrays = HashMap<String, List<String>>()
 
     init {
         val locale = Locale.getDefault()
@@ -23,6 +24,8 @@ object Strings {
         return if (args.isEmpty()) text else text.format(*args)
     }
 
+    fun array(name: String): List<String> = arrays[name].orEmpty()
+
     fun plural(name: String, count: Int, vararg args: Any): String {
         val forms = plurals[name] ?: return name
         val text = (if (count == 1) forms["one"] else null) ?: forms["other"] ?: forms.values.first()
@@ -38,6 +41,11 @@ object Strings {
             val name = node.getAttribute("name")
             when (node.tagName) {
                 "string" -> node.textContent.takeIf { it.isNotBlank() }?.let { strings[name] = unescape(it) }
+                "string-array" -> {
+                    val items = node.getElementsByTagName("item")
+                    val values = (0 until items.length).map { unescape(items.item(it).textContent) }.filter { it.isNotBlank() }
+                    if (values.isNotEmpty()) arrays[name] = values
+                }
                 "plurals" -> {
                     val items = node.getElementsByTagName("item")
                     val forms = (0 until items.length).map { items.item(it) as Element }

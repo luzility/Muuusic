@@ -41,6 +41,7 @@ import me.luzility.muuusic.data.model.MusicCollection
 import me.luzility.muuusic.data.youtube.YouTubeRepository
 import me.luzility.muuusic.desktop.ui.Artwork
 import me.luzility.muuusic.desktop.ui.BrowseShelf
+import me.luzility.muuusic.desktop.ui.DownloadAllButton
 import me.luzility.muuusic.desktop.ui.ErrorBox
 import me.luzility.muuusic.desktop.ui.Loadable
 import me.luzility.muuusic.desktop.ui.LoadingBox
@@ -78,7 +79,11 @@ fun CollectionPage(collection: MusicCollection) {
                     if (songs.isNotEmpty()) {
                         Text(Strings.plural("song_count", songs.size), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         Spacer(Modifier.height(20.dp))
-                        PlayButtons(onPlay = { player.play(songs) }, onShuffle = { player.play(songs, shuffle = true) })
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            PlayButtons(onPlay = { player.play(songs) }, onShuffle = { player.play(songs, shuffle = true) })
+                            Spacer(Modifier.width(12.dp))
+                            DownloadAllButton(songs)
+                        }
                     }
                 }
             }

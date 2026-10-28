@@ -39,6 +39,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.TextButton
 import kotlinx.coroutines.launch
 import me.luzility.muuusic.desktop.ui.NameDialog
+import me.luzility.muuusic.desktop.ui.DownloadAllButton
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
@@ -55,7 +56,7 @@ import me.luzility.muuusic.desktop.ui.SongRow
 import me.luzility.muuusic.desktop.ui.Strings
 import me.luzility.muuusic.desktop.ui.str
 
-private val tabs = listOf("liked_songs", "history", "playlists")
+private val tabs = listOf("liked_songs", "history", "playlists", "downloads")
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -66,6 +67,7 @@ fun LibraryPage() {
     val liked by services.library.liked.collectAsState(initial = emptyList())
     val history by services.library.history.collectAsState(initial = emptyList())
     val playlists by services.playlists.playlists.collectAsState(initial = emptyList())
+    val downloaded by services.downloads.songs.collectAsState(initial = emptyList())
     val scope = rememberCoroutineScope()
     var creating by remember { mutableStateOf(false) }
     if (creating) {
@@ -97,6 +99,7 @@ fun LibraryPage() {
         when (tab) {
             0 -> SongList(liked, empty = str("empty_liked"))
             1 -> SongList(history, empty = str("empty_history"))
+            3 -> SongList(downloaded, empty = str("empty_downloads"))
             else -> Column {
                 FilledTonalButton(onClick = { creating = true }, shapes = ButtonDefaults.shapes(), modifier = Modifier.padding(start = 32.dp, bottom = 12.dp)) {
                     Icon(Icons.Rounded.Add, null)
@@ -182,7 +185,11 @@ fun PlaylistPage(id: Long) {
                     Text(Strings.plural("song_count", songs.size), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     Spacer(Modifier.height(20.dp))
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        if (songs.isNotEmpty()) PlayButtons(onPlay = { player.play(songs) }, onShuffle = { player.play(songs, shuffle = true) })
+                        if (songs.isNotEmpty()) {
+                            PlayButtons(onPlay = { player.play(songs) }, onShuffle = { player.play(songs, shuffle = true) })
+                            Spacer(Modifier.width(12.dp))
+                            DownloadAllButton(songs)
+                        }
                         Spacer(Modifier.width(8.dp))
                         IconButton(onClick = { renaming = true }) { Icon(Icons.Rounded.Edit, str("rename")) }
                         IconButton(onClick = { deleting = true }) { Icon(Icons.Rounded.DeleteOutline, str("delete_playlist")) }

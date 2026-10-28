@@ -102,6 +102,9 @@ class DesktopPlayer(
     private var segments: List<Segment> = emptyList()
     private var segmentJob: Job? = null
     private var normalizeJob: Job? = null
+    private val store = QueueStore(File(services.dataDir, "queue.json"))
+    private var saveJob: Job? = null
+    private var resumeAt: Long? = null
 
     init {
         listOf(active, standby).forEach { it.mpv.set("user-agent", NewPipeDownloader.USER_AGENT) }
@@ -129,6 +132,43 @@ class DesktopPlayer(
                 skipSegment()
                 maybeStartFade()
             }
+        }
+        scope.launch {
+            while (true) {
+                delay(SAVE_INTERVAL_MS)
+                if (active.hasFile && !active.paused) scheduleSave()
+            }
+        }
+        restore()
+    }
+
+    private fun restore() {
+        val snapshot = store.load() ?: return
+        queue = snapshot.queue.toMutableList()
+        order = snapshot.order.toMutableList()
+        shuffle = snapshot.shuffle
+        repeat = snapshot.repeat
+        current = snapshot.current
+        val song = queue[current]
+        active.song = song
+        active.durationMs = song.durationSec * 1000
+        resumeAt = snapshot.positionMs.takeIf { it > 0 }
+        loading = true
+        startOn(active, song, paused = true)
+        publish()
+    }
+
+    private fun snapshot(): QueueSnapshot? {
+        if (current !in queue.indices) return null
+        return QueueSnapshot(queue.toList(), order.toList(), current, resumeAt ?: position(), shuffle, repeat)
+    }
+
+    private fun scheduleSave() {
+        saveJob?.cancel()
+        saveJob = scope.launch {
+            delay(SAVE_DEBOUNCE_MS)
+            val snapshot = snapshot()
+            launch(Dispatchers.IO) { store.save(snapshot) }
         }
     }
 
@@ -294,6 +334,7 @@ class DesktopPlayer(
     }
 
     fun release() {
+        store.save(snapshot())
         scope.cancel()
         active.mpv.destroy()
         standby.mpv.destroy()
@@ -302,6 +343,7 @@ class DesktopPlayer(
     private fun load(index: Int) {
         val song = queue.getOrNull(index) ?: return
         cancelFade()
+        resumeAt = null
         current = index
         loading = true
         active.song = song
@@ -324,7 +366,13 @@ class DesktopPlayer(
 
     private fun onEvent(deck: Deck, event: MpvEvent) {
         when (event) {
-            MpvEvent.FileLoaded -> deck.hasFile = true
+            MpvEvent.FileLoaded -> {
+                deck.hasFile = true
+                if (deck === active) {
+                    resumeAt?.let { deck.mpv.command("seek", (it / 1000.0).toString(), "absolute") }
+                    resumeAt = null
+                }
+            }
             MpvEvent.PlaybackRestart -> {
                 deck.buffering = false
                 if (deck === active) {
@@ -568,6 +616,7 @@ class DesktopPlayer(
     }
 
     private fun publish() {
+        scheduleSave()
         _state.value = PlayerState(
             current = queue.getOrNull(current),
             isPlaying = active.hasFile && !active.paused && !loading && !active.buffering,
@@ -593,5 +642,7 @@ class DesktopPlayer(
         const val PRELOAD_MS = 15_000L
         const val MIN_GAIN_DB = -15f
         const val MAX_GAIN_DB = 6f
+        const val SAVE_INTERVAL_MS = 10_000L
+        const val SAVE_DEBOUNCE_MS = 1_000L
     }
 }

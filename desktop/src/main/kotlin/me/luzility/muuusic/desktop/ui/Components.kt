@@ -3,6 +3,8 @@ package me.luzility.muuusic.desktop.ui
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.ScrollableState
+import androidx.compose.foundation.gestures.animateScrollBy
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.hoverable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -20,12 +22,18 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowLeft
+import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
 import androidx.compose.material.icons.automirrored.rounded.PlaylistAdd
 import androidx.compose.material.icons.automirrored.rounded.QueueMusic
+import androidx.compose.material.icons.rounded.DeleteOutline
+import androidx.compose.material.icons.rounded.Download
 import androidx.compose.material.icons.rounded.Favorite
 import androidx.compose.material.icons.rounded.FavoriteBorder
 import androidx.compose.material.icons.rounded.GraphicEq
@@ -41,14 +49,18 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.LoadingIndicator
+import androidx.compose.material3.MaterialShapes
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.toShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -75,7 +87,6 @@ import me.luzility.muuusic.data.model.BrowseSection
 import me.luzility.muuusic.data.model.MusicCollection
 import me.luzility.muuusic.data.model.Song
 import me.luzility.muuusic.desktop.playback.QueueResult
-import androidx.compose.material3.SnackbarHostState
 
 val LocalSnackbar = staticCompositionLocalOf<SnackbarHostState> { error("SnackbarHostState not provided") }
 
@@ -159,7 +170,14 @@ fun SongRow(
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
-            Text(song.artist, style = MaterialTheme.typography.bodyMedium, color = colors.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                val download = downloadStatuses()[song.id]
+                if (download != null) {
+                    DownloadBadge(download)
+                    Spacer(Modifier.width(6.dp))
+                }
+                Text(song.artist, style = MaterialTheme.typography.bodyMedium, color = colors.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            }
         }
         IconButton(
             onClick = { scope.launch { services.library.setLiked(song, !liked) } },
@@ -223,6 +241,16 @@ fun SongMenu(song: Song, open: androidx.compose.runtime.MutableState<Boolean>, s
                 leadingIcon = { Icon(Icons.Rounded.LibraryAdd, null) },
                 onClick = { adding = true; open.value = false },
             )
+            val downloads = LocalServices.current.downloads
+            val downloaded = downloadStatuses()[song.id] != null
+            DropdownMenuItem(
+                text = { Text(str(if (downloaded) "remove_download" else "download")) },
+                leadingIcon = { Icon(if (downloaded) Icons.Rounded.DeleteOutline else Icons.Rounded.Download, null) },
+                onClick = {
+                    if (downloaded) downloads.remove(song.id) else downloads.download(listOf(song))
+                    open.value = false
+                },
+            )
             DropdownMenuItem(
                 text = { Text(str("start_radio")) },
                 leadingIcon = { Icon(Icons.Rounded.Radio, null) },
@@ -281,8 +309,9 @@ fun BrowseShelf(section: BrowseSection) {
     val player = LocalPlayer.current
     val navigator = LocalNavigator.current
     val songs = section.items.filterIsInstance<BrowseItem.SongItem>().map { it.song }
-    SectionTitle(section.title)
-    LazyRow(contentPadding = PaddingValues(horizontal = 24.dp), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+    val listState = rememberLazyListState()
+    ShelfHeader(section.title, listState)
+    LazyRow(state = listState, contentPadding = PaddingValues(horizontal = 24.dp), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
         itemsIndexed(section.items) { _, item ->
             when (item) {
                 is BrowseItem.SongItem -> {
@@ -363,3 +392,54 @@ fun logoPainter(): androidx.compose.ui.graphics.painter.Painter {
     }
     return androidx.compose.ui.graphics.vector.rememberVectorPainter(vector)
 }
+
+@Composable
+fun ShelfHeader(title: String, state: ScrollableState, step: () -> Float = { (state as? LazyListState)?.layoutInfo?.viewportSize?.width?.times(0.8f) ?: 600f }) {
+    Row(verticalAlignment = Alignment.Bottom) {
+        SectionTitle(title, Modifier.weight(1f))
+        if (state.canScrollBackward || state.canScrollForward) {
+            Row(Modifier.padding(end = 32.dp, bottom = 12.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                ScrollArrow(state, forward = false, step = step)
+                ScrollArrow(state, forward = true, step = step)
+            }
+        }
+    }
+}
+
+@Composable
+fun ScrollArrow(
+    state: ScrollableState,
+    forward: Boolean,
+    modifier: Modifier = Modifier,
+    step: () -> Float = { (state as? LazyListState)?.layoutInfo?.viewportSize?.width?.times(0.8f) ?: 600f },
+) {
+    val scope = rememberCoroutineScope()
+    FilledTonalIconButton(
+        onClick = {
+            val distance = step()
+            scope.launch { state.animateScrollBy(if (forward) distance else -distance) }
+        },
+        enabled = if (forward) state.canScrollForward else state.canScrollBackward,
+        shapes = IconButtonDefaults.shapes(),
+        modifier = modifier.size(36.dp),
+    ) {
+        Icon(
+            if (forward) Icons.AutoMirrored.Rounded.KeyboardArrowRight else Icons.AutoMirrored.Rounded.KeyboardArrowLeft,
+            str(if (forward) "next" else "previous"),
+        )
+    }
+}
+
+private val playfulShapes = listOf(
+    MaterialShapes.Cookie9Sided,
+    MaterialShapes.Clover4Leaf,
+    MaterialShapes.SoftBurst,
+    MaterialShapes.Pentagon,
+    MaterialShapes.Cookie6Sided,
+    MaterialShapes.Arch,
+    MaterialShapes.Sunny,
+    MaterialShapes.Gem,
+)
+
+@Composable
+fun playfulShape(index: Int): Shape = playfulShapes[index % playfulShapes.size].toShape()

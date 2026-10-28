@@ -2,6 +2,8 @@ package me.luzility.muuusic.desktop
 
 import androidx.room.Room
 import androidx.sqlite.driver.bundled.BundledSQLiteDriver
+import java.io.File
+import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -13,6 +15,8 @@ import me.luzility.muuusic.data.innertube.InnerTubeClient
 import me.luzility.muuusic.data.lyrics.LyricsRepository
 import me.luzility.muuusic.data.lyrics.LyricsSettings
 import me.luzility.muuusic.data.lyrics.LyricsTranslator
+import me.luzility.muuusic.data.recognition.ShazamClient
+import me.luzility.muuusic.data.recognition.SongRecognizer
 import me.luzility.muuusic.data.search.SearchHistory
 import me.luzility.muuusic.data.settings.AppSettings
 import me.luzility.muuusic.data.settings.Hints
@@ -21,8 +25,6 @@ import me.luzility.muuusic.data.update.Updates
 import me.luzility.muuusic.data.youtube.YouTubeRepository
 import me.luzility.muuusic.playback.audio.LoudnessStore
 import okhttp3.OkHttpClient
-import java.io.File
-import java.util.concurrent.TimeUnit
 
 class DesktopServices(val dataDir: File) {
     val okHttp: OkHttpClient = OkHttpClient.Builder()
@@ -46,6 +48,7 @@ class DesktopServices(val dataDir: File) {
     val updates by lazy { Updates(stores, okHttp) }
     val loudness by lazy { LoudnessStore(stores) }
     val sponsorBlock by lazy { SponsorBlock(okHttp) }
+    val recognizer by lazy { SongRecognizer(ShazamClient(okHttp)) }
 
     private val database = Room.databaseBuilder<MuuusicDatabase>(File(dataDir, "muuusic.db").absolutePath)
         .addMigrations(MuuusicDatabase.MIGRATION_1_2, MuuusicDatabase.MIGRATION_2_3)
@@ -58,6 +61,8 @@ class DesktopServices(val dataDir: File) {
     val backup by lazy { Backup(stores, database, playlists) }
 
     val streamCache = StreamCache(File(dataDir, "cache"), okHttp, youtube, settings)
+
+    val downloads by lazy { DesktopDownloads(File(dataDir, "downloads"), okHttp, youtube) }
 
     companion object {
         fun defaultDataDir(): File {

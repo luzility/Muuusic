@@ -5,9 +5,11 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -21,8 +23,9 @@ import androidx.compose.material.icons.automirrored.rounded.VolumeDown
 import androidx.compose.material.icons.automirrored.rounded.VolumeOff
 import androidx.compose.material.icons.automirrored.rounded.VolumeUp
 import androidx.compose.material.icons.rounded.Favorite
-import androidx.compose.material.icons.rounded.Lyrics
 import androidx.compose.material.icons.rounded.FavoriteBorder
+import androidx.compose.material.icons.rounded.Lyrics
+import androidx.compose.material.icons.rounded.MoreVert
 import androidx.compose.material.icons.rounded.Pause
 import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material.icons.rounded.Repeat
@@ -30,6 +33,7 @@ import androidx.compose.material.icons.rounded.RepeatOne
 import androidx.compose.material.icons.rounded.Shuffle
 import androidx.compose.material.icons.rounded.SkipNext
 import androidx.compose.material.icons.rounded.SkipPrevious
+import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -68,6 +72,7 @@ import me.luzility.muuusic.desktop.playback.PlayerState
 import me.luzility.muuusic.desktop.playback.RepeatMode
 
 val PlayerBarHeight = 96.dp
+private val CompactBarWidth = 1100.dp
 
 @Composable
 fun rememberPlaybackPosition(player: DesktopPlayer, state: PlayerState, intervalMs: Long = 200): State<Long> {
@@ -92,58 +97,65 @@ fun PlayerBar(state: PlayerState, modifier: Modifier = Modifier) {
     val liked by remember(song.id) { services.library.isLiked(song.id) }.collectAsState(initial = false)
 
     Surface(color = colors.surfaceContainer, modifier = modifier.fillMaxWidth().height(PlayerBarHeight)) {
-        Row(Modifier.padding(horizontal = 16.dp), verticalAlignment = Alignment.CenterVertically) {
-            Row(Modifier.weight(0.3f), verticalAlignment = Alignment.CenterVertically) {
-                Artwork(song.thumbnailUrl, Modifier.size(64.dp), MaterialTheme.shapes.large)
-                Spacer(Modifier.width(14.dp))
-                Column(Modifier.weight(1f, fill = false)) {
-                    Text(song.title, style = MaterialTheme.typography.titleMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                    Text(
-                        song.artist,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = colors.onSurfaceVariant,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.clip(MaterialTheme.shapes.extraSmall).clickable { navigator.openArtist(song.artist, song.artistUrl) },
-                    )
+        BoxWithConstraints {
+            val compact = maxWidth < CompactBarWidth
+            Row(Modifier.fillMaxSize().padding(horizontal = 16.dp), verticalAlignment = Alignment.CenterVertically) {
+                Row(Modifier.weight(if (compact) 1f else 0.3f), verticalAlignment = Alignment.CenterVertically) {
+                    Artwork(song.thumbnailUrl, Modifier.size(64.dp), MaterialTheme.shapes.large)
+                    Spacer(Modifier.width(14.dp))
+                    Column(Modifier.weight(1f, fill = false)) {
+                        Text(song.title, style = MaterialTheme.typography.titleMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                        Text(
+                            song.artist,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = colors.onSurfaceVariant,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.clip(MaterialTheme.shapes.extraSmall).clickable { navigator.openArtist(song.artist, song.artistUrl) },
+                        )
+                    }
+                    IconButton(onClick = { scope.launch { services.library.setLiked(song, !liked) } }, shapes = IconButtonDefaults.shapes()) {
+                        Icon(
+                            if (liked) Icons.Rounded.Favorite else Icons.Rounded.FavoriteBorder,
+                            str(if (liked) "unlike" else "like"),
+                            tint = if (liked) colors.primary else colors.onSurfaceVariant,
+                        )
+                    }
                 }
-                IconButton(onClick = { scope.launch { services.library.setLiked(song, !liked) } }, shapes = IconButtonDefaults.shapes()) {
-                    Icon(
-                        if (liked) Icons.Rounded.Favorite else Icons.Rounded.FavoriteBorder,
-                        str(if (liked) "unlike" else "like"),
-                        tint = if (liked) colors.primary else colors.onSurfaceVariant,
-                    )
-                }
-            }
 
-            Column(
-                Modifier.weight(0.4f).widthIn(max = 640.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(2.dp),
-            ) {
-                Controls(state)
-                Seek(state)
-            }
+                Column(
+                    if (compact) Modifier.width(320.dp) else Modifier.weight(0.4f).widthIn(max = 640.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(2.dp),
+                ) {
+                    Controls(state)
+                    Seek(state)
+                }
 
-            Row(Modifier.weight(0.3f), horizontalArrangement = Arrangement.End, verticalAlignment = Alignment.CenterVertically) {
-                SpeedButton()
-                KaraokeButton()
-                SleepTimerButton()
-                IconToggleButton(
-                    checked = navigator.panel == Panel.Lyrics,
-                    onCheckedChange = { navigator.togglePanel(Panel.Lyrics) },
-                    shapes = IconButtonDefaults.toggleableShapes(),
-                ) {
-                    Icon(Icons.Rounded.Lyrics, str("lyrics"))
+                Row(if (compact) Modifier else Modifier.weight(0.3f), horizontalArrangement = Arrangement.End, verticalAlignment = Alignment.CenterVertically) {
+                    if (compact) {
+                        MoreButton()
+                    } else {
+                        SpeedButton()
+                        KaraokeButton()
+                        SleepTimerButton()
+                    }
+                    IconToggleButton(
+                        checked = navigator.panel == Panel.Lyrics,
+                        onCheckedChange = { navigator.togglePanel(Panel.Lyrics) },
+                        shapes = IconButtonDefaults.toggleableShapes(),
+                    ) {
+                        Icon(Icons.Rounded.Lyrics, str("lyrics"))
+                    }
+                    IconToggleButton(
+                        checked = navigator.panel == Panel.Queue,
+                        onCheckedChange = { navigator.togglePanel(Panel.Queue) },
+                        shapes = IconButtonDefaults.toggleableShapes(),
+                    ) {
+                        Icon(Icons.AutoMirrored.Rounded.QueueMusic, str("queue"))
+                    }
+                    Volume(compact)
                 }
-                IconToggleButton(
-                    checked = navigator.panel == Panel.Queue,
-                    onCheckedChange = { navigator.togglePanel(Panel.Queue) },
-                    shapes = IconButtonDefaults.toggleableShapes(),
-                ) {
-                    Icon(Icons.AutoMirrored.Rounded.QueueMusic, str("queue"))
-                }
-                Volume()
             }
         }
     }
@@ -222,7 +234,7 @@ private fun Seek(state: PlayerState) {
 }
 
 @Composable
-private fun Volume() {
+private fun Volume(compact: Boolean) {
     val player = LocalPlayer.current
     val volume by player.volume.collectAsState()
     var beforeMute by remember { mutableFloatStateOf(1f) }
@@ -246,10 +258,32 @@ private fun Volume() {
             str("volume"),
         )
     }
-    Box(Modifier.width(120.dp)) {
-        SlimSlider(value = volume, onValueChange = player::setVolume, onValueChangeFinished = {}, thumbHeight = 18.dp) { progress ->
-            LinearProgressIndicator(progress = { progress }, modifier = Modifier.fillMaxWidth().height(6.dp), gapSize = 0.dp, drawStopIndicator = {})
+    Box(Modifier.width(if (compact) 88.dp else 120.dp)) {
+        VolumeSlider(volume, player::setVolume)
+    }
+}
+
+@Composable
+private fun MoreButton() {
+    var open by remember { mutableStateOf(false) }
+    Box {
+        IconButton(onClick = { open = true }, shapes = IconButtonDefaults.shapes()) {
+            Icon(Icons.Rounded.MoreVert, str("more"))
         }
+        DropdownMenu(expanded = open, onDismissRequest = { open = false }, shape = MaterialTheme.shapes.extraLarge) {
+            Row(Modifier.padding(horizontal = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+                SpeedButton()
+                KaraokeButton()
+                SleepTimerButton()
+            }
+        }
+    }
+}
+
+@Composable
+private fun VolumeSlider(volume: Float, onChange: (Float) -> Unit) {
+    SlimSlider(value = volume, onValueChange = onChange, onValueChangeFinished = {}, thumbHeight = 18.dp) { progress ->
+        LinearProgressIndicator(progress = { progress }, modifier = Modifier.fillMaxWidth().height(6.dp), gapSize = 0.dp, drawStopIndicator = {})
     }
 }
 

@@ -161,9 +161,13 @@
     <string name="recognize_no_permission">Mikrofon izni gerekli</string>
     <string name="recognize_no_permission_hint">Çalan şarkıyı duyabilmek için Muuusic\'in mikrofona erişmesi gerekiyor.</string>
     <string name="recognize_allow">İzin ver</string>
+    <string name="recognize_listening_hint_desktop">Şarkıyı bilgisayarında çal</string>
+    <string name="recognize_no_capture">Bilgisayarın sesi alınamıyor</string>
+    <string name="recognize_no_capture_hint">Muuusic sesi PulseAudio ya da PipeWire üzerinden dinler. Kullanmak için pulseaudio-utils veya pipewire kur.</string>
     <string name="settings_lab">Laboratuvar</string>
     <string name="settings_song_recognition">Şarkı tanıma</string>
     <string name="settings_song_recognition_summary">Çalan şarkıyı mikrofonla tanır. Resmî olmayan bir servis kullanır, çalışmayı bırakabilir.</string>
+    <string name="settings_song_recognition_summary_desktop">Bilgisayarında çalanı tanır, örneğin tarayıcıdaki bir videoyu. Resmî olmayan bir servis kullanır, çalışmayı bırakabilir.</string>
     <string-array name="search_genres">
         <item>Pop</item>
         <item>Türkçe Pop</item>

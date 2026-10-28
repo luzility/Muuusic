@@ -23,6 +23,7 @@ import androidx.compose.material.icons.rounded.Home
 import androidx.compose.material.icons.rounded.LibraryMusic
 import androidx.compose.material.icons.rounded.Menu
 import androidx.compose.material.icons.rounded.Search
+import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -40,8 +41,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -58,7 +61,6 @@ import me.luzility.muuusic.desktop.ui.pages.PlaylistPage
 import me.luzility.muuusic.desktop.ui.pages.SearchModel
 import me.luzility.muuusic.desktop.ui.pages.SearchPage
 import me.luzility.muuusic.desktop.ui.pages.SettingsPage
-import androidx.compose.material.icons.rounded.Settings
 
 private enum class Tab(val route: Route, val label: String, val icon: ImageVector) {
     Home(Route.Home, "nav_home", Icons.Rounded.Home),
@@ -118,13 +120,15 @@ fun App(services: DesktopServices, player: DesktopPlayer, navigator: Navigator) 
                                     }
                                 }
                             }
+                            var lastPanel by remember { mutableStateOf(Panel.Queue) }
+                            navigator.panel?.let { lastPanel = it }
                             AnimatedVisibility(
                                 visible = navigator.panel != null && state.current != null,
                                 enter = expandHorizontally(MaterialTheme.motionScheme.defaultSpatialSpec()) + fadeIn(),
                                 exit = shrinkHorizontally(MaterialTheme.motionScheme.fastSpatialSpec()) + fadeOut(),
                             ) {
                                 SidePanel(
-                                    panel = navigator.panel ?: Panel.Queue,
+                                    panel = lastPanel,
                                     onSelect = { navigator.panel = it },
                                     onClose = { navigator.panel = null },
                                 )
@@ -139,6 +143,15 @@ fun App(services: DesktopServices, player: DesktopPlayer, navigator: Navigator) 
                         }
                     }
                     SnackbarHost(snackbar, Modifier.align(Alignment.BottomCenter).padding(bottom = PlayerBarHeight + 16.dp))
+                    AnimatedVisibility(visible = search.recognizing, enter = fadeIn(), exit = fadeOut()) {
+                        RecognitionOverlay(
+                            onClose = { search.recognizing = false },
+                            onResult = { query ->
+                                search.recognizing = false
+                                search.search(query)
+                            },
+                        )
+                    }
                 }
             }
         }

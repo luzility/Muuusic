@@ -32,8 +32,9 @@ fun main() {
     NewPipe.init(NewPipeDownloader(services.okHttp), Localization.fromLocale(locale), ContentCountry(locale.country.ifEmpty { "US" }))
 
     application {
-        val player = remember { DesktopPlayer(services) }
+        val player = remember { DesktopPlayer(services, localFile = services.downloads::fileFor) }
         val navigator = remember { Navigator() }
+        remember { DesktopPresence(services.scope, player, services.settings) }
         Window(
             onCloseRequest = {
                 player.release()

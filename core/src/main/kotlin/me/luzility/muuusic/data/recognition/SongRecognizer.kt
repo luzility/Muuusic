@@ -1,10 +1,5 @@
 package me.luzility.muuusic.data.recognition
 
-import android.Manifest
-import android.media.AudioFormat
-import android.media.AudioRecord
-import android.media.MediaRecorder
-import androidx.annotation.RequiresPermission
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -13,6 +8,11 @@ import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.withContext
 import kotlin.math.log10
 import kotlin.math.sqrt
+
+interface PcmSource {
+    fun read(buffer: ShortArray): Int
+    fun close()
+}
 
 // Lookups go out after 4, 8 and 12 s of audio; first match wins.
 class SongRecognizer(private val client: ShazamClient) {
@@ -24,27 +24,11 @@ class SongRecognizer(private val client: ShazamClient) {
     }
 
     // onLevel gets 0..1 about 15 times a second; onSearching fires when only a lookup is left.
-    @RequiresPermission(Manifest.permission.RECORD_AUDIO)
-    suspend fun recognize(onLevel: (Float) -> Unit, onSearching: () -> Unit): Result = withContext(Dispatchers.Default) {
-        val minBuffer = AudioRecord.getMinBufferSize(
-            ShazamSignature.SAMPLE_RATE, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT,
-        )
-        val recorder = AudioRecord(
-            MediaRecorder.AudioSource.MIC,
-            ShazamSignature.SAMPLE_RATE,
-            AudioFormat.CHANNEL_IN_MONO,
-            AudioFormat.ENCODING_PCM_16BIT,
-            maxOf(minBuffer, READ_SIZE * 4),
-        )
-        if (recorder.state != AudioRecord.STATE_INITIALIZED) {
-            recorder.release()
-            return@withContext Result.Failed
-        }
-
+    suspend fun recognize(open: () -> PcmSource?, onLevel: (Float) -> Unit, onSearching: () -> Unit): Result = withContext(Dispatchers.Default) {
+        val source = open() ?: return@withContext Result.Failed
         val signature = ShazamSignature()
         val buffer = ShortArray(READ_SIZE)
         try {
-            recorder.startRecording()
             coroutineScope {
                 val lookups = mutableListOf<Deferred<kotlin.Result<RecognizedSong?>>>()
                 var failures = 0
@@ -61,7 +45,7 @@ class SongRecognizer(private val client: ShazamClient) {
                         }
                         if (outcome.isFailure) failures++
                     }
-                    val read = recorder.read(buffer, 0, buffer.size)
+                    val read = source.read(buffer)
                     if (read < 0) {
                         lookups.forEach { it.cancel() }
                         return@coroutineScope Result.Failed
@@ -76,7 +60,7 @@ class SongRecognizer(private val client: ShazamClient) {
                         next++
                     }
                 }
-                recorder.stop()
+                source.close()
                 onSearching()
                 for (lookup in lookups) {
                     val outcome = lookup.await()
@@ -90,8 +74,7 @@ class SongRecognizer(private val client: ShazamClient) {
                 if (failures == CHECKPOINTS_SECONDS.size) Result.Failed else Result.NotFound
             }
         } finally {
-            if (recorder.recordingState == AudioRecord.RECORDSTATE_RECORDING) recorder.stop()
-            recorder.release()
+            source.close()
         }
     }
 

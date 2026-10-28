@@ -32,6 +32,7 @@ import androidx.compose.material.icons.rounded.Backup
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.GraphicEq
+import androidx.compose.material.icons.rounded.Hub
 import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material.icons.rounded.Lyrics
 import androidx.compose.material.icons.rounded.Palette
@@ -114,12 +115,14 @@ private enum class Category(val title: String, val summary: String, val icon: Im
     Lab("settings_lab", "settings_lab_summary", Icons.Rounded.Science, 7),
     Updates("settings_updates", "settings_updates_summary", Icons.Rounded.SystemUpdate, 8),
     About("settings_about", "settings_about_summary", Icons.Rounded.Info, 9),
+    Integrations("settings_integrations", "settings_integrations_summary", Icons.Rounded.Hub, 10),
 }
 
 private val sections = listOf(
     listOf(Category.Appearance, Category.Playback, Category.Sound, Category.Lyrics),
     listOf(Category.Storage, Category.Backup),
-    listOf(Category.Lab, Category.Updates, Category.About),
+    listOf(Category.Integrations, Category.Lab),
+    listOf(Category.Updates, Category.About),
 )
 
 private val index = listOf(
@@ -142,8 +145,10 @@ private val index = listOf(
     "settings_clear_history" to Category.Storage,
     "settings_backup_create" to Category.Backup,
     "settings_backup_restore" to Category.Backup,
+    "settings_discord" to Category.Integrations,
     "settings_karaoke" to Category.Lab,
     "settings_karaoke_strength" to Category.Lab,
+    "settings_song_recognition" to Category.Lab,
     "settings_check_updates" to Category.Updates,
     "settings_update_channel" to Category.Updates,
     "settings_source" to Category.About,
@@ -359,8 +364,16 @@ private fun CategoryContent(category: Category, onOpenEqualizer: () -> Unit) {
                     onSelect = { value -> settings.update { it.copy(karaokeStrength = value) } },
                 )
             },
+            {
+                SwitchSetting(str("settings_song_recognition"), str("settings_song_recognition_summary_desktop"), prefs.songRecognition) { on ->
+                    settings.update { it.copy(songRecognition = on) }
+                }
+            },
         )
         Category.Updates -> UpdateSettings()
+        Category.Integrations -> SettingsGroup(
+            { SwitchSetting(str("settings_discord"), str("settings_discord_summary"), prefs.discordPresence) { on -> settings.update { it.copy(discordPresence = on) } } },
+        )
         Category.About -> Column {
             AboutCard()
             Spacer(Modifier.height(8.dp))
@@ -382,7 +395,12 @@ private fun StorageSettings() {
     val scope = rememberCoroutineScope()
     var cacheUsed by remember { mutableLongStateOf(-1L) }
     var confirmHistory by remember { mutableStateOf(false) }
-    LaunchedEffect(Unit) { cacheUsed = withContext(Dispatchers.IO) { services.streamCache.bytesUsed() } }
+    var confirmDownloads by remember { mutableStateOf(false) }
+    var downloadsUsed by remember { mutableLongStateOf(-1L) }
+    LaunchedEffect(Unit) {
+        cacheUsed = withContext(Dispatchers.IO) { services.streamCache.bytesUsed() }
+        downloadsUsed = withContext(Dispatchers.IO) { services.downloads.bytesUsed() }
+    }
     SettingsGroup(
         {
             ChoiceSetting(
@@ -402,8 +420,29 @@ private fun StorageSettings() {
                 }
             }
         },
+        {
+            ActionSetting(
+                str("settings_remove_downloads"),
+                str("settings_downloads_used", if (downloadsUsed >= 0) formatBytes(downloadsUsed) else "…") + "\n" + str("settings_remove_downloads_summary"),
+            ) { confirmDownloads = true }
+        },
         { ActionSetting(str("settings_clear_history"), str("settings_clear_history_summary")) { confirmHistory = true } },
     )
+    if (confirmDownloads) {
+        AlertDialog(
+            onDismissRequest = { confirmDownloads = false },
+            title = { Text(str("settings_remove_downloads")) },
+            text = { Text(str("settings_remove_downloads_confirm")) },
+            confirmButton = {
+                TextButton(onClick = {
+                    services.downloads.removeAll()
+                    downloadsUsed = 0
+                    confirmDownloads = false
+                }) { Text(str("delete")) }
+            },
+            dismissButton = { TextButton(onClick = { confirmDownloads = false }) { Text(str("cancel")) } },
+        )
+    }
     if (confirmHistory) {
         AlertDialog(
             onDismissRequest = { confirmHistory = false },
