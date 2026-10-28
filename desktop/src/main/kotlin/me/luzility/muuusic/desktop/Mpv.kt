@@ -114,15 +114,14 @@ class Mpv(private val onEvent: (MpvEvent) -> Unit) {
 
         private val library: LibMpv by lazy {
             useCNumericLocale()
-            listOfNotNull(System.getenv("MUUUSIC_LIBMPV"), "mpv", "mpv-2", "libmpv-2").firstNotNullOfOrNull { name ->
+            listOfNotNull(System.getenv("MUUUSIC_LIBMPV"), Platform.bundled("libmpv-2.dll")?.absolutePath, "mpv", "mpv-2", "libmpv-2").firstNotNullOfOrNull { name ->
                 runCatching { Native.load(name, LibMpv::class.java) }.getOrNull()
             } ?: error("libmpv not found")
         }
 
         private fun useCNumericLocale() {
-            val os = System.getProperty("os.name").lowercase()
-            if (os.contains("win")) return
-            val category = if (os.contains("mac")) LC_NUMERIC_MAC else LC_NUMERIC_LINUX
+            if (Platform.isWindows) return
+            val category = if (Platform.isMac) LC_NUMERIC_MAC else LC_NUMERIC_LINUX
             runCatching { Native.load("c", LibC::class.java).setlocale(category, "C") }
         }
     }

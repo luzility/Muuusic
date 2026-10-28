@@ -10,3 +10,4 @@ build/
 .cxx/
 *.keystore
 *.jks
+/desktop/resources/

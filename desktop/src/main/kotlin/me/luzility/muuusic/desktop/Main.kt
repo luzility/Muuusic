@@ -67,12 +67,14 @@ fun main() {
         var trayMenu by remember { mutableStateOf<IntOffset?>(null) }
         var frame by remember { mutableStateOf<ComposeWindow?>(null) }
         val miniState = remember { WindowState(size = DpSize(400.dp, 120.dp), position = WindowPosition(Alignment.BottomEnd)) }
-        lateinit var mpris: Mpris
-        lateinit var tray: Tray
+        var mpris: Mpris? = null
+        var mediaKeys: WindowsMediaKeys? = null
+        lateinit var tray: AppTray
         fun quit(restart: Boolean) {
             if (!open) return
             open = false
-            mpris.close()
+            mpris?.close()
+            mediaKeys?.close()
             tray.close()
             player.release()
             Thread {
@@ -98,15 +100,20 @@ fun main() {
         }
         fun keepsPlaying() = tray.available.value && services.settings.prefs.value.closeToTray
         mpris = remember {
-            Mpris(
-                services.scope,
-                player,
-                onRaise = { showWindow() },
-                onQuit = { quit(false) },
-            )
+            if (Platform.isWindows) {
+                null
+            } else {
+                Mpris(
+                    services.scope,
+                    player,
+                    onRaise = { showWindow() },
+                    onQuit = { quit(false) },
+                )
+            }
         }
+        mediaKeys = remember { if (Platform.isWindows) WindowsMediaKeys(services.scope, player) else null }
         tray = remember {
-            Tray(
+            AppTray.create(
                 services.scope,
                 player,
                 onActivate = { if (windowVisible && frame?.isActive == true) hideToTray() else showWindow() },

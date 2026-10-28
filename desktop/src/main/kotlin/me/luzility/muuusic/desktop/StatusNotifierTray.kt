@@ -18,9 +18,6 @@ import org.freedesktop.dbus.interfaces.DBusInterface
 import org.freedesktop.dbus.interfaces.Properties
 import org.freedesktop.dbus.messages.DBusSignal
 import org.freedesktop.dbus.types.Variant
-import java.awt.RenderingHints
-import java.awt.image.BufferedImage
-import javax.imageio.ImageIO
 
 @DBusInterfaceName("org.kde.StatusNotifierItem")
 interface StatusNotifierItem : DBusInterface {
@@ -50,15 +47,15 @@ class ToolTip(
     @field:Position(3) val text: String,
 ) : Struct()
 
-class Tray(
+class StatusNotifierTray(
     private val scope: CoroutineScope,
     private val player: DesktopPlayer,
     private val onActivate: () -> Unit,
     private val onMenu: (x: Int, y: Int) -> Unit,
-) : StatusNotifierItem, Properties {
+) : AppTray, StatusNotifierItem, Properties {
     private var connection: DBusConnection? = null
     private val _available = MutableStateFlow(false)
-    val available: StateFlow<Boolean> = _available.asStateFlow()
+    override val available: StateFlow<Boolean> = _available.asStateFlow()
     private val icons: List<IconPixmap> by lazy { loadIcons() }
 
     init {
@@ -67,7 +64,7 @@ class Tray(
             val name = "org.kde.StatusNotifierItem-${ProcessHandle.current().pid()}-1"
             val registered = runCatching {
                 bus.requestBusName(name)
-                bus.exportObject(PATH, this@Tray)
+                bus.exportObject(PATH, this@StatusNotifierTray)
                 bus.getRemoteObject(WATCHER, WATCHER_PATH, StatusNotifierWatcher::class.java).RegisterStatusNotifierItem(name)
             }.isSuccess
             if (!registered) {
@@ -82,7 +79,7 @@ class Tray(
         }
     }
 
-    fun close() {
+    override fun close() {
         _available.value = false
         runCatching { connection?.close() }
     }
@@ -127,25 +124,16 @@ class Tray(
         )
     }
 
-    private fun loadIcons(): List<IconPixmap> {
-        val source = javaClass.classLoader.getResourceAsStream("icon/muuusic.png")?.use { ImageIO.read(it) } ?: return emptyList()
-        return listOf(22, 32, 48, 64).map { size ->
-            val image = BufferedImage(size, size, BufferedImage.TYPE_INT_ARGB)
-            image.createGraphics().apply {
-                setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC)
-                setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY)
-                drawImage(source, 0, 0, size, size, null)
-                dispose()
-            }
-            val data = ByteArray(size * size * 4)
-            image.getRGB(0, 0, size, size, null, 0, size).forEachIndexed { i, argb ->
-                data[i * 4] = (argb ushr 24).toByte()
-                data[i * 4 + 1] = (argb ushr 16).toByte()
-                data[i * 4 + 2] = (argb ushr 8).toByte()
-                data[i * 4 + 3] = argb.toByte()
-            }
-            IconPixmap(size, size, data)
+    private fun loadIcons(): List<IconPixmap> = listOf(22, 32, 48, 64).mapNotNull { size ->
+        val image = trayIcon(size) ?: return@mapNotNull null
+        val data = ByteArray(size * size * 4)
+        image.getRGB(0, 0, size, size, null, 0, size).forEachIndexed { i, argb ->
+            data[i * 4] = (argb ushr 24).toByte()
+            data[i * 4 + 1] = (argb ushr 16).toByte()
+            data[i * 4 + 2] = (argb ushr 8).toByte()
+            data[i * 4 + 3] = argb.toByte()
         }
+        IconPixmap(size, size, data)
     }
 
     private fun onMain(block: () -> Unit) {

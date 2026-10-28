@@ -41,7 +41,9 @@ class SystemAudioSource private constructor(private val process: Process) : PcmS
             listOf("pw-record", "-P", "{ stream.capture.sink=true }", "--rate", rate, "--channels", "1", "--format", "s16", "-"),
         )
 
-        val isSupported: Boolean by lazy { commands.any { onPath(it.first()) } }
+        val isPlatformSupported = !Platform.isWindows
+
+        val isSupported: Boolean by lazy { isPlatformSupported && commands.any { onPath(it.first()) } }
 
         fun open(): SystemAudioSource? {
             val command = commands.firstOrNull { onPath(it.first()) } ?: return null

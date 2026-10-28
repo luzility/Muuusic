@@ -8,6 +8,12 @@ plugins {
 
 val appVersion = (findProperty("versionName") as String?) ?: "0.1.0"
 
+fun msiVersionOf(version: String): String {
+    val match = Regex("""(\d+)\.(\d+)\.(\d+)(?:-beta\.(\d+))?""").matchEntire(version) ?: return "0.0.1"
+    val (major, minor, patch, beta) = match.destructured
+    return "$major.$minor.${patch.toInt() * 1000 + (beta.toIntOrNull() ?: 999)}"
+}
+
 kotlin {
     jvmToolchain(21)
     compilerOptions {
@@ -53,6 +59,7 @@ dependencies {
     implementation(libs.sqlite.bundled)
     implementation(libs.org.json)
     implementation(libs.jna)
+    implementation(libs.jna.platform)
     implementation(libs.dbus.java.core)
     implementation(libs.dbus.java.transport)
 }
@@ -68,6 +75,15 @@ compose.desktop {
             vendor = "Luzi"
             packageVersion = appVersion.substringBefore("-")
             modules("java.sql", "jdk.httpserver", "jdk.unsupported")
+            appResourcesRootDir = project.layout.projectDirectory.dir("resources")
+            windows {
+                iconFile = project.file("packaging/muuusic.ico")
+                msiPackageVersion = msiVersionOf(appVersion)
+                upgradeUuid = "3393bbc7-efd5-4bc2-a357-8fc6633c92cc"
+                menuGroup = "Muuusic"
+                perUserInstall = true
+                shortcut = true
+            }
             linux {
                 packageName = "muuusic"
                 iconFile = project.file("packaging/muuusic.png")

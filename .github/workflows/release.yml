@@ -90,9 +90,44 @@ jobs:
           name: linux
           path: desktop/build/release/*
 
+  windows:
+    needs: version
+    runs-on: windows-latest
+    env:
+      MPV_BUILD: "20261021"
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - uses: gradle/actions/setup-gradle@v6
+
+      - name: Fetch libmpv
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release download "$MPV_BUILD" --repo shinchiro/mpv-winbuild-cmake --pattern "mpv-dev-x86_64-2*.7z" --dir "$RUNNER_TEMP/mpv"
+          7z e "$RUNNER_TEMP"/mpv/*.7z -o"desktop/resources/windows" libmpv-2.dll -r -y
+
+      - name: Build MSI
+        shell: bash
+        run: |
+          ./gradlew :desktop:packageMsi -PversionName=${{ needs.version.outputs.name }}
+          mkdir -p dist
+          cp desktop/build/compose/binaries/main/msi/*.msi "dist/Muuusic-${{ needs.version.outputs.name }}-x64.msi"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows
+          path: dist/*.msi
+
   publish:
     if: github.event_name == 'push'
-    needs: [version, android, linux]
+    needs: [version, android, linux, windows]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7

@@ -95,7 +95,7 @@ class DiscordRpc(scope: CoroutineScope) {
     }
 
     private fun candidates(): List<String> {
-        if (isWindows) return (0..9).map { "\\\\.\\pipe\\discord-ipc-$it" }
+        if (Platform.isWindows) return (0..9).map { "\\\\.\\pipe\\discord-ipc-$it" }
         val bases = listOfNotNull(System.getenv("XDG_RUNTIME_DIR"), System.getenv("TMPDIR"), "/tmp").distinct()
         val folders = bases.flatMap { base ->
             listOf(base, "$base/app/com.discordapp.Discord", "$base/app/com.discordapp.DiscordCanary", "$base/snap.discord", "$base/.flatpak/dev.vencord.Vesktop/xdg-run")
@@ -103,7 +103,7 @@ class DiscordRpc(scope: CoroutineScope) {
         return folders.flatMap { folder -> (0..9).map { "$folder/discord-ipc-$it" } }.filter { File(it).exists() }
     }
 
-    private fun open(path: String): IpcConnection = if (isWindows) PipeConnection(path) else SocketConnection(path)
+    private fun open(path: String): IpcConnection = if (Platform.isWindows) PipeConnection(path) else SocketConnection(path)
 
     private interface IpcConnection : Closeable {
         fun write(bytes: ByteArray)
@@ -163,6 +163,5 @@ class DiscordRpc(scope: CoroutineScope) {
         const val APP_URL = "https://github.com/luzility/Muuusic"
         const val BUTTON_LISTEN = "Listen on YouTube Music"
         const val BUTTON_APP = "Get Muuusic"
-        val isWindows = System.getProperty("os.name").lowercase().contains("win")
     }
 }

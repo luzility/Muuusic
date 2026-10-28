@@ -67,11 +67,10 @@ class DesktopServices(val dataDir: File) {
 
     companion object {
         fun defaultDataDir(): File {
-            val os = System.getProperty("os.name").lowercase()
             val home = System.getProperty("user.home")
             val base = when {
-                os.contains("win") -> System.getenv("APPDATA")?.let(::File) ?: File(home, "AppData/Roaming")
-                os.contains("mac") -> File(home, "Library/Application Support")
+                Platform.isWindows -> System.getenv("APPDATA")?.let(::File) ?: File(home, "AppData/Roaming")
+                Platform.isMac -> File(home, "Library/Application Support")
                 else -> System.getenv("XDG_DATA_HOME")?.let(::File) ?: File(home, ".local/share")
             }
             return File(base, "Muuusic").apply { mkdirs() }

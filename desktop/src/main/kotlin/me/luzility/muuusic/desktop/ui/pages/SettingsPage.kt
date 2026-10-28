@@ -98,6 +98,7 @@ import me.luzility.muuusic.data.settings.ThemeMode
 import me.luzility.muuusic.data.update.AppRelease
 import me.luzility.muuusic.data.update.UpdateChannel
 import me.luzility.muuusic.data.update.Versions
+import me.luzility.muuusic.desktop.SystemAudioSource
 import me.luzility.muuusic.desktop.playback.DesktopEqualizer
 import me.luzility.muuusic.desktop.ui.LocalServices
 import me.luzility.muuusic.desktop.ui.LocalSnackbar
@@ -158,7 +159,7 @@ private val index = listOf(
     "settings_source" to Category.About,
     "settings_report" to Category.About,
     "settings_license" to Category.About,
-)
+).filter { (title, _) -> title != "settings_song_recognition" || SystemAudioSource.isPlatformSupported }
 
 private val CategoryShapes = listOf(
     MaterialShapes.Cookie9Sided,
@@ -357,24 +358,31 @@ private fun CategoryContent(category: Category, onOpenEqualizer: () -> Unit) {
                 }
             },
         )
-        Category.Lab -> SettingsGroup(
-            { SwitchSetting(str("settings_karaoke"), str("settings_karaoke_summary"), prefs.karaoke) { on -> settings.update { it.copy(karaoke = on) } } },
-            {
-                ChoiceSetting(
-                    title = str("settings_karaoke_strength"),
-                    summary = str("settings_karaoke_strength_summary"),
-                    options = Karaoke.strengths,
-                    selected = prefs.karaokeStrength,
-                    label = { "%${(it * 100).toInt()}" },
-                    onSelect = { value -> settings.update { it.copy(karaokeStrength = value) } },
-                )
-            },
-            {
-                SwitchSetting(str("settings_song_recognition"), str("settings_song_recognition_summary_desktop"), prefs.songRecognition) { on ->
-                    settings.update { it.copy(songRecognition = on) }
+        Category.Lab -> {
+            val recognition: (@Composable () -> Unit)? = if (SystemAudioSource.isPlatformSupported) {
+                {
+                    SwitchSetting(str("settings_song_recognition"), str("settings_song_recognition_summary_desktop"), prefs.songRecognition) { on ->
+                        settings.update { it.copy(songRecognition = on) }
+                    }
                 }
-            },
-        )
+            } else {
+                null
+            }
+            SettingsGroup(
+                { SwitchSetting(str("settings_karaoke"), str("settings_karaoke_summary"), prefs.karaoke) { on -> settings.update { it.copy(karaoke = on) } } },
+                {
+                    ChoiceSetting(
+                        title = str("settings_karaoke_strength"),
+                        summary = str("settings_karaoke_strength_summary"),
+                        options = Karaoke.strengths,
+                        selected = prefs.karaokeStrength,
+                        label = { "%${(it * 100).toInt()}" },
+                        onSelect = { value -> settings.update { it.copy(karaokeStrength = value) } },
+                    )
+                },
+                *listOfNotNull(recognition).toTypedArray(),
+            )
+        }
         Category.Updates -> UpdateSettings()
         Category.Integrations -> SettingsGroup(
             { SwitchSetting(str("settings_discord"), str("settings_discord_summary"), prefs.discordPresence) { on -> settings.update { it.copy(discordPresence = on) } } },

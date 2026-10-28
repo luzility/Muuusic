@@ -72,6 +72,7 @@ import kotlinx.coroutines.launch
 import me.luzility.muuusic.data.model.SearchFilter
 import me.luzility.muuusic.data.model.SearchResult
 import me.luzility.muuusic.desktop.DesktopServices
+import me.luzility.muuusic.desktop.SystemAudioSource
 import me.luzility.muuusic.desktop.ui.ErrorBox
 import me.luzility.muuusic.desktop.ui.Loadable
 import me.luzility.muuusic.desktop.ui.LoadingBox
@@ -222,7 +223,7 @@ fun SearchPage(model: SearchModel) {
     val navigator = LocalNavigator.current
     val focus = remember { FocusRequester() }
     LaunchedEffect(Unit) { focus.requestFocus() }
-    val recognition by LocalServices.current.settings.prefs.collectAsState().let { prefs -> remember { derivedStateOf { prefs.value.songRecognition } } }
+    val recognition by LocalServices.current.settings.prefs.collectAsState().let { prefs -> remember { derivedStateOf { prefs.value.songRecognition && SystemAudioSource.isPlatformSupported } } }
 
     Column(Modifier.fillMaxSize()) {
         TextField(
