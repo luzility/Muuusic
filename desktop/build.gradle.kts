@@ -59,8 +59,18 @@ compose.desktop {
         nativeDistributions {
             targetFormats(TargetFormat.Deb, TargetFormat.Msi)
             packageName = "Muuusic"
+            description = "Ad-free YouTube Music client"
+            vendor = "Luzi"
             packageVersion = appVersion.substringBefore("-")
             modules("java.sql", "jdk.httpserver", "jdk.unsupported")
+            linux {
+                packageName = "muuusic"
+                iconFile = project.file("packaging/muuusic.png")
+                menuGroup = "AudioVideo;Audio;Player"
+                appCategory = "sound"
+                debMaintainer = "firatbirer03@gmail.com"
+                shortcut = true
+            }
         }
     }
 }

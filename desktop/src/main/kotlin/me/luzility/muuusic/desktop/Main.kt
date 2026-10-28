@@ -35,19 +35,21 @@ fun main() {
         val player = remember { DesktopPlayer(services, localFile = services.downloads::fileFor) }
         val navigator = remember { Navigator() }
         remember { DesktopPresence(services.scope, player, services.settings) }
+        fun quit(restart: Boolean) {
+            player.release()
+            services.streamCache.stop()
+            if (restart) services.updater.relaunch()
+            exitApplication()
+        }
         Window(
-            onCloseRequest = {
-                player.release()
-                services.streamCache.stop()
-                exitApplication()
-            },
+            onCloseRequest = { quit(false) },
             title = "Muuusic",
             icon = logoPainter(),
             state = rememberWindowState(size = DpSize(1280.dp, 820.dp)),
             onKeyEvent = { event -> event.type == KeyEventType.KeyDown && handleKey(event, player, navigator) },
         ) {
             window.minimumSize = Dimension(900, 600)
-            App(services, player, navigator)
+            App(services, player, navigator, onRestart = { quit(true) })
         }
     }
 }

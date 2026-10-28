@@ -10,7 +10,14 @@ import java.io.IOException
 
 enum class UpdateChannel { Release, Beta }
 
-data class AppRelease(val version: String, val notes: String, val pageUrl: String, val apkUrl: String?, val prerelease: Boolean)
+data class AppRelease(
+    val version: String,
+    val notes: String,
+    val pageUrl: String,
+    val apkUrl: String?,
+    val prerelease: Boolean,
+    val assets: Map<String, String> = emptyMap(),
+)
 
 object Versions {
     private val pattern = Regex("""^v?(\d+)\.(\d+)\.(\d+)(?:-beta\.(\d+))?$""")
@@ -74,15 +81,16 @@ class Updates(stores: KeyValueStores, private val client: OkHttpClient) {
                 val tag = release.optString("tag_name").removePrefix("v")
                 if (Versions.code(tag) == null) return@mapNotNull null
                 val assets = release.optJSONArray("assets") ?: JSONArray()
-                val apk = (0 until assets.length()).map { assets.getJSONObject(it) }
-                    .firstOrNull { it.optString("name").endsWith(".apk") }
-                    ?.optString("browser_download_url")
+                val files = (0 until assets.length()).map { assets.getJSONObject(it) }
+                    .associate { it.optString("name") to it.optString("browser_download_url") }
+                val apk = files.entries.firstOrNull { it.key.endsWith(".apk") }?.value
                 AppRelease(
                     version = tag,
                     notes = cleanNotes(release.optString("body")),
                     pageUrl = release.optString("html_url"),
                     apkUrl = apk,
                     prerelease = release.optBoolean("prerelease"),
+                    assets = files,
                 )
             }
         }

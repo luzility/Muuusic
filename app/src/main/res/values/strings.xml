@@ -228,6 +228,9 @@
     <string name="update_no_notes">No release notes for this version.</string>
     <string name="update_download">Download</string>
     <string name="update_later">Later</string>
+    <string name="update_install">Update</string>
+    <string name="update_installing">Downloading update… %1$d%%</string>
+    <string name="update_install_failed">Couldn\'t install the update. You can download it from GitHub instead.</string>
     <string name="settings_developer_summary">Developer · github.com/luzility</string>
     <string name="settings_source">Source code</string>
     <string name="settings_report">Report a problem</string>

@@ -49,6 +49,7 @@ class DesktopServices(val dataDir: File) {
     val loudness by lazy { LoudnessStore(stores) }
     val sponsorBlock by lazy { SponsorBlock(okHttp) }
     val recognizer by lazy { SongRecognizer(ShazamClient(okHttp)) }
+    val updater by lazy { DesktopUpdater(okHttp, File(dataDir, "cache")) }
 
     private val database = Room.databaseBuilder<MuuusicDatabase>(File(dataDir, "muuusic.db").absolutePath)
         .addMigrations(MuuusicDatabase.MIGRATION_1_2, MuuusicDatabase.MIGRATION_2_3)

@@ -6,20 +6,35 @@ on:
   push:
     tags:
       - "v*"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Version to stamp on the test build
+        default: 0.0.0-beta.1
 
 permissions:
   contents: write
 
 jobs:
-  release:
+  version:
+    runs-on: ubuntu-latest
+    outputs:
+      name: ${{ steps.version.outputs.name }}
+      prerelease: ${{ steps.version.outputs.prerelease }}
+    steps:
+      - name: Read version from tag
+        id: version
+        run: |
+          version="${{ inputs.version || github.ref_name }}"
+          version="${version#v}"
+          echo "name=$version" >> "$GITHUB_OUTPUT"
+          if [[ "$version" == *-beta.* ]]; then echo "prerelease=true" >> "$GITHUB_OUTPUT"; else echo "prerelease=false" >> "$GITHUB_OUTPUT"; fi
+
+  android:
+    needs: version
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-        with:
-          fetch-depth: 0
-
-      # checkout turns annotated tags into plain ones; fetch them again to read their messages.
-      - run: git fetch --force --tags
 
       - uses: actions/setup-java@v6
         with:
@@ -27,13 +42,6 @@ jobs:
           java-version: 21
 
       - uses: gradle/actions/setup-gradle@v6
-
-      - name: Read version from tag
-        id: version
-        run: |
-          version="${GITHUB_REF_NAME#v}"
-          echo "name=$version" >> "$GITHUB_OUTPUT"
-          if [[ "$version" == *-beta.* ]]; then echo "prerelease=true" >> "$GITHUB_OUTPUT"; else echo "prerelease=false" >> "$GITHUB_OUTPUT"; fi
 
       - name: Build signed APK
         env:
@@ -43,8 +51,61 @@ jobs:
           SIGNING_KEY_PASSWORD: ${{ secrets.SIGNING_KEY_PASSWORD }}
         run: |
           echo "${{ secrets.SIGNING_KEYSTORE_BASE64 }}" | base64 -d > "$SIGNING_KEYSTORE"
-          ./gradlew :app:assembleRelease -PversionName=${{ steps.version.outputs.name }}
-          cp app/build/outputs/apk/release/app-release.apk "Muuusic-${{ steps.version.outputs.name }}.apk"
+          ./gradlew :app:assembleRelease -PversionName=${{ needs.version.outputs.name }}
+          cp app/build/outputs/apk/release/app-release.apk "Muuusic-${{ needs.version.outputs.name }}.apk"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: android
+          path: Muuusic-*.apk
+
+  linux:
+    needs: version
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - uses: gradle/actions/setup-gradle@v6
+
+      - name: Install packaging tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libmpv2 fakeroot
+          curl -fsSL -o "$RUNNER_TEMP/linuxdeploy" https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-x86_64.AppImage
+          curl -fsSL -o "$RUNNER_TEMP/linuxdeploy-plugin-appimage" https://github.com/linuxdeploy/linuxdeploy-plugin-appimage/releases/download/continuous/linuxdeploy-plugin-appimage-x86_64.AppImage
+          chmod +x "$RUNNER_TEMP/linuxdeploy" "$RUNNER_TEMP/linuxdeploy-plugin-appimage"
+
+      - name: Build .deb and AppImage
+        run: |
+          ./gradlew :desktop:packageDeb :desktop:createDistributable -PversionName=${{ needs.version.outputs.name }}
+          PATH="$RUNNER_TEMP:$PATH" desktop/packaging/linux.sh "${{ needs.version.outputs.name }}" "$RUNNER_TEMP/linuxdeploy"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: linux
+          path: desktop/build/release/*
+
+  publish:
+    if: github.event_name == 'push'
+    needs: [version, android, linux]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      # checkout turns annotated tags into plain ones; fetch them again to read their messages.
+      - run: git fetch --force --tags
+
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
 
       - name: Write release notes
         run: |
@@ -77,6 +138,6 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          flags=(--notes-file notes.md --title "Muuusic ${{ steps.version.outputs.name }}")
-          if [[ "${{ steps.version.outputs.prerelease }}" == "true" ]]; then flags+=(--prerelease); fi
-          gh release create "$GITHUB_REF_NAME" "Muuusic-${{ steps.version.outputs.name }}.apk" "${flags[@]}"
+          flags=(--notes-file notes.md --title "Muuusic ${{ needs.version.outputs.name }}")
+          if [[ "${{ needs.version.outputs.prerelease }}" == "true" ]]; then flags+=(--prerelease); fi
+          gh release create "$GITHUB_REF_NAME" dist/* "${flags[@]}"

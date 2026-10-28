@@ -227,6 +227,9 @@
     <string name="update_no_notes">Bu sürüm için not yok.</string>
     <string name="update_download">İndir</string>
     <string name="update_later">Sonra</string>
+    <string name="update_install">Güncelle</string>
+    <string name="update_installing">Güncelleme indiriliyor… %%%1$d</string>
+    <string name="update_install_failed">Güncelleme kurulamadı. Bunun yerine GitHub\'dan indirebilirsin.</string>
     <string name="settings_developer_summary">Geliştirici · github.com/luzility</string>
     <string name="settings_source">Kaynak kodu</string>
     <string name="settings_report">Sorun bildir</string>

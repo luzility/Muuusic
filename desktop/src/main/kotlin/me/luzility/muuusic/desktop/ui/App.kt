@@ -70,13 +70,14 @@ private enum class Tab(val route: Route, val label: String, val icon: ImageVecto
 }
 
 @Composable
-fun App(services: DesktopServices, player: DesktopPlayer, navigator: Navigator) {
+fun App(services: DesktopServices, player: DesktopPlayer, navigator: Navigator, onRestart: () -> Unit) {
     val state by player.state.collectAsState()
     val prefs by services.settings.prefs.collectAsState()
     val scope = rememberCoroutineScope()
     val snackbar = remember { SnackbarHostState() }
     val home = remember { HomeModel(services, scope) }
     val search = remember { SearchModel(services, scope) }
+    val updates = remember { UpdateModel(services, scope, onRestart) }
 
     MuuusicDesktopTheme(artworkUrl = state.current?.thumbnailUrl, prefs = prefs) {
         CompositionLocalProvider(
@@ -84,6 +85,7 @@ fun App(services: DesktopServices, player: DesktopPlayer, navigator: Navigator) 
             LocalPlayer provides player,
             LocalNavigator provides navigator,
             LocalSnackbar provides snackbar,
+            LocalUpdates provides updates,
         ) {
             Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.surface) {
                 Box(Modifier.fillMaxSize()) {
@@ -143,6 +145,7 @@ fun App(services: DesktopServices, player: DesktopPlayer, navigator: Navigator) 
                         }
                     }
                     SnackbarHost(snackbar, Modifier.align(Alignment.BottomCenter).padding(bottom = PlayerBarHeight + 16.dp))
+                    UpdatePrompt()
                     AnimatedVisibility(visible = search.recognizing, enter = fadeIn(), exit = fadeOut()) {
                         RecognitionOverlay(
                             onClose = { search.recognizing = false },

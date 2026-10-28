@@ -108,7 +108,7 @@ class Mpv(private val onEvent: (MpvEvent) -> Unit) {
 
         private val library: LibMpv by lazy {
             useCNumericLocale()
-            listOf("mpv", "mpv-2", "libmpv-2").firstNotNullOfOrNull { name ->
+            listOfNotNull(System.getenv("MUUUSIC_LIBMPV"), "mpv", "mpv-2", "libmpv-2").firstNotNullOfOrNull { name ->
                 runCatching { Native.load(name, LibMpv::class.java) }.getOrNull()
             } ?: error("libmpv not found")
         }

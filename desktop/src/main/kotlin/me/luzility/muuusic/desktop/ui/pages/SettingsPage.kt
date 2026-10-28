@@ -79,6 +79,12 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import java.awt.FileDialog
+import java.awt.Frame
+import java.io.File
+import java.time.LocalDate
+import java.util.Locale
+import kotlin.math.roundToInt
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -95,15 +101,11 @@ import me.luzility.muuusic.data.update.Versions
 import me.luzility.muuusic.desktop.playback.DesktopEqualizer
 import me.luzility.muuusic.desktop.ui.LocalServices
 import me.luzility.muuusic.desktop.ui.LocalSnackbar
+import me.luzility.muuusic.desktop.ui.LocalUpdates
+import me.luzility.muuusic.desktop.ui.UpdateCheck
 import me.luzility.muuusic.desktop.ui.logoPainter
 import me.luzility.muuusic.desktop.ui.str
 import me.luzility.muuusic.playback.audio.Karaoke
-import java.awt.FileDialog
-import java.awt.Frame
-import java.io.File
-import java.time.LocalDate
-import java.util.Locale
-import kotlin.math.roundToInt
 
 private enum class Category(val title: String, val summary: String, val icon: ImageVector, val colorIndex: Int) {
     Appearance("settings_appearance", "settings_appearance_summary", Icons.Rounded.Palette, 0),
@@ -459,25 +461,14 @@ private fun StorageSettings() {
     }
 }
 
-private sealed interface UpdateCheck {
-    data object Idle : UpdateCheck
-    data object Checking : UpdateCheck
-    data object UpToDate : UpdateCheck
-    data object Failed : UpdateCheck
-    data class Available(val release: AppRelease) : UpdateCheck
-}
-
 @Composable
 private fun UpdateSettings() {
-    val services = LocalServices.current
-    val settings = services.settings
+    val settings = LocalServices.current.settings
     val prefs by settings.prefs.collectAsState()
-    val scope = rememberCoroutineScope()
-    val uri = LocalUriHandler.current
-    var check by remember { mutableStateOf<UpdateCheck>(UpdateCheck.Idle) }
+    val updates = LocalUpdates.current
     SettingsGroup(
         {
-            val current = check
+            val current = updates.check
             ActionSetting(
                 title = str("settings_check_updates"),
                 summary = when (current) {
@@ -488,18 +479,7 @@ private fun UpdateSettings() {
                     UpdateCheck.Idle -> str("settings_version", AppInfo.versionName)
                 },
             ) {
-                if (current is UpdateCheck.Available) {
-                    uri.openUri(current.release.pageUrl)
-                    return@ActionSetting
-                }
-                if (current == UpdateCheck.Checking) return@ActionSetting
-                check = UpdateCheck.Checking
-                scope.launch {
-                    check = runCatching { services.updates.newerThan(AppInfo.versionName, prefs.updateChannel) }.fold(
-                        onSuccess = { release -> release?.let(UpdateCheck::Available) ?: UpdateCheck.UpToDate },
-                        onFailure = { UpdateCheck.Failed },
-                    )
-                }
+                if (current is UpdateCheck.Available) updates.show(current.release) else updates.checkNow()
             }
         },
         {
