@@ -216,6 +216,8 @@
     <string name="equalizer_unavailable">This device doesn\'t offer an equalizer.</string>
     <string name="settings_sponsorblock">Skip non-music parts</string>
     <string name="settings_sponsorblock_summary">Skips talking, intros and sponsor segments in music videos, using SponsorBlock</string>
+    <string name="settings_close_to_tray">Keep playing when closed</string>
+    <string name="settings_close_to_tray_summary">Closing the window leaves Muuusic in the system tray</string>
     <string name="widget_name">Now playing</string>
     <string name="widget_description">What\'s playing, with play controls</string>
     <string name="widget_idle">Tap to play</string>

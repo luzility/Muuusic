@@ -135,6 +135,7 @@ private val index = listOf(
     "settings_audio_quality" to Category.Playback,
     "settings_autoplay" to Category.Playback,
     "settings_sponsorblock" to Category.Playback,
+    "settings_close_to_tray" to Category.Playback,
     "settings_normalize" to Category.Sound,
     "settings_crossfade" to Category.Sound,
     "settings_link_pitch" to Category.Sound,
@@ -286,6 +287,7 @@ private fun CategoryContent(category: Category, onOpenEqualizer: () -> Unit) {
             },
             { SwitchSetting(str("settings_autoplay"), str("settings_autoplay_summary"), prefs.autoplay) { on -> settings.update { it.copy(autoplay = on) } } },
             { SwitchSetting(str("settings_sponsorblock"), str("settings_sponsorblock_summary"), prefs.sponsorBlock) { on -> settings.update { it.copy(sponsorBlock = on) } } },
+            { SwitchSetting(str("settings_close_to_tray"), str("settings_close_to_tray_summary"), prefs.closeToTray) { on -> settings.update { it.copy(closeToTray = on) } } },
         )
         Category.Sound -> SettingsGroup(
             { SwitchSetting(str("settings_normalize"), str("settings_normalize_summary"), prefs.normalizeVolume) { on -> settings.update { it.copy(normalizeVolume = on) } } },

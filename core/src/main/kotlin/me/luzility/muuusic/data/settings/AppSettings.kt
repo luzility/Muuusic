@@ -25,6 +25,7 @@ data class AppPrefs(
     val haptics: Boolean = true,
     val floatingNavBar: Boolean = true,
     val discordPresence: Boolean = true,
+    val closeToTray: Boolean = true,
     val onboarded: Boolean = false,
     val playbackSpeed: Float = 1f,
     val pitchSemitones: Float = 0f,
@@ -68,6 +69,7 @@ class AppSettings(stores: KeyValueStores) {
             putBoolean(KEY_HAPTICS, next.haptics)
             putBoolean(KEY_FLOATING_NAV, next.floatingNavBar)
             putBoolean(KEY_DISCORD, next.discordPresence)
+            putBoolean(KEY_CLOSE_TO_TRAY, next.closeToTray)
             putBoolean(KEY_ONBOARDED, next.onboarded)
             putFloat(KEY_SPEED, next.playbackSpeed)
             putFloat(KEY_PITCH, next.pitchSemitones)
@@ -101,6 +103,7 @@ class AppSettings(stores: KeyValueStores) {
         haptics = store.getBoolean(KEY_HAPTICS, true),
         floatingNavBar = store.getBoolean(KEY_FLOATING_NAV, true),
         discordPresence = store.getBoolean(KEY_DISCORD, true),
+        closeToTray = store.getBoolean(KEY_CLOSE_TO_TRAY, true),
         onboarded = store.getBoolean(KEY_ONBOARDED, false),
         playbackSpeed = store.getFloat(KEY_SPEED, 1f),
         pitchSemitones = store.getFloat(KEY_PITCH, 0f),
@@ -135,6 +138,7 @@ class AppSettings(stores: KeyValueStores) {
         private const val KEY_HAPTICS = "haptics"
         private const val KEY_FLOATING_NAV = "floating_nav_bar"
         private const val KEY_DISCORD = "discord_presence"
+        private const val KEY_CLOSE_TO_TRAY = "close_to_tray"
         private const val KEY_ONBOARDED = "onboarded"
         private const val KEY_SPEED = "playback_speed"
         private const val KEY_PITCH = "pitch_semitones"

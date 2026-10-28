@@ -93,13 +93,10 @@ fun main() {
             windowVisible = false
         }
         fun hideToTray() {
-            if (tray.available.value) {
-                windowVisible = false
-                miniPlayer = false
-            } else {
-                quit(false)
-            }
+            windowVisible = false
+            miniPlayer = false
         }
+        fun keepsPlaying() = tray.available.value && services.settings.prefs.value.closeToTray
         mpris = remember {
             Mpris(
                 services.scope,
@@ -118,7 +115,7 @@ fun main() {
         }
         if (!open) return@application
         Window(
-            onCloseRequest = { hideToTray() },
+            onCloseRequest = { if (keepsPlaying()) hideToTray() else quit(false) },
             visible = windowVisible,
             title = "Muuusic",
             icon = logoPainter(),
@@ -130,7 +127,7 @@ fun main() {
             App(services, player, navigator, onRestart = { quit(true) }, onMiniPlayer = { openMiniPlayer() })
         }
         if (miniPlayer) Window(
-            onCloseRequest = { hideToTray() },
+            onCloseRequest = { if (keepsPlaying()) hideToTray() else showWindow() },
             state = miniState,
             title = "Muuusic",
             icon = logoPainter(),
@@ -142,7 +139,7 @@ fun main() {
             DisposableEffect(window) { onDispose(roundCorners(window, WindowCorner)) }
             WindowDraggableArea {
                 PlayerWindowTheme(services, player) {
-                    MiniPlayer(onExpand = { showWindow() }, onClose = { hideToTray() })
+                    MiniPlayer(onExpand = { showWindow() }, onClose = { if (keepsPlaying()) hideToTray() else showWindow() })
                 }
             }
         }
