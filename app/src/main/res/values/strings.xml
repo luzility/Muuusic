@@ -343,7 +343,7 @@
     <string name="settings_integrations_summary">Discord</string>
     <string name="settings_updates_summary">Check for updates, release channel</string>
     <string name="settings_about_summary">Version, source code, credits</string>
-    <string name="about_tagline">An ad-free YouTube Music client for Android</string>
+    <string name="about_tagline">An ad-free YouTube Music client</string>
     <string name="about_released">Released %1$s</string>
     <string name="settings_discord">Show on Discord</string>
     <string name="settings_discord_summary">Shows the song you\'re listening to on your Discord profile</string>

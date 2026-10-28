@@ -342,7 +342,7 @@
     <string name="settings_integrations_summary">Discord</string>
     <string name="settings_updates_summary">Güncelleme kontrolü, sürüm kanalı</string>
     <string name="settings_about_summary">Sürüm, kaynak kod, katkıda bulunanlar</string>
-    <string name="about_tagline">Android için reklamsız bir YouTube Music istemcisi</string>
+    <string name="about_tagline">Reklamsız bir YouTube Music istemcisi</string>
     <string name="about_released">Yayın tarihi: %1$s</string>
     <string name="settings_discord">Discord\'da göster</string>
     <string name="settings_discord_summary">Dinlediğin şarkıyı Discord profilinde gösterir</string>
