@@ -1,0 +1,78 @@
+import org.jetbrains.compose.desktop.application.dsl.TargetFormat
+
+plugins {
+    alias(libs.plugins.kotlin.jvm)
+    alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.compose.multiplatform)
+}
+
+val appVersion = (findProperty("versionName") as String?) ?: "0.1.0"
+
+kotlin {
+    jvmToolchain(21)
+    compilerOptions {
+        optIn.addAll(
+            "androidx.compose.material3.ExperimentalMaterial3Api",
+            "androidx.compose.material3.ExperimentalMaterial3ExpressiveApi",
+        )
+    }
+}
+
+val sharedResources = tasks.register<Sync>("sharedResources") {
+    from(rootProject.file("app/src/main/res")) {
+        include("values*/strings.xml")
+        into("strings")
+    }
+    from(rootProject.file("app/src/main/assets/fonts")) {
+        into("fonts")
+    }
+    from(rootProject.file("app/src/main/res/drawable/ic_launcher_foreground.xml")) {
+        into("drawable")
+        rename { "logo.xml" }
+        filter { line -> line.replace("@color/brand_light", "#FFE9DDFF").replace("@color/brand", "#FF7C4DFF") }
+    }
+    into(layout.buildDirectory.dir("generated/sharedResources"))
+}
+
+sourceSets.main {
+    resources.srcDir(sharedResources)
+}
+
+dependencies {
+    implementation(project(":core"))
+    implementation(compose.desktop.currentOs)
+    implementation(libs.desktop.material3)
+    implementation(compose.materialIconsExtended)
+    implementation(libs.kotlinx.coroutines.swing)
+    implementation(libs.coil.compose)
+    implementation(libs.coil.network.okhttp)
+    implementation(libs.material.kolor)
+    implementation(libs.sqlite.bundled)
+    implementation(libs.org.json)
+    implementation(libs.jna)
+    implementation(libs.dbus.java.core)
+    implementation(libs.dbus.java.transport)
+}
+
+compose.desktop {
+    application {
+        mainClass = "me.luzility.muuusic.desktop.MainKt"
+        jvmArgs += listOf("-Dmuuusic.version=$appVersion", "--enable-native-access=ALL-UNNAMED")
+        nativeDistributions {
+            targetFormats(TargetFormat.Deb, TargetFormat.Msi)
+            packageName = "Muuusic"
+            description = "Ad-free YouTube Music client"
+            vendor = "Luzi"
+            packageVersion = appVersion.substringBefore("-")
+            modules("java.sql", "jdk.httpserver", "jdk.unsupported")
+            linux {
+                packageName = "muuusic"
+                iconFile = project.file("packaging/muuusic.png")
+                menuGroup = "AudioVideo;Audio;Player"
+                appCategory = "sound"
+                debMaintainer = "firatbirer03@gmail.com"
+                shortcut = true
+            }
+        }
+    }
+}

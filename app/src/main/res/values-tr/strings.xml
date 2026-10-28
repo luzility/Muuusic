@@ -161,9 +161,13 @@
     <string name="recognize_no_permission">Mikrofon izni gerekli</string>
     <string name="recognize_no_permission_hint">Çalan şarkıyı duyabilmek için Muuusic\'in mikrofona erişmesi gerekiyor.</string>
     <string name="recognize_allow">İzin ver</string>
+    <string name="recognize_listening_hint_desktop">Şarkıyı bilgisayarında çal</string>
+    <string name="recognize_no_capture">Bilgisayarın sesi alınamıyor</string>
+    <string name="recognize_no_capture_hint">Muuusic sesi PulseAudio ya da PipeWire üzerinden dinler. Kullanmak için pulseaudio-utils veya pipewire kur.</string>
     <string name="settings_lab">Laboratuvar</string>
     <string name="settings_song_recognition">Şarkı tanıma</string>
     <string name="settings_song_recognition_summary">Çalan şarkıyı mikrofonla tanır. Resmî olmayan bir servis kullanır, çalışmayı bırakabilir.</string>
+    <string name="settings_song_recognition_summary_desktop">Bilgisayarında çalanı tanır, örneğin tarayıcıdaki bir videoyu. Resmî olmayan bir servis kullanır, çalışmayı bırakabilir.</string>
     <string-array name="search_genres">
         <item>Pop</item>
         <item>Türkçe Pop</item>
@@ -223,6 +227,9 @@
     <string name="update_no_notes">Bu sürüm için not yok.</string>
     <string name="update_download">İndir</string>
     <string name="update_later">Sonra</string>
+    <string name="update_install">Güncelle</string>
+    <string name="update_installing">Güncelleme indiriliyor… %%%1$d</string>
+    <string name="update_install_failed">Güncelleme kurulamadı. Bunun yerine GitHub\'dan indirebilirsin.</string>
     <string name="settings_developer_summary">Geliştirici · github.com/luzility</string>
     <string name="settings_source">Kaynak kodu</string>
     <string name="settings_report">Sorun bildir</string>
@@ -335,7 +342,7 @@
     <string name="settings_integrations_summary">Discord</string>
     <string name="settings_updates_summary">Güncelleme kontrolü, sürüm kanalı</string>
     <string name="settings_about_summary">Sürüm, kaynak kod, katkıda bulunanlar</string>
-    <string name="about_tagline">Android için reklamsız bir YouTube Music istemcisi</string>
+    <string name="about_tagline">Reklamsız bir YouTube Music istemcisi</string>
     <string name="about_released">Yayın tarihi: %1$s</string>
     <string name="settings_discord">Discord\'da göster</string>
     <string name="settings_discord_summary">Dinlediğin şarkıyı Discord profilinde gösterir</string>
@@ -346,6 +353,7 @@
     <string name="settings_discord_logout">Çıkış yapmak için dokun</string>
     <string name="discord_login_done">Discord\'a giriş yapıldı</string>
     <string name="discord_login_failed">Discord\'a giriş yapılamadı</string>
+    <string name="volume">Ses düzeyi</string>
     <plurals name="queue_remaining">
         <item quantity="one">%d şarkı kaldı</item>
         <item quantity="other">%d şarkı kaldı</item>

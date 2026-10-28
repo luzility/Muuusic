@@ -162,9 +162,13 @@
     <string name="recognize_no_permission">Microphone access needed</string>
     <string name="recognize_no_permission_hint">Muuusic needs the microphone to hear the song that\'s playing.</string>
     <string name="recognize_allow">Allow</string>
+    <string name="recognize_listening_hint_desktop">Play the song on your computer</string>
+    <string name="recognize_no_capture">Can\'t hear your computer</string>
+    <string name="recognize_no_capture_hint">Muuusic listens through PulseAudio or PipeWire. Install pulseaudio-utils or pipewire to use this.</string>
     <string name="settings_lab">Labs</string>
     <string name="settings_song_recognition">Song recognition</string>
     <string name="settings_song_recognition_summary">Identify what\'s playing with the microphone. Uses an unofficial service and may stop working.</string>
+    <string name="settings_song_recognition_summary_desktop">Identify what\'s playing on your computer, like a video in your browser. Uses an unofficial service and may stop working.</string>
     <string-array name="search_genres">
         <item>Pop</item>
         <item>Hip-Hop</item>
@@ -224,6 +228,9 @@
     <string name="update_no_notes">No release notes for this version.</string>
     <string name="update_download">Download</string>
     <string name="update_later">Later</string>
+    <string name="update_install">Update</string>
+    <string name="update_installing">Downloading update… %1$d%%</string>
+    <string name="update_install_failed">Couldn\'t install the update. You can download it from GitHub instead.</string>
     <string name="settings_developer_summary">Developer · github.com/luzility</string>
     <string name="settings_source">Source code</string>
     <string name="settings_report">Report a problem</string>
@@ -336,7 +343,7 @@
     <string name="settings_integrations_summary">Discord</string>
     <string name="settings_updates_summary">Check for updates, release channel</string>
     <string name="settings_about_summary">Version, source code, credits</string>
-    <string name="about_tagline">An ad-free YouTube Music client for Android</string>
+    <string name="about_tagline">An ad-free YouTube Music client</string>
     <string name="about_released">Released %1$s</string>
     <string name="settings_discord">Show on Discord</string>
     <string name="settings_discord_summary">Shows the song you\'re listening to on your Discord profile</string>
@@ -347,6 +354,7 @@
     <string name="settings_discord_logout">Tap to sign out</string>
     <string name="discord_login_done">Signed in to Discord</string>
     <string name="discord_login_failed">Couldn\'t sign in to Discord</string>
+    <string name="volume">Volume</string>
     <plurals name="queue_remaining">
         <item quantity="one">%d song left</item>
         <item quantity="other">%d songs left</item>

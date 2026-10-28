@@ -3,33 +3,12 @@ package me.luzility.muuusic.playback.audio
 import androidx.media3.common.C
 import androidx.media3.common.audio.AudioProcessor
 import androidx.media3.common.audio.BaseAudioProcessor
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.roundToInt
 import kotlin.math.sin
-
-object Karaoke {
-    val strengths = listOf(0.5f, 0.75f, 1f)
-
-    private val _enabled = MutableStateFlow(false)
-    val enabled: StateFlow<Boolean> = _enabled.asStateFlow()
-
-    private val _strength = MutableStateFlow(1f)
-    val strength: StateFlow<Float> = _strength.asStateFlow()
-
-    fun set(on: Boolean) {
-        _enabled.value = on
-    }
-
-    fun setStrength(value: Float) {
-        _strength.value = value.coerceIn(0f, 1f)
-    }
-}
 
 class KaraokeAudioProcessor : BaseAudioProcessor() {
 

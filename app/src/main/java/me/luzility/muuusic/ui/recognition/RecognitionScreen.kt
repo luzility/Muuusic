@@ -83,6 +83,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import me.luzility.muuusic.R
 import me.luzility.muuusic.container
+import me.luzility.muuusic.data.recognition.MicSource
 import me.luzility.muuusic.data.recognition.RecognizedSong
 import me.luzility.muuusic.data.recognition.SongRecognizer
 import me.luzility.muuusic.ui.components.Artwork
@@ -124,6 +125,7 @@ class RecognitionViewModel(app: Application) : AndroidViewModel(app) {
             delay(Earcons.START_DURATION_MS)
             @Suppress("MissingPermission") // checked above
             val result = recognizer.recognize(
+                open = { MicSource.open() },
                 onLevel = { _level.value = it },
                 onSearching = { _phase.value = RecognitionPhase.Searching },
             )

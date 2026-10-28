@@ -1,6 +1,6 @@
 <p align="center"><img src=".github/assets/banner.png" alt="Muuusic"></p>
 
-<p align="center">An ad-free YouTube Music client for Android.</p>
+<p align="center">An ad-free YouTube Music client for Android and Linux.</p>
 
 ## Features
 
@@ -17,15 +17,18 @@
 - Volume normalization, crossfade and an equalizer
 - Skips non-music parts of music videos (SponsorBlock)
 - Sleep timer
-- Home screen widget
-- Android Auto
+- Home screen widget and Android Auto
+- On Linux: media keys and system media controls (MPRIS)
 - Picks up where you left off after the app is closed
 - Download songs, albums and playlists for offline listening
 - Played songs are cached
 
 ## Download
 
-Get the APK from [Releases](https://github.com/luzility/Muuusic/releases). Betas are marked as pre-releases. Needs Android 8.0 or newer.
+Everything is on [Releases](https://github.com/luzility/Muuusic/releases). Betas are marked as pre-releases.
+
+- **Android:** the `.apk`. Needs Android 8.0 or newer.
+- **Linux:** the `.AppImage`, or the `.deb` for Debian and Ubuntu. Both update themselves from the app. The `.deb` needs `libmpv2`.
 
 ## Translations
 
@@ -35,10 +38,14 @@ Translations are done on [Weblate](https://hosted.weblate.org/engage/muuusic/). 
 
 ## Building
 
-Requires JDK 17+ and the Android SDK (API 37).
+Requires JDK 21 and the Android SDK (API 37). The desktop app also needs `libmpv` installed.
 
 ```bash
-./gradlew assembleRelease
+./gradlew :app:assembleRelease
+```
+
+```bash
+./gradlew :desktop:run
 ```
 
 ## Disclaimer

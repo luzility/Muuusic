@@ -25,6 +25,8 @@ import androidx.media3.datasource.cache.LeastRecentlyUsedCacheEvictor
 import androidx.media3.datasource.cache.SimpleCache
 import androidx.media3.datasource.okhttp.OkHttpDataSource
 import androidx.room.Room
+import androidx.sqlite.driver.AndroidSQLiteDriver
+import me.luzility.muuusic.data.storage.AndroidKeyValueStores
 import me.luzility.muuusic.data.LibraryRepository
 import me.luzility.muuusic.data.PlaylistRepository
 import me.luzility.muuusic.data.backup.Backup
@@ -55,6 +57,7 @@ class MuuusicApp : Application() {
 
     override fun onCreate() {
         super.onCreate()
+        AppInfo.versionName = BuildConfig.VERSION_NAME
         container = AppContainer(this)
         FlexFont.init(this)
         val locale = Locale.getDefault()
@@ -78,7 +81,9 @@ class AppContainer(context: Context) {
 
     val appScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
 
-    val settings = AppSettings(appContext)
+    private val stores = AndroidKeyValueStores(appContext)
+
+    val settings = AppSettings(stores)
 
     val connectivity = Connectivity(appContext)
 
@@ -90,30 +95,31 @@ class AppContainer(context: Context) {
 
     val songRecognizer by lazy { SongRecognizer(ShazamClient(okHttp)) }
 
-    val searchHistory by lazy { SearchHistory(appContext) }
+    val searchHistory by lazy { SearchHistory(stores) }
 
     val innerTube by lazy { InnerTubeClient(okHttp) }
 
-    val loudness by lazy { LoudnessStore(appContext) }
+    val loudness by lazy { LoudnessStore(stores) }
     val sponsorBlock by lazy { SponsorBlock(okHttp) }
     val discord by lazy { DiscordPresence(appContext, okHttp) }
-    val updates by lazy { Updates(appContext, okHttp) }
-    val hints by lazy { Hints(appContext) }
+    val updates by lazy { Updates(stores, okHttp) }
+    val hints by lazy { Hints(stores) }
 
     // Set by the playback service once its equalizer exists; null if the device has none.
     val equalizerLayout = MutableStateFlow<EqualizerLayout?>(null)
 
-    val lyricsSettings by lazy { LyricsSettings(appContext) }
+    val lyricsSettings by lazy { LyricsSettings(stores) }
 
     private val database = Room.databaseBuilder(appContext, MuuusicDatabase::class.java, "muuusic.db")
         .addMigrations(MuuusicDatabase.MIGRATION_1_2, MuuusicDatabase.MIGRATION_2_3)
+        .setDriver(AndroidSQLiteDriver())
         .build()
 
     val library = LibraryRepository(database.songDao())
 
     val playlists = PlaylistRepository(database, database.playlistDao(), database.songDao())
 
-    val backup by lazy { Backup(appContext, database, playlists) }
+    val backup by lazy { Backup(stores, database, playlists) }
 
     // One index DB shared by the play cache, download cache and download index.
     private val mediaDatabase by lazy { StandaloneDatabaseProvider(appContext) }
