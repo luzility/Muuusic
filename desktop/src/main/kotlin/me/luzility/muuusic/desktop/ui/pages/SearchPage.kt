@@ -82,6 +82,7 @@ import me.luzility.muuusic.desktop.ui.ShelfCard
 import me.luzility.muuusic.desktop.ui.SongRow
 import me.luzility.muuusic.desktop.ui.Strings
 import me.luzility.muuusic.desktop.ui.str
+import me.luzility.muuusic.desktop.ui.typingField
 
 class SearchModel(private val services: DesktopServices, private val scope: CoroutineScope) {
     var query by mutableStateOf("")
@@ -227,7 +228,7 @@ fun SearchPage(model: SearchModel) {
         TextField(
             value = model.query,
             onValueChange = model::onQueryChange,
-            modifier = Modifier.padding(start = 32.dp, end = 32.dp, top = 32.dp).widthIn(max = 720.dp).fillMaxWidth().focusRequester(focus),
+            modifier = Modifier.padding(start = 32.dp, end = 32.dp, top = 32.dp).widthIn(max = 720.dp).fillMaxWidth().focusRequester(focus).typingField(),
             placeholder = { Text(str("search_hint")) },
             leadingIcon = { Icon(Icons.Rounded.Search, null) },
             trailingIcon = {

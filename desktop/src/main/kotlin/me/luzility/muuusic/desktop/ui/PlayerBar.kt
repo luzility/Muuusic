@@ -27,6 +27,7 @@ import androidx.compose.material.icons.rounded.FavoriteBorder
 import androidx.compose.material.icons.rounded.Lyrics
 import androidx.compose.material.icons.rounded.MoreVert
 import androidx.compose.material.icons.rounded.Pause
+import androidx.compose.material.icons.rounded.PictureInPictureAlt
 import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material.icons.rounded.Repeat
 import androidx.compose.material.icons.rounded.RepeatOne
@@ -58,6 +59,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -73,6 +75,8 @@ import me.luzility.muuusic.desktop.playback.RepeatMode
 
 val PlayerBarHeight = 96.dp
 private val CompactBarWidth = 1100.dp
+
+val LocalMiniPlayer = staticCompositionLocalOf<() -> Unit> { {} }
 
 @Composable
 fun rememberPlaybackPosition(player: DesktopPlayer, state: PlayerState, intervalMs: Long = 200): State<Long> {
@@ -153,6 +157,10 @@ fun PlayerBar(state: PlayerState, modifier: Modifier = Modifier) {
                         shapes = IconButtonDefaults.toggleableShapes(),
                     ) {
                         Icon(Icons.AutoMirrored.Rounded.QueueMusic, str("queue"))
+                    }
+                    val openMiniPlayer = LocalMiniPlayer.current
+                    IconButton(onClick = openMiniPlayer, shapes = IconButtonDefaults.shapes()) {
+                        Icon(Icons.Rounded.PictureInPictureAlt, str("mini_player"))
                     }
                     Volume(compact)
                 }

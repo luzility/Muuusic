@@ -162,6 +162,11 @@
     <string name="recognize_no_permission_hint">Çalan şarkıyı duyabilmek için Muuusic\'in mikrofona erişmesi gerekiyor.</string>
     <string name="recognize_allow">İzin ver</string>
     <string name="recognize_listening_hint_desktop">Şarkıyı bilgisayarında çal</string>
+    <string name="mini_player">Mini oynatıcı</string>
+    <string name="show_window">Muuusic\'i göster</string>
+    <string name="hide_window">Muuusic\'i gizle</string>
+    <string name="quit">Çık</string>
+    <string name="nothing_playing">Çalan bir şey yok</string>
     <string name="recognize_no_capture">Bilgisayarın sesi alınamıyor</string>
     <string name="recognize_no_capture_hint">Muuusic sesi PulseAudio ya da PipeWire üzerinden dinler. Kullanmak için pulseaudio-utils veya pipewire kur.</string>
     <string name="settings_lab">Laboratuvar</string>

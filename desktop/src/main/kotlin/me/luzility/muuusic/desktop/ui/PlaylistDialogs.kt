@@ -104,7 +104,7 @@ fun NameDialog(title: String, confirm: String, initial: String, onDismiss: () ->
         onDismissRequest = onDismiss,
         title = { Text(title) },
         text = {
-            OutlinedTextField(value = name, onValueChange = { name = it }, label = { Text(str("playlist_name")) }, singleLine = true)
+            OutlinedTextField(value = name, onValueChange = { name = it }, label = { Text(str("playlist_name")) }, singleLine = true, modifier = Modifier.typingField())
         },
         confirmButton = {
             TextButton(onClick = { onConfirm(name.trim()) }, enabled = name.isNotBlank()) { Text(confirm) }

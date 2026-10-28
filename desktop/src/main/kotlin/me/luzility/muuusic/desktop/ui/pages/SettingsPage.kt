@@ -105,6 +105,7 @@ import me.luzility.muuusic.desktop.ui.LocalUpdates
 import me.luzility.muuusic.desktop.ui.UpdateCheck
 import me.luzility.muuusic.desktop.ui.logoPainter
 import me.luzility.muuusic.desktop.ui.str
+import me.luzility.muuusic.desktop.ui.typingField
 import me.luzility.muuusic.playback.audio.Karaoke
 
 private enum class Category(val title: String, val summary: String, val icon: ImageVector, val colorIndex: Int) {
@@ -644,7 +645,7 @@ private fun SettingsSearch(query: String, onQueryChange: (String) -> Unit) {
     TextField(
         value = query,
         onValueChange = onQueryChange,
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp).typingField(),
         placeholder = { Text(str("settings_search")) },
         leadingIcon = { Icon(Icons.Rounded.Search, null) },
         trailingIcon = {

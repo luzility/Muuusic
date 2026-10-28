@@ -62,6 +62,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.toShape
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -72,7 +73,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.composed
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.isSecondaryPressed
@@ -89,6 +92,22 @@ import me.luzility.muuusic.data.model.Song
 import me.luzility.muuusic.desktop.playback.QueueResult
 
 val LocalSnackbar = staticCompositionLocalOf<SnackbarHostState> { error("SnackbarHostState not provided") }
+
+object Typing {
+    @Volatile
+    var active = false
+}
+
+fun Modifier.typingField(): Modifier = composed {
+    val focused = remember { mutableStateOf(false) }
+    DisposableEffect(Unit) {
+        onDispose { if (focused.value) Typing.active = false }
+    }
+    onFocusChanged {
+        focused.value = it.isFocused
+        if (it.isFocused) Typing.active = true else if (Typing.active) Typing.active = false
+    }
+}
 
 fun formatDuration(ms: Long): String {
     val total = (ms / 1000).coerceAtLeast(0)

@@ -31,6 +31,9 @@ val sharedResources = tasks.register<Sync>("sharedResources") {
         rename { "logo.xml" }
         filter { line -> line.replace("@color/brand_light", "#FFE9DDFF").replace("@color/brand", "#FF7C4DFF") }
     }
+    from(project.file("packaging/muuusic.png")) {
+        into("icon")
+    }
     into(layout.buildDirectory.dir("generated/sharedResources"))
 }
 

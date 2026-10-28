@@ -70,7 +70,7 @@ private enum class Tab(val route: Route, val label: String, val icon: ImageVecto
 }
 
 @Composable
-fun App(services: DesktopServices, player: DesktopPlayer, navigator: Navigator, onRestart: () -> Unit) {
+fun App(services: DesktopServices, player: DesktopPlayer, navigator: Navigator, onRestart: () -> Unit, onMiniPlayer: () -> Unit) {
     val state by player.state.collectAsState()
     val prefs by services.settings.prefs.collectAsState()
     val scope = rememberCoroutineScope()
@@ -86,6 +86,7 @@ fun App(services: DesktopServices, player: DesktopPlayer, navigator: Navigator, 
             LocalNavigator provides navigator,
             LocalSnackbar provides snackbar,
             LocalUpdates provides updates,
+            LocalMiniPlayer provides onMiniPlayer,
         ) {
             Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.surface) {
                 Box(Modifier.fillMaxSize()) {

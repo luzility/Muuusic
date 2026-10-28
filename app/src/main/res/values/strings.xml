@@ -163,6 +163,11 @@
     <string name="recognize_no_permission_hint">Muuusic needs the microphone to hear the song that\'s playing.</string>
     <string name="recognize_allow">Allow</string>
     <string name="recognize_listening_hint_desktop">Play the song on your computer</string>
+    <string name="mini_player">Mini player</string>
+    <string name="show_window">Show Muuusic</string>
+    <string name="hide_window">Hide Muuusic</string>
+    <string name="quit">Quit</string>
+    <string name="nothing_playing">Nothing playing</string>
     <string name="recognize_no_capture">Can\'t hear your computer</string>
     <string name="recognize_no_capture_hint">Muuusic listens through PulseAudio or PipeWire. Install pulseaudio-utils or pipewire to use this.</string>
     <string name="settings_lab">Labs</string>

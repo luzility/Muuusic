@@ -47,7 +47,7 @@ class Mpris(
 
     init {
         scope.launch(Dispatchers.IO) {
-            val bus = runCatching { DBusConnectionBuilder.forSessionBus().build() }.getOrNull() ?: return@launch
+            val bus = runCatching { DBusConnectionBuilder.forSessionBus().withShared(false).build() }.getOrNull() ?: return@launch
             val exported = runCatching {
                 bus.requestBusName(BUS_NAME)
                 bus.exportObject(PATH, this@Mpris)
