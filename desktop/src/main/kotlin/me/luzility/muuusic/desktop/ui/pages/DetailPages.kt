@@ -12,15 +12,22 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Info
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialShapes
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.ToggleButton
+import androidx.compose.material3.ToggleButtonDefaults
 import androidx.compose.material3.toShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -121,34 +128,49 @@ fun ArtistPage(name: String, url: String?) {
                 section.items.isNotEmpty() && section.items.all { it is BrowseItem.SongItem && !it.wide }
             }
             val songs = topSongs?.items?.map { (it as BrowseItem.SongItem).song }.orEmpty()
-            LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(bottom = 32.dp)) {
-                item { ArtistHeader(artist) }
-                if (songs.isNotEmpty()) {
-                    item {
-                        Box(Modifier.padding(horizontal = 32.dp, vertical = 8.dp)) {
-                            PlayButtons(onPlay = { player.play(songs) }, onShuffle = { player.play(songs, shuffle = true) })
+            var showAbout by remember(artist.url) { mutableStateOf(false) }
+            val bio = artist.description
+            Box(Modifier.fillMaxSize()) {
+                LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(bottom = 32.dp)) {
+                    item(key = "header") { ArtistHeader(artist) }
+                    if (showAbout && bio != null) {
+                        item(key = "about") {
+                            Text(
+                                bio,
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.animateItem().padding(horizontal = 32.dp, vertical = 8.dp).widthIn(max = 760.dp),
+                            )
+                        }
+                        return@LazyColumn
+                    }
+                    if (songs.isNotEmpty()) {
+                        item(key = "play") {
+                            Box(Modifier.animateItem().padding(horizontal = 32.dp, vertical = 8.dp)) {
+                                PlayButtons(onPlay = { player.play(songs) }, onShuffle = { player.play(songs, shuffle = true) })
+                            }
+                        }
+                    }
+                    artist.sections.forEachIndexed { index, section ->
+                        if (section === topSongs) {
+                            item(key = "top") { SectionTitle(section.title) }
+                            itemsIndexed(songs.take(10), key = { i, song -> "top-$i-${song.id}" }) { i, song ->
+                                Box(Modifier.padding(horizontal = 20.dp)) { SongRow(song, i, onPlay = { player.play(songs, i) }) }
+                            }
+                        } else {
+                            item(key = "section-$index") { BrowseShelf(section) }
                         }
                     }
                 }
-                artist.sections.forEachIndexed { index, section ->
-                    if (section === topSongs) {
-                        item(key = "top") { SectionTitle(section.title) }
-                        itemsIndexed(songs.take(10), key = { i, song -> "top-$i-${song.id}" }) { i, song ->
-                            Box(Modifier.padding(horizontal = 20.dp)) { SongRow(song, i, onPlay = { player.play(songs, i) }) }
-                        }
-                    } else {
-                        item(key = "section-$index") { BrowseShelf(section) }
-                    }
-                }
-                artist.description?.let { bio ->
-                    item {
-                        SectionTitle(str("artist_about"))
-                        Text(
-                            bio,
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.padding(horizontal = 32.dp).fillMaxWidth(0.75f),
-                        )
+                if (bio != null) {
+                    ToggleButton(
+                        checked = showAbout,
+                        onCheckedChange = { showAbout = it },
+                        modifier = Modifier.align(Alignment.TopEnd).padding(12.dp),
+                    ) {
+                        Icon(Icons.Rounded.Info, null, Modifier.size(ToggleButtonDefaults.IconSize))
+                        Spacer(Modifier.width(ToggleButtonDefaults.IconSpacing))
+                        Text(str("artist_about"))
                     }
                 }
             }
