@@ -47,6 +47,7 @@ class DesktopServices(val dataDir: File) {
     val hints by lazy { Hints(stores) }
     val updates by lazy { Updates(stores, okHttp) }
     val loudness by lazy { LoudnessStore(stores) }
+    val playerStore by lazy { stores.open("player") }
     val sponsorBlock by lazy { SponsorBlock(okHttp) }
     val recognizer by lazy { SongRecognizer(ShazamClient(okHttp)) }
     val updater by lazy { DesktopUpdater(okHttp, File(dataDir, "cache")) }

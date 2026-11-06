@@ -89,7 +89,7 @@ class DesktopPlayer(
     private val _seeks = MutableSharedFlow<Long>(extraBufferCapacity = 1)
     val seeks: SharedFlow<Long> = _seeks.asSharedFlow()
 
-    private val _volume = MutableStateFlow(1f)
+    private val _volume = MutableStateFlow(services.playerStore.getFloat(KEY_VOLUME, 1f).coerceIn(0f, 1f))
     val volume: StateFlow<Float> = _volume.asStateFlow()
 
     private var queue = mutableListOf<Song>()
@@ -111,9 +111,13 @@ class DesktopPlayer(
     private val store = QueueStore(File(services.dataDir, "queue.json"))
     private var saveJob: Job? = null
     private var resumeAt: Long? = null
+    private var volumeSaveJob: Job? = null
 
     init {
-        listOf(active, standby).forEach { it.mpv.set("user-agent", NewPipeDownloader.USER_AGENT) }
+        listOf(active, standby).forEach {
+            it.mpv.set("user-agent", NewPipeDownloader.USER_AGENT)
+            it.applyVolume()
+        }
         scope.launch {
             settings.prefs.map { Triple(it.playbackSpeed, it.linkPitch, it.pitchSemitones) }.distinctUntilChanged().collect { applyFilters() }
         }
@@ -308,6 +312,12 @@ class DesktopPlayer(
         _volume.value = value.coerceIn(0f, 1f)
         active.applyVolume()
         standby.applyVolume()
+        volumeSaveJob?.cancel()
+        volumeSaveJob = scope.launch {
+            delay(SAVE_DEBOUNCE_MS)
+            val volume = _volume.value
+            launch(Dispatchers.IO) { services.playerStore.edit { putFloat(KEY_VOLUME, volume) } }
+        }
     }
 
     fun setSleepTimer(minutes: Int) {
@@ -349,6 +359,7 @@ class DesktopPlayer(
 
     fun release() {
         store.save(snapshot())
+        services.playerStore.edit(commit = true) { putFloat(KEY_VOLUME, _volume.value) }
         scope.cancel()
     }
 
@@ -662,5 +673,6 @@ class DesktopPlayer(
         const val MAX_GAIN_DB = 6f
         const val SAVE_INTERVAL_MS = 10_000L
         const val SAVE_DEBOUNCE_MS = 1_000L
+        const val KEY_VOLUME = "volume"
     }
 }
