@@ -68,7 +68,7 @@ fun SidePanel(panel: Panel, onClose: () -> Unit, modifier: Modifier = Modifier) 
 }
 
 @Composable
-private fun QueueList() {
+internal fun QueueList() {
     val player = LocalPlayer.current
     val state by player.state.collectAsState()
     val order = state.playOrder.filter { it in state.queue.indices }

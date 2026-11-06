@@ -214,6 +214,7 @@ private fun handleKey(event: KeyEvent, player: DesktopPlayer, navigator: Navigat
         (event.key == Key.Spacebar && !typing) || event.key == Key.MediaPlayPause -> player.togglePlay()
         event.key == Key.MediaNext || (!typing && event.isCtrlPressed && event.key == Key.DirectionRight) -> player.next()
         event.key == Key.MediaPrevious || (!typing && event.isCtrlPressed && event.key == Key.DirectionLeft) -> player.previous()
+        event.key == Key.Escape && navigator.nowPlaying -> navigator.nowPlaying = false
         !typing && event.isAltPressed && event.key == Key.DirectionLeft -> navigator.back()
         else -> return false
     }

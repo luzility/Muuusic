@@ -105,10 +105,16 @@ fun PlayerBar(state: PlayerState, modifier: Modifier = Modifier) {
             val compact = maxWidth < CompactBarWidth
             Row(Modifier.fillMaxSize().padding(horizontal = 16.dp), verticalAlignment = Alignment.CenterVertically) {
                 Row(Modifier.weight(if (compact) 1f else 0.3f), verticalAlignment = Alignment.CenterVertically) {
-                    Artwork(song.thumbnailUrl, Modifier.size(64.dp), MaterialTheme.shapes.large)
+                    Artwork(song.thumbnailUrl, Modifier.size(64.dp).clip(MaterialTheme.shapes.large).clickable { navigator.nowPlaying = true }, MaterialTheme.shapes.large)
                     Spacer(Modifier.width(14.dp))
                     Column(Modifier.weight(1f, fill = false)) {
-                        Text(song.title, style = MaterialTheme.typography.titleMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                        Text(
+                            song.title,
+                            style = MaterialTheme.typography.titleMedium,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.clip(MaterialTheme.shapes.extraSmall).clickable { navigator.nowPlaying = true },
+                        )
                         Text(
                             song.artist,
                             style = MaterialTheme.typography.bodyMedium,
@@ -221,7 +227,7 @@ private fun Seek(state: PlayerState) {
 }
 
 @Composable
-private fun Volume(compact: Boolean) {
+internal fun Volume(compact: Boolean) {
     val player = LocalPlayer.current
     val volume by player.volume.collectAsState()
     var beforeMute by remember { mutableFloatStateOf(1f) }

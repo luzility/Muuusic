@@ -183,7 +183,7 @@ private fun LabBadge() {
     }
 }
 
-private class MorphShape(private val morph: Morph, private val progress: Float, private val rotationDegrees: Float = 0f) : Shape {
+internal class MorphShape(private val morph: Morph, private val progress: Float, private val rotationDegrees: Float = 0f) : Shape {
     override fun createOutline(size: Size, layoutDirection: LayoutDirection, density: Density): Outline {
         val path = morph.toPath(progress = progress)
         if (rotationDegrees != 0f) {

@@ -99,6 +99,8 @@ import me.luzility.muuusic.data.update.AppRelease
 import me.luzility.muuusic.data.update.UpdateChannel
 import me.luzility.muuusic.data.update.Versions
 import me.luzility.muuusic.desktop.playback.DesktopEqualizer
+import me.luzility.muuusic.desktop.ui.Credits
+import me.luzility.muuusic.desktop.ui.CreditsDialog
 import me.luzility.muuusic.desktop.ui.LocalServices
 import me.luzility.muuusic.desktop.ui.LocalSnackbar
 import me.luzility.muuusic.desktop.ui.LocalUpdates
@@ -158,6 +160,7 @@ private val index = listOf(
     "settings_source" to Category.About,
     "settings_report" to Category.About,
     "settings_license" to Category.About,
+    "settings_credits" to Category.About,
 )
 
 private val CategoryShapes = listOf(
@@ -380,6 +383,8 @@ private fun CategoryContent(category: Category, onOpenEqualizer: () -> Unit) {
             { SwitchSetting(str("settings_discord"), str("settings_discord_summary"), prefs.discordPresence) { on -> settings.update { it.copy(discordPresence = on) } } },
         )
         Category.About -> Column {
+            var showCredits by remember { mutableStateOf(false) }
+            if (showCredits) CreditsDialog(onDismiss = { showCredits = false })
             AboutCard()
             Spacer(Modifier.height(8.dp))
             SettingsGroup(
@@ -387,6 +392,7 @@ private fun CategoryContent(category: Category, onOpenEqualizer: () -> Unit) {
                 { ActionSetting(str("settings_source"), "github.com/luzility/Muuusic") { uri.openUri("https://github.com/luzility/Muuusic") } },
                 { ActionSetting(str("settings_report"), str("settings_report_summary")) { uri.openUri("https://github.com/luzility/Muuusic/issues/new") } },
                 { ActionSetting(str("settings_license"), str("settings_license_summary")) { uri.openUri("https://www.gnu.org/licenses/gpl-3.0.html") } },
+                { ActionSetting(str("settings_credits"), str("settings_credits_summary", Credits.size)) { showCredits = true } },
             )
         }
     }

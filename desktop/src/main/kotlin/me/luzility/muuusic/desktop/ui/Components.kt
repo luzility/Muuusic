@@ -38,6 +38,7 @@ import androidx.compose.material.icons.rounded.Favorite
 import androidx.compose.material.icons.rounded.FavoriteBorder
 import androidx.compose.material.icons.rounded.GraphicEq
 import androidx.compose.material.icons.rounded.LibraryAdd
+import androidx.compose.material.icons.rounded.Link
 import androidx.compose.material.icons.rounded.MoreHoriz
 import androidx.compose.material.icons.rounded.MusicNote
 import androidx.compose.material.icons.rounded.Person
@@ -90,6 +91,8 @@ import me.luzility.muuusic.data.model.BrowseSection
 import me.luzility.muuusic.data.model.MusicCollection
 import me.luzility.muuusic.data.model.Song
 import me.luzility.muuusic.desktop.playback.QueueResult
+import java.awt.Toolkit
+import java.awt.datatransfer.StringSelection
 import java.util.concurrent.atomic.AtomicInteger
 
 val LocalSnackbar = staticCompositionLocalOf<SnackbarHostState> { error("SnackbarHostState not provided") }
@@ -113,6 +116,10 @@ fun Modifier.typingField(): Modifier = composed {
         focused.value = it.isFocused
         Typing.changed(it.isFocused)
     }
+}
+
+fun copyToClipboard(text: String) {
+    Toolkit.getDefaultToolkit().systemClipboard.setContents(StringSelection(text), null)
 }
 
 fun formatDuration(ms: Long): String {
@@ -285,6 +292,15 @@ fun SongMenu(song: Song, open: androidx.compose.runtime.MutableState<Boolean>, s
                 text = { Text(str("go_to_artist")) },
                 leadingIcon = { Icon(Icons.Rounded.Person, null) },
                 onClick = { navigator.openArtist(song.artist, song.artistUrl); open.value = false },
+            )
+            DropdownMenuItem(
+                text = { Text(str("copy_link")) },
+                leadingIcon = { Icon(Icons.Rounded.Link, null) },
+                onClick = {
+                    copyToClipboard("${song.title} - ${song.artist}\nhttps://music.youtube.com/watch?v=${song.id}")
+                    scope.launch { snackbar.showSnackbar(str("link_copied")) }
+                    open.value = false
+                },
             )
         }
     }

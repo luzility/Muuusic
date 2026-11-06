@@ -24,6 +24,7 @@ sealed interface Route {
 class Navigator {
     val stack = mutableStateListOf<Route>(Route.Home)
     var panel by mutableStateOf<Panel?>(null)
+    var nowPlaying by mutableStateOf(false)
 
     fun togglePanel(target: Panel) {
         panel = if (panel == target) null else target
@@ -34,6 +35,7 @@ class Navigator {
     val canGoBack: Boolean get() = stack.size > 1
 
     fun open(route: Route) {
+        nowPlaying = false
         if (stack.last() != route) stack.add(route)
     }
 

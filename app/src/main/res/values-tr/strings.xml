@@ -255,6 +255,8 @@
     <string name="credit_font">Yazı tipi</string>
     <string name="credit_lrclib">Şarkı sözleri</string>
     <string name="credit_sponsorblock">Müzik dışı kısımları atlama</string>
+    <string name="credit_jna">Yerel kütüphanelere erişim</string>
+    <string name="credit_dbus">Medya kontrolleri ve tepsi ikonu</string>
     <string name="onboarding_skip">Geç</string>
     <string name="onboarding_next">İleri</string>
     <string name="onboarding_start">Dinlemeye başla</string>
@@ -283,6 +285,8 @@
     <string name="queue_moved_next">Zaten sıradaydı, hemen sonraya alındı</string>
     <string name="queue_moved_end">Zaten sıradaydı, sonuna taşındı</string>
     <string name="share">Paylaş</string>
+    <string name="copy_link">Bağlantıyı kopyala</string>
+    <string name="link_copied">Bağlantı kopyalandı</string>
     <string name="settings_language">Dil</string>
     <string name="settings_app_language">Uygulama dili</string>
     <string name="settings_language_system">Telefonla aynı</string>
@@ -303,6 +307,10 @@
     <string name="back">Geri</string>
     <string name="downloading">İndiriliyor</string>
     <string name="share_lyrics">Sözleri paylaş</string>
+    <string name="lyrics_card_copy">Görseli kopyala</string>
+    <string name="lyrics_card_copied">Görsel kopyalandı</string>
+    <string name="lyrics_card_save">Görseli kaydet</string>
+    <string name="lyrics_card_saved">Görsel kaydedildi</string>
     <string name="lyrics_card_lines">Satırlar (en fazla %1$d)</string>
     <string name="card_style_artwork">Kapak</string>
     <string name="card_style_vivid">Canlı</string>

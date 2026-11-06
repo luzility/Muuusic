@@ -132,6 +132,8 @@ fun LyricsPanel() {
         val lines = data.synced?.map { it.text } ?: data.plain.orEmpty().lines()
         value = runCatching { services.lyricsTranslator.translate(lines, LyricsTranslator.targetFor(Locale.getDefault())) }.getOrDefault(emptyMap())
     }
+    var sharing by remember { mutableStateOf<Pair<List<String>, Int>?>(null) }
+    sharing?.let { (lines, index) -> LyricCardDialog(song, lines, index, onDismiss = { sharing = null }) }
     Box(Modifier.fillMaxSize().padding(horizontal = 12.dp), contentAlignment = Alignment.Center) {
         when (val current = lyrics) {
             Loadable.Loading -> LoadingIndicator(Modifier.size(56.dp))
@@ -148,10 +150,10 @@ fun LyricsPanel() {
                     val synced = loaded.synced
                     if (synced != null) {
                         androidx.compose.runtime.key(song.id) {
-                            SyncedLyrics(state, synced, prefs, offset, translations)
+                            SyncedLyrics(state, synced, prefs, offset, translations, onShare = { lines, index -> sharing = lines to index })
                         }
                     } else {
-                        PlainLyrics(loaded.plain.orEmpty(), prefs, translations)
+                        PlainLyrics(loaded.plain.orEmpty(), prefs, translations, onShare = { lines -> sharing = lines to 0 })
                     }
                 }
             }
@@ -225,6 +227,7 @@ private fun SyncedLyrics(
     prefs: LyricsPrefs,
     offsetMs: Long,
     translations: Map<String, String>,
+    onShare: (List<String>, Int) -> Unit,
 ) {
     val player = LocalPlayer.current
     val motion = MaterialTheme.motionScheme
@@ -232,6 +235,7 @@ private fun SyncedLyrics(
     val offsetState = rememberUpdatedState(offsetMs)
     val positionProvider = remember { { positionState.value + offsetState.value } }
     val lines = remember(source) { withInterludes(source) }
+    val texts = remember(lines) { lines.map { it.text }.filter { it.isNotBlank() } }
     val current by remember(lines) {
         derivedStateOf { lines.indexOfLast { it.timeMs <= positionProvider() + LeadMs } }
     }
@@ -302,6 +306,7 @@ private fun SyncedLyrics(
                         distance = if (current < 0) index + 1 else abs(index - current),
                         browsing = browsing,
                         prefs = prefs,
+                        onShare = { onShare(texts, texts.indexOf(line.text).coerceAtLeast(0)) },
                         onClick = {
                             player.seekTo((start - offsetMs).coerceAtLeast(0))
                             if (browsing) {
@@ -368,6 +373,7 @@ private fun LyricLineItem(
     distance: Int,
     browsing: Boolean,
     prefs: LyricsPrefs,
+    onShare: () -> Unit,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -413,6 +419,7 @@ private fun LyricLineItem(
         modifier = modifier
             .fillMaxWidth()
             .clip(MaterialTheme.shapes.large)
+            .onSecondaryClick(onShare)
             .clickable(onClick = onClick)
             .padding(horizontal = 8.dp, vertical = 10.dp),
     ) {
@@ -488,7 +495,7 @@ private fun Interlude(active: Boolean, align: LyricsAlign, progress: () -> Float
 }
 
 @Composable
-private fun PlainLyrics(text: String, prefs: LyricsPrefs, translations: Map<String, String>) {
+private fun PlainLyrics(text: String, prefs: LyricsPrefs, translations: Map<String, String>, onShare: (List<String>) -> Unit) {
     val centered = prefs.align == LyricsAlign.Center
     val style = lyricsTextStyle(prefs.textSize).copy(
         fontFamily = FlexFont.family(RestWeight.toInt()),
@@ -500,6 +507,7 @@ private fun PlainLyrics(text: String, prefs: LyricsPrefs, translations: Map<Stri
         modifier = Modifier
             .fillMaxSize()
             .fadingEdges()
+            .onSecondaryClick { onShare(text.lines().filter { it.isNotBlank() }) }
             .verticalScroll(rememberScrollState())
             .padding(vertical = 48.dp, horizontal = 8.dp),
     ) {

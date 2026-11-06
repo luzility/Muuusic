@@ -256,6 +256,8 @@
     <string name="credit_font">Font</string>
     <string name="credit_lrclib">Lyrics</string>
     <string name="credit_sponsorblock">Skipping non-music parts</string>
+    <string name="credit_jna">Calling native libraries</string>
+    <string name="credit_dbus">Media controls and tray icon</string>
     <string name="onboarding_skip">Skip</string>
     <string name="onboarding_next">Next</string>
     <string name="onboarding_start">Start listening</string>
@@ -284,6 +286,8 @@
     <string name="queue_moved_next">Already in the queue, moved up to play next</string>
     <string name="queue_moved_end">Already in the queue, moved to the end</string>
     <string name="share">Share</string>
+    <string name="copy_link">Copy link</string>
+    <string name="link_copied">Link copied</string>
     <string name="settings_language">Language</string>
     <string name="settings_app_language">App language</string>
     <string name="settings_language_system">Same as the phone</string>
@@ -304,6 +308,10 @@
     <string name="back">Back</string>
     <string name="downloading">Downloading</string>
     <string name="share_lyrics">Share lyrics</string>
+    <string name="lyrics_card_copy">Copy image</string>
+    <string name="lyrics_card_copied">Image copied</string>
+    <string name="lyrics_card_save">Save image</string>
+    <string name="lyrics_card_saved">Image saved</string>
     <string name="lyrics_card_lines">Lines (up to %1$d)</string>
     <string name="card_style_artwork">Artwork</string>
     <string name="card_style_vivid">Vivid</string>
