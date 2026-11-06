@@ -37,6 +37,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import me.luzility.muuusic.data.model.Song
@@ -44,8 +45,13 @@ import me.luzility.muuusic.data.model.Song
 val SidePanelWidth = 400.dp
 
 @Composable
-fun SidePanel(panel: Panel, onSelect: (Panel) -> Unit, onClose: () -> Unit) {
-    Surface(color = MaterialTheme.colorScheme.surfaceContainerLow, modifier = Modifier.width(SidePanelWidth).fillMaxHeight()) {
+fun SidePanel(panel: Panel, onSelect: (Panel) -> Unit, onClose: () -> Unit, modifier: Modifier = Modifier) {
+    Surface(
+        color = MaterialTheme.colorScheme.surfaceContainer,
+        shape = MaterialTheme.shapes.extraLarge,
+        shadowElevation = 8.dp,
+        modifier = modifier.width(SidePanelWidth).fillMaxHeight(),
+    ) {
         Column {
             Row(Modifier.fillMaxWidth().padding(start = 16.dp, end = 8.dp, top = 12.dp, bottom = 8.dp), verticalAlignment = Alignment.CenterVertically) {
                 Row(Modifier.weight(1f), horizontalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween)) {
@@ -100,7 +106,7 @@ private fun QueueRow(song: Song, current: Boolean, played: Boolean, onClick: () 
         Modifier
             .fillMaxWidth()
             .clip(MaterialTheme.shapes.medium)
-            .background(if (current) colors.secondaryContainer else if (hovered) colors.surfaceContainerHigh else colors.surfaceContainerLow)
+            .background(if (current) colors.secondaryContainer else if (hovered) colors.surfaceContainerHighest else Color.Transparent)
             .hoverable(interactions)
             .clickable(onClick = onClick)
             .padding(horizontal = 10.dp, vertical = 6.dp),

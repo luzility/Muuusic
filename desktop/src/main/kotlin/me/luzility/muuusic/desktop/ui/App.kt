@@ -2,11 +2,14 @@ package me.luzility.muuusic.desktop.ui
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.expandHorizontally
+import androidx.compose.animation.core.FastOutLinearInEasing
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.updateTransition
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.shrinkHorizontally
+import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Box
@@ -61,6 +64,8 @@ import me.luzility.muuusic.desktop.ui.pages.PlaylistPage
 import me.luzility.muuusic.desktop.ui.pages.SearchModel
 import me.luzility.muuusic.desktop.ui.pages.SearchPage
 import me.luzility.muuusic.desktop.ui.pages.SettingsPage
+
+private const val PanelExitMs = 200
 
 private enum class Tab(val route: Route, val label: String, val icon: ImageVector) {
     Home(Route.Home, "nav_home", Icons.Rounded.Home),
@@ -122,19 +127,21 @@ fun App(services: DesktopServices, player: DesktopPlayer, navigator: Navigator, 
                                         Icon(Icons.AutoMirrored.Rounded.ArrowBack, str("back"))
                                     }
                                 }
-                            }
-                            var lastPanel by remember { mutableStateOf(Panel.Queue) }
-                            navigator.panel?.let { lastPanel = it }
-                            AnimatedVisibility(
-                                visible = navigator.panel != null && state.current != null,
-                                enter = expandHorizontally(MaterialTheme.motionScheme.defaultSpatialSpec()) + fadeIn(),
-                                exit = shrinkHorizontally(MaterialTheme.motionScheme.fastSpatialSpec()) + fadeOut(),
-                            ) {
-                                SidePanel(
-                                    panel = lastPanel,
-                                    onSelect = { navigator.panel = it },
-                                    onClose = { navigator.panel = null },
-                                )
+                                var lastPanel by remember { mutableStateOf(Panel.Queue) }
+                                navigator.panel?.let { lastPanel = it }
+                                updateTransition(navigator.panel != null && state.current != null, label = "sidePanel").AnimatedVisibility(
+                                    visible = { it },
+                                    enter = slideInHorizontally(MaterialTheme.motionScheme.defaultSpatialSpec()) { it / 2 } + fadeIn(),
+                                    exit = slideOutHorizontally(tween(PanelExitMs, easing = FastOutLinearInEasing)) { it } + fadeOut(tween(PanelExitMs, easing = FastOutLinearInEasing)),
+                                    modifier = Modifier.align(Alignment.CenterEnd),
+                                ) {
+                                    SidePanel(
+                                        panel = lastPanel,
+                                        onSelect = { navigator.panel = it },
+                                        onClose = { navigator.panel = null },
+                                        modifier = Modifier.padding(12.dp),
+                                    )
+                                }
                             }
                         }
                         AnimatedVisibility(
