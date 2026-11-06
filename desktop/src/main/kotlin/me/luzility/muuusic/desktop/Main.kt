@@ -77,9 +77,9 @@ fun main() {
             player.release()
             Thread {
                 Thread({ Thread.sleep(QUIT_TIMEOUT_MS); Runtime.getRuntime().halt(0) }, "quit-watchdog").apply { isDaemon = true }.start()
+                if (restart) runCatching { services.updater.relaunch() }
                 services.streamCache.stop()
                 player.destroy()
-                if (restart) services.updater.relaunch()
                 exitProcess(0)
             }.start()
         }

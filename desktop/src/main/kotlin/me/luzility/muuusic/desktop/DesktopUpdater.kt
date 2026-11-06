@@ -58,7 +58,11 @@ class DesktopUpdater(private val client: OkHttpClient, private val cacheDir: Fil
             Install.Deb -> "$DEB_ROOT/bin/Muuusic"
             Install.None -> return
         }
-        ProcessBuilder(command).start()
+        val pid = ProcessHandle.current().pid()
+        ProcessBuilder("sh", "-c", "while kill -0 $pid 2>/dev/null; do sleep 0.2; done; exec \"\$0\"", command)
+            .redirectOutput(ProcessBuilder.Redirect.DISCARD)
+            .redirectError(ProcessBuilder.Redirect.DISCARD)
+            .start()
     }
 
     private suspend fun download(url: String, target: File, onProgress: (Float) -> Unit) {
