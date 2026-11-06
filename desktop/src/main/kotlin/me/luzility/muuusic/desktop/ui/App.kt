@@ -137,7 +137,6 @@ fun App(services: DesktopServices, player: DesktopPlayer, navigator: Navigator, 
                                 ) {
                                     SidePanel(
                                         panel = lastPanel,
-                                        onSelect = { navigator.panel = it },
                                         onClose = { navigator.panel = null },
                                         modifier = Modifier.padding(12.dp),
                                     )

@@ -6,9 +6,6 @@ import androidx.compose.foundation.hoverable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.material3.ButtonGroupDefaults
-import androidx.compose.material3.ToggleButton
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -26,6 +23,7 @@ import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.GraphicEq
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -45,7 +43,7 @@ import me.luzility.muuusic.data.model.Song
 val SidePanelWidth = 400.dp
 
 @Composable
-fun SidePanel(panel: Panel, onSelect: (Panel) -> Unit, onClose: () -> Unit, modifier: Modifier = Modifier) {
+fun SidePanel(panel: Panel, onClose: () -> Unit, modifier: Modifier = Modifier) {
     Surface(
         color = MaterialTheme.colorScheme.surfaceContainer,
         shape = MaterialTheme.shapes.extraLarge,
@@ -53,19 +51,13 @@ fun SidePanel(panel: Panel, onSelect: (Panel) -> Unit, onClose: () -> Unit, modi
         modifier = modifier.width(SidePanelWidth).fillMaxHeight(),
     ) {
         Column {
-            Row(Modifier.fillMaxWidth().padding(start = 16.dp, end = 8.dp, top = 12.dp, bottom = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-                Row(Modifier.weight(1f), horizontalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween)) {
-                    Panel.entries.forEachIndexed { index, entry ->
-                        ToggleButton(
-                            checked = panel == entry,
-                            onCheckedChange = { onSelect(entry) },
-                            shapes = if (index == 0) ButtonGroupDefaults.connectedLeadingButtonShapes() else ButtonGroupDefaults.connectedTrailingButtonShapes(),
-                        ) {
-                            Text(str(if (entry == Panel.Queue) "queue" else "lyrics"))
-                        }
-                    }
-                }
-                IconButton(onClick = onClose) { Icon(Icons.Rounded.Close, str("close")) }
+            Row(Modifier.fillMaxWidth().padding(start = 20.dp, end = 8.dp, top = 12.dp, bottom = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    str(if (panel == Panel.Queue) "queue" else "lyrics"),
+                    style = MaterialTheme.typography.titleLargeEmphasized,
+                    modifier = Modifier.weight(1f),
+                )
+                IconButton(onClick = onClose, shapes = IconButtonDefaults.shapes()) { Icon(Icons.Rounded.Close, str("close")) }
             }
             when (panel) {
                 Panel.Queue -> QueueList()
