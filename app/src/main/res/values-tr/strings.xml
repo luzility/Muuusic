@@ -163,6 +163,7 @@
     <string name="recognize_allow">İzin ver</string>
     <string name="recognize_listening_hint_desktop">Şarkıyı bilgisayarında çal</string>
     <string name="mini_player">Mini oynatıcı</string>
+    <string name="close_player">Oynatıcıyı kapat</string>
     <string name="show_window">Muuusic\'i göster</string>
     <string name="hide_window">Muuusic\'i gizle</string>
     <string name="quit">Çık</string>

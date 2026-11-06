@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -25,16 +26,14 @@ import androidx.compose.material.icons.automirrored.rounded.VolumeUp
 import androidx.compose.material.icons.rounded.Favorite
 import androidx.compose.material.icons.rounded.FavoriteBorder
 import androidx.compose.material.icons.rounded.Lyrics
-import androidx.compose.material.icons.rounded.MoreVert
 import androidx.compose.material.icons.rounded.Pause
-import androidx.compose.material.icons.rounded.PictureInPictureAlt
 import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material.icons.rounded.Repeat
 import androidx.compose.material.icons.rounded.RepeatOne
 import androidx.compose.material.icons.rounded.Shuffle
 import androidx.compose.material.icons.rounded.SkipNext
 import androidx.compose.material.icons.rounded.SkipPrevious
-import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.ButtonGroupDefaults
 import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -48,6 +47,7 @@ import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.ToggleButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.State
@@ -137,32 +137,11 @@ fun PlayerBar(state: PlayerState, modifier: Modifier = Modifier) {
                 }
 
                 Row(if (compact) Modifier else Modifier.weight(0.3f), horizontalArrangement = Arrangement.End, verticalAlignment = Alignment.CenterVertically) {
-                    if (compact) {
-                        MoreButton()
-                    } else {
-                        SpeedButton()
-                        KaraokeButton()
-                        SleepTimerButton()
-                    }
-                    IconToggleButton(
-                        checked = navigator.panel == Panel.Lyrics,
-                        onCheckedChange = { navigator.togglePanel(Panel.Lyrics) },
-                        shapes = IconButtonDefaults.toggleableShapes(),
-                    ) {
-                        Icon(Icons.Rounded.Lyrics, str("lyrics"))
-                    }
-                    IconToggleButton(
-                        checked = navigator.panel == Panel.Queue,
-                        onCheckedChange = { navigator.togglePanel(Panel.Queue) },
-                        shapes = IconButtonDefaults.toggleableShapes(),
-                    ) {
-                        Icon(Icons.AutoMirrored.Rounded.QueueMusic, str("queue"))
-                    }
-                    val openMiniPlayer = LocalMiniPlayer.current
-                    IconButton(onClick = openMiniPlayer, shapes = IconButtonDefaults.shapes()) {
-                        Icon(Icons.Rounded.PictureInPictureAlt, str("mini_player"))
-                    }
+                    PanelToggles()
+                    Spacer(Modifier.width(12.dp))
                     Volume(compact)
+                    Spacer(Modifier.width(4.dp))
+                    PlayerMenu()
                 }
             }
         }
@@ -272,17 +251,19 @@ private fun Volume(compact: Boolean) {
 }
 
 @Composable
-private fun MoreButton() {
-    var open by remember { mutableStateOf(false) }
-    Box {
-        IconButton(onClick = { open = true }, shapes = IconButtonDefaults.shapes()) {
-            Icon(Icons.Rounded.MoreVert, str("more"))
-        }
-        DropdownMenu(expanded = open, onDismissRequest = { open = false }, shape = MaterialTheme.shapes.extraLarge) {
-            Row(Modifier.padding(horizontal = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-                SpeedButton()
-                KaraokeButton()
-                SleepTimerButton()
+private fun PanelToggles() {
+    val navigator = LocalNavigator.current
+    val panels = listOf(Panel.Lyrics to Icons.Rounded.Lyrics, Panel.Queue to Icons.AutoMirrored.Rounded.QueueMusic)
+    Row(horizontalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween)) {
+        panels.forEachIndexed { index, (panel, icon) ->
+            ToggleButton(
+                checked = navigator.panel == panel,
+                onCheckedChange = { navigator.togglePanel(panel) },
+                shapes = if (index == 0) ButtonGroupDefaults.connectedLeadingButtonShapes() else ButtonGroupDefaults.connectedTrailingButtonShapes(),
+                contentPadding = PaddingValues(horizontal = 14.dp),
+                modifier = Modifier.height(40.dp),
+            ) {
+                Icon(icon, str(if (panel == Panel.Lyrics) "lyrics" else "queue"))
             }
         }
     }

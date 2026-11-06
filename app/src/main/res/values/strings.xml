@@ -164,6 +164,7 @@
     <string name="recognize_allow">Allow</string>
     <string name="recognize_listening_hint_desktop">Play the song on your computer</string>
     <string name="mini_player">Mini player</string>
+    <string name="close_player">Close player</string>
     <string name="show_window">Show Muuusic</string>
     <string name="hide_window">Hide Muuusic</string>
     <string name="quit">Quit</string>
