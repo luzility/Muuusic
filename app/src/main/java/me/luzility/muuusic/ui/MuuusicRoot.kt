@@ -187,7 +187,8 @@ fun MuuusicRoot(player: PlayerViewModel) {
                 Box(Modifier.fillMaxSize().tapHaptics().semantics { testTagsAsResourceId = true }) {
                     val stack by nav.currentBackStack.collectAsStateWithLifecycle()
                     val currentTab = stack.lastOrNull { entry -> Tab.entries.any { it.route == entry.destination.route } }?.destination?.route
-                    val selectTab: (Tab) -> Unit = { tab ->
+                    val selectTab: (Tab) -> Unit = selectTab@{ tab ->
+                        if (nav.currentBackStackEntry?.lifecycle?.currentState != Lifecycle.State.RESUMED) return@selectTab
                         if (currentTab == tab.route) {
                             nav.popBackStack(tab.route, inclusive = false)
                         } else {
