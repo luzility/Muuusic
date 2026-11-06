@@ -212,14 +212,17 @@ class DesktopPlayer(
     }
 
     fun togglePlay() {
-        if (current < 0 || loading) return
-        if (!active.hasFile) {
+        if (active.paused || (!active.hasFile && !loading)) resume() else pause()
+    }
+
+    fun resume() {
+        if (current < 0) return
+        if (!active.hasFile && !loading) {
             load(current)
             return
         }
-        val pause = !active.paused
-        active.mpv.set("pause", if (pause) "yes" else "no")
-        if (fadingOut) standby.mpv.set("pause", if (pause) "yes" else "no")
+        active.mpv.set("pause", "no")
+        if (fadingOut) standby.mpv.set("pause", "no")
     }
 
     fun pause() {
@@ -228,8 +231,12 @@ class DesktopPlayer(
     }
 
     fun next() {
-        val target = nextIndex() ?: return
-        load(target)
+        nextIndex()?.let {
+            load(it)
+            return
+        }
+        if (!settings.prefs.value.autoplay) return
+        fetchRadio(queue.getOrNull(current)?.id ?: return) { first -> load(first) }
     }
 
     fun previous() {
@@ -588,7 +595,7 @@ class DesktopPlayer(
         fetchRadio(queue.getOrNull(current)?.id ?: return)
     }
 
-    private fun fetchRadio(seedId: String) {
+    private fun fetchRadio(seedId: String, onAdded: (Int) -> Unit = {}) {
         radioJob?.cancel()
         radioJob = scope.launch {
             val songs = runCatching { services.youtube.radio(seedId) }.getOrNull() ?: return@launch
@@ -599,6 +606,7 @@ class DesktopPlayer(
             queue.addAll(fresh)
             order.addAll(start until queue.size)
             publish()
+            onAdded(start)
         }
     }
 

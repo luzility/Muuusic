@@ -81,7 +81,7 @@ class Mpris(
 
     override fun Stop() = onMain { player.pause() }
 
-    override fun Play() = onMain { if (!player.state.value.isPlaying) player.togglePlay() }
+    override fun Play() = onMain { player.resume() }
 
     override fun Seek(offset: Long) = onMain { player.seekTo((player.position() + offset / 1000).coerceAtLeast(0)) }
 
