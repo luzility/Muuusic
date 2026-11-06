@@ -113,6 +113,9 @@ fun main() {
                 onMenu = { x, y -> trayMenu = IntOffset(x, y) },
             )
         }
+        LaunchedEffect(tray) {
+            tray.available.collect { shown -> if (!shown && open && !windowVisible && !miniPlayer) showWindow() }
+        }
         if (!open) return@application
         Window(
             onCloseRequest = { if (keepsPlaying()) hideToTray() else quit(false) },

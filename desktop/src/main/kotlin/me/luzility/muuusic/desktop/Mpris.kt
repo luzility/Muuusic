@@ -144,7 +144,6 @@ class Mpris(
 
     private fun playerProperties(state: PlayerState, volume: Float): Map<String, Variant<*>> {
         val song = state.current
-        val position = state.playOrder.indexOf(state.currentIndex)
         return mapOf(
             "PlaybackStatus" to Variant(
                 when {
@@ -166,7 +165,7 @@ class Mpris(
             "Volume" to Variant(volume.toDouble()),
             "MinimumRate" to Variant(1.0),
             "MaximumRate" to Variant(1.0),
-            "CanGoNext" to Variant(song != null && (position + 1 < state.playOrder.size || state.repeatMode == RepeatMode.All)),
+            "CanGoNext" to Variant(song != null && player.hasNext()),
             "CanGoPrevious" to Variant(song != null),
             "CanPlay" to Variant(song != null),
             "CanPause" to Variant(song != null),

@@ -14,6 +14,7 @@ import org.freedesktop.dbus.annotations.DBusInterfaceName
 import org.freedesktop.dbus.annotations.Position
 import org.freedesktop.dbus.connections.impl.DBusConnection
 import org.freedesktop.dbus.connections.impl.DBusConnectionBuilder
+import org.freedesktop.dbus.interfaces.DBus
 import org.freedesktop.dbus.interfaces.DBusInterface
 import org.freedesktop.dbus.interfaces.Properties
 import org.freedesktop.dbus.messages.DBusSignal
@@ -65,21 +66,36 @@ class Tray(
         scope.launch(Dispatchers.IO) {
             val bus = runCatching { DBusConnectionBuilder.forSessionBus().withShared(false).build() }.getOrNull() ?: return@launch
             val name = "org.kde.StatusNotifierItem-${ProcessHandle.current().pid()}-1"
-            val registered = runCatching {
+            val exported = runCatching {
                 bus.requestBusName(name)
                 bus.exportObject(PATH, this@Tray)
-                bus.getRemoteObject(WATCHER, WATCHER_PATH, StatusNotifierWatcher::class.java).RegisterStatusNotifierItem(name)
             }.isSuccess
-            if (!registered) {
+            if (!exported) {
                 bus.close()
                 return@launch
             }
             connection = bus
-            _available.value = true
+            runCatching {
+                bus.addSigHandler(DBus.NameOwnerChanged::class.java) { signal ->
+                    if (signal.name != WATCHER) return@addSigHandler
+                    if (signal.newOwner.isEmpty()) {
+                        _available.value = false
+                    } else {
+                        scope.launch(Dispatchers.IO) { register(bus, name) }
+                    }
+                }
+            }
+            register(bus, name)
             player.state.distinctUntilChangedBy { it.current?.id }.collect {
                 runCatching { bus.sendMessage(StatusNotifierItem.NewToolTip(PATH)) }
             }
         }
+    }
+
+    private fun register(bus: DBusConnection, name: String) {
+        _available.value = runCatching {
+            bus.getRemoteObject(WATCHER, WATCHER_PATH, StatusNotifierWatcher::class.java).RegisterStatusNotifierItem(name)
+        }.isSuccess
     }
 
     fun close() {

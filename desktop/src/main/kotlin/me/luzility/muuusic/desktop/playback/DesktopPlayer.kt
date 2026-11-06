@@ -186,6 +186,7 @@ class DesktopPlayer(
 
     fun play(songs: List<Song>, startIndex: Int = 0, shuffle: Boolean = false) {
         if (songs.isEmpty()) return
+        radioJob?.cancel()
         queue = songs.toMutableList()
         this.shuffle = shuffle
         val start = if (shuffle) songs.indices.random() else startIndex.coerceIn(songs.indices)
@@ -242,6 +243,8 @@ class DesktopPlayer(
         if (!settings.prefs.value.autoplay) return
         fetchRadio(queue.getOrNull(current)?.id ?: return) { first -> load(first) }
     }
+
+    fun hasNext(): Boolean = current >= 0 && (nextIndex() != null || settings.prefs.value.autoplay)
 
     fun previous() {
         val position = order.indexOf(current)

@@ -90,22 +90,28 @@ import me.luzility.muuusic.data.model.BrowseSection
 import me.luzility.muuusic.data.model.MusicCollection
 import me.luzility.muuusic.data.model.Song
 import me.luzility.muuusic.desktop.playback.QueueResult
+import java.util.concurrent.atomic.AtomicInteger
 
 val LocalSnackbar = staticCompositionLocalOf<SnackbarHostState> { error("SnackbarHostState not provided") }
 
 object Typing {
-    @Volatile
-    var active = false
+    private val focused = AtomicInteger()
+    val active: Boolean get() = focused.get() > 0
+
+    fun changed(isFocused: Boolean) {
+        if (isFocused) focused.incrementAndGet() else focused.updateAndGet { (it - 1).coerceAtLeast(0) }
+    }
 }
 
 fun Modifier.typingField(): Modifier = composed {
     val focused = remember { mutableStateOf(false) }
     DisposableEffect(Unit) {
-        onDispose { if (focused.value) Typing.active = false }
+        onDispose { if (focused.value) Typing.changed(false) }
     }
     onFocusChanged {
+        if (it.isFocused == focused.value) return@onFocusChanged
         focused.value = it.isFocused
-        if (it.isFocused) Typing.active = true else if (Typing.active) Typing.active = false
+        Typing.changed(it.isFocused)
     }
 }
 
