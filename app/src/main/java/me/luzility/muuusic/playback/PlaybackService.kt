@@ -27,6 +27,7 @@ import android.content.Intent
 import android.util.Log
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
+import androidx.media3.common.ForwardingPlayer
 import androidx.media3.common.MediaItem
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
@@ -68,6 +69,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.withContext
 import java.io.File
+import java.lang.reflect.Proxy
 
 class PlaybackService : MediaLibraryService() {
 
@@ -160,7 +162,7 @@ class PlaybackService : MediaLibraryService() {
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
         )
         browseTree = BrowseTree(this)
-        session = MediaLibrarySession.Builder(this, player, SessionCallback())
+        session = MediaLibrarySession.Builder(this, AutoplayPlayer(player), SessionCallback())
             .setSessionActivity(openApp)
             .build()
     }
@@ -707,7 +709,7 @@ class PlaybackService : MediaLibraryService() {
         player = next
         gain = newGain
         next.addListener(listener)
-        session?.player = next
+        session?.player = AutoplayPlayer(next)
         next.prepare()
         next.play()
         next.currentMediaItem?.let(::onSongStarted)
@@ -794,15 +796,69 @@ class PlaybackService : MediaLibraryService() {
         fetchRadio(player.currentMediaItem?.mediaId ?: return)
     }
 
-    private fun fetchRadio(seedId: String) {
+    private fun fetchRadio(seedId: String, onAdded: (Int) -> Unit = {}) {
         radioJob?.cancel()
         radioJob = scope.launch {
             val songs = runCatching { container.youtube.radio(seedId) }
                 .onFailure { Log.w(TAG, "Radio failed for $seedId", it) }
                 .getOrNull() ?: return@launch
             val queued = (0 until player.mediaItemCount).map { player.getMediaItemAt(it).mediaId }.toSet()
+            if (seedId !in queued) return@launch
             val fresh = songs.filter { it.id !in queued }.take(25)
-            if (fresh.isNotEmpty()) player.addMediaItems(fresh.map { it.toMediaItem() })
+            if (fresh.isEmpty()) return@launch
+            val first = player.mediaItemCount
+            player.addMediaItems(fresh.map { it.toMediaItem() })
+            onAdded(first)
+        }
+    }
+
+    private inner class AutoplayPlayer(base: ExoPlayer) : ForwardingPlayer(base) {
+        private val listeners = HashMap<Player.Listener, Player.Listener>()
+
+        private fun extendsQueue() =
+            container.settings.prefs.value.autoplay && wrappedPlayer.mediaItemCount > 0 && !wrappedPlayer.hasNextMediaItem()
+
+        override fun addListener(listener: Player.Listener) {
+            val wrapped = Proxy.newProxyInstance(Player.Listener::class.java.classLoader, arrayOf(Player.Listener::class.java)) { proxy, method, args ->
+                when {
+                    method.declaringClass == Any::class.java -> when (method.name) {
+                        "equals" -> proxy === args?.firstOrNull()
+                        "hashCode" -> System.identityHashCode(proxy)
+                        else -> "AutoplayListener($listener)"
+                    }
+                    method.name == "onAvailableCommandsChanged" -> method.invoke(listener, availableCommands)
+                    else -> method.invoke(listener, *(args ?: emptyArray()))
+                }
+            } as Player.Listener
+            listeners[listener] = wrapped
+            super.addListener(wrapped)
+        }
+
+        override fun removeListener(listener: Player.Listener) {
+            listeners.remove(listener)?.let { super.removeListener(it) }
+        }
+
+        override fun getAvailableCommands(): Player.Commands {
+            val commands = super.getAvailableCommands()
+            if (!extendsQueue()) return commands
+            return commands.buildUpon().addAll(Player.COMMAND_SEEK_TO_NEXT, Player.COMMAND_SEEK_TO_NEXT_MEDIA_ITEM).build()
+        }
+
+        override fun isCommandAvailable(command: Int): Boolean =
+            super.isCommandAvailable(command) ||
+                ((command == Player.COMMAND_SEEK_TO_NEXT || command == Player.COMMAND_SEEK_TO_NEXT_MEDIA_ITEM) && extendsQueue())
+
+        override fun seekToNext() {
+            if (extendsQueue()) playRadioNext() else super.seekToNext()
+        }
+
+        override fun seekToNextMediaItem() {
+            if (extendsQueue()) playRadioNext() else super.seekToNextMediaItem()
+        }
+
+        private fun playRadioNext() {
+            val seed = wrappedPlayer.currentMediaItem?.mediaId ?: return
+            fetchRadio(seed) { first -> if (player.currentMediaItem?.mediaId == seed) player.seekToDefaultPosition(first) }
         }
     }
 
