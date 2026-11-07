@@ -12,3 +12,5 @@
 
 # The widget renders through WorkManager, which creates its input merger by reflection.
 -keep class * extends androidx.work.InputMerger { <init>(); }
+
+-keepclassmembernames interface androidx.media3.common.Player$Listener { *; }
