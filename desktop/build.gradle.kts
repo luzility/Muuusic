@@ -64,6 +64,7 @@ compose.desktop {
         mainClass = "me.luzility.muuusic.desktop.MainKt"
         jvmArgs += listOf(
             "-Dmuuusic.version=$appVersion",
+            "-Xmx512m",
             "--enable-native-access=ALL-UNNAMED",
             "--add-opens=java.desktop/sun.awt=ALL-UNNAMED",
             "--add-opens=java.desktop/java.awt.peer=ALL-UNNAMED",

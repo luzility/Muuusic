@@ -22,6 +22,8 @@ class Mpv(private val onEvent: (MpvEvent) -> Unit) {
         setOption("audio-display", "no")
         setOption("input-default-bindings", "no")
         setOption("terminal", "no")
+        setOption("demuxer-max-bytes", "32MiB")
+        setOption("demuxer-max-back-bytes", "8MiB")
         check(lib.mpv_initialize(handle) >= 0) { "mpv_initialize failed" }
         observe("pause", FORMAT_FLAG)
         observe("duration", FORMAT_DOUBLE)

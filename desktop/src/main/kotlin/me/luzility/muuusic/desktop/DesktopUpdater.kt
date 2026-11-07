@@ -60,6 +60,7 @@ class DesktopUpdater(private val client: OkHttpClient, private val cacheDir: Fil
         }
         val pid = ProcessHandle.current().pid()
         ProcessBuilder("sh", "-c", "while kill -0 $pid 2>/dev/null; do sleep 0.2; done; exec \"\$0\"", command)
+            .apply { environment()["MALLOC_ARENA_MAX"] = "2" }
             .redirectOutput(ProcessBuilder.Redirect.DISCARD)
             .redirectError(ProcessBuilder.Redirect.DISCARD)
             .start()

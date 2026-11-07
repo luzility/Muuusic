@@ -28,11 +28,18 @@ import androidx.compose.ui.window.WindowState
 import androidx.compose.ui.window.application
 import androidx.compose.ui.window.rememberDialogState
 import androidx.compose.ui.window.rememberWindowState
+import coil3.ImageLoader
+import coil3.SingletonImageLoader
+import coil3.disk.DiskCache
+import coil3.memory.MemoryCache
+import coil3.network.okhttp.OkHttpNetworkFetcherFactory
 import java.awt.Dimension
 import java.awt.event.WindowAdapter
 import java.awt.event.WindowEvent
+import java.io.File
 import java.util.Locale
 import kotlin.system.exitProcess
+import okio.Path.Companion.toOkioPath
 import me.luzility.muuusic.AppInfo
 import me.luzility.muuusic.data.youtube.NewPipeDownloader
 import me.luzility.muuusic.desktop.playback.DesktopPlayer
@@ -57,6 +64,13 @@ fun main() {
     val services = DesktopServices(DesktopServices.defaultDataDir())
     val locale = Locale.getDefault()
     NewPipe.init(NewPipeDownloader(services.okHttp), Localization.fromLocale(locale), ContentCountry(locale.country.ifEmpty { "US" }))
+    SingletonImageLoader.setSafe { context ->
+        ImageLoader.Builder(context)
+            .components { add(OkHttpNetworkFetcherFactory(callFactory = { services.okHttp })) }
+            .memoryCache { MemoryCache.Builder().maxSizeBytes(IMAGE_MEMORY_BYTES).build() }
+            .diskCache { DiskCache.Builder().directory(File(services.dataDir, "images").toOkioPath()).maxSizeBytes(IMAGE_DISK_BYTES).build() }
+            .build()
+    }
 
     application(exitProcessOnExit = false) {
         val player = remember { DesktopPlayer(services, localFile = services.downloads::fileFor) }
@@ -209,6 +223,8 @@ fun main() {
 }
 
 private const val QUIT_TIMEOUT_MS = 3_000L
+private const val IMAGE_MEMORY_BYTES = 128L * 1024 * 1024
+private const val IMAGE_DISK_BYTES = 256L * 1024 * 1024
 
 private fun handleKey(event: KeyEvent, player: DesktopPlayer, navigator: Navigator): Boolean {
     val typing = Typing.active
