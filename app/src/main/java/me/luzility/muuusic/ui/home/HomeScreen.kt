@@ -37,11 +37,6 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyHorizontalGrid
 import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Settings
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -63,6 +58,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import me.luzility.muuusic.R
+import me.luzility.muuusic.ui.components.ProfileButton
 import me.luzility.muuusic.ui.components.LocalMiniPlayerInset
 import me.luzility.muuusic.container
 import me.luzility.muuusic.data.model.CollectionType
@@ -232,7 +228,7 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
 }
 
 @Composable
-fun HomeScreen(onOpenSettings: () -> Unit, vm: HomeViewModel = viewModel()) {
+fun HomeScreen(vm: HomeViewModel = viewModel()) {
     val player = LocalPlayer.current
     val recent by vm.recent.collectAsStateWithLifecycle()
     val mostPlayed by vm.mostPlayed.collectAsStateWithLifecycle()
@@ -246,7 +242,7 @@ fun HomeScreen(onOpenSettings: () -> Unit, vm: HomeViewModel = viewModel()) {
         contentPadding = PaddingValues(bottom = 24.dp + LocalMiniPlayerInset.current),
     ) {
         item { Spacer(Modifier.windowInsetsTopHeight(WindowInsets.statusBars)) }
-        item { Greeting(onOpenSettings) }
+        item { Greeting() }
 
         if (moods.isNotEmpty()) {
             item(key = "moods") {
@@ -319,7 +315,7 @@ fun HomeScreen(onOpenSettings: () -> Unit, vm: HomeViewModel = viewModel()) {
 private const val GREETING_WEIGHT = 860f
 
 @Composable
-private fun Greeting(onOpenSettings: () -> Unit) {
+private fun Greeting() {
     val greeting = when (LocalTime.now().hour) {
         in 5..11 -> R.string.greeting_morning
         in 12..17 -> R.string.greeting_afternoon
@@ -348,9 +344,7 @@ private fun Greeting(onOpenSettings: () -> Unit) {
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
-        IconButton(onClick = onOpenSettings, shapes = IconButtonDefaults.shapes()) {
-            Icon(Icons.Rounded.Settings, stringResource(R.string.settings))
-        }
+        ProfileButton()
     }
 }
 

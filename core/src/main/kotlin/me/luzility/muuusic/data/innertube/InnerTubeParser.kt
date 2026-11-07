@@ -13,6 +13,8 @@ import org.json.JSONObject
 
 data class LibraryPlaylist(val browseId: String, val title: String)
 
+data class AccountInfo(val name: String?, val photoUrl: String?)
+
 object InnerTubeParser {
     const val LIKED_PLAYLIST = "VLLM"
 
@@ -101,12 +103,14 @@ object InnerTubeParser {
         return token
     }
 
-    fun accountName(json: JSONObject): String? {
-        var name: String? = null
-        walk(json) { node ->
-            if (name == null) name = node.path("activeAccountHeaderRenderer")?.array("accountName", "runs").firstText()
-        }
-        return name
+    fun account(json: JSONObject): AccountInfo? {
+        var header: JSONObject? = null
+        walk(json) { node -> if (header == null) header = node.path("activeAccountHeaderRenderer") }
+        val found = header ?: return null
+        return AccountInfo(
+            name = found.array("accountName", "runs").firstText(),
+            photoUrl = found.array("accountPhoto", "thumbnails").lastUrl(square = false),
+        )
     }
 
     private fun walk(node: Any?, visit: (JSONObject) -> Unit) {

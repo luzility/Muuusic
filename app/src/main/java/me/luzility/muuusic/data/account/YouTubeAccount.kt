@@ -34,6 +34,9 @@ class YouTubeAccount(
     private val _name = MutableStateFlow<String?>(null)
     val name: StateFlow<String?> = _name.asStateFlow()
 
+    private val _photo = MutableStateFlow<String?>(null)
+    val photo: StateFlow<String?> = _photo.asStateFlow()
+
     private val _signedIn = MutableStateFlow(false)
     val signedIn: StateFlow<Boolean> = _signedIn.asStateFlow()
 
@@ -45,19 +48,28 @@ class YouTubeAccount(
         if (saved != null) {
             cookie = saved.optString("cookie").takeIf { it.isNotBlank() }
             _name.value = saved.optString("name").takeIf { it.isNotBlank() }
+            _photo.value = saved.optString("photo").takeIf { it.isNotBlank() }
             _signedIn.value = cookie != null
         }
+        if (_signedIn.value && _photo.value == null) refreshInfo()
     }
 
     fun signIn(newCookie: String) {
         cookie = newCookie
         _signedIn.value = true
         save()
+        refreshInfo()
+        importNow()
+    }
+
+    private fun refreshInfo() {
+        val current = cookie ?: return
         scope.launch {
-            _name.value = runCatching { innerTube.accountName(newCookie) }.getOrNull()
+            val info = runCatching { innerTube.account(current) }.getOrNull() ?: return@launch
+            _name.value = info.name
+            _photo.value = info.photoUrl
             save()
         }
-        importNow()
     }
 
     fun importNow() {
@@ -75,6 +87,7 @@ class YouTubeAccount(
         importJob?.cancel()
         cookie = null
         _name.value = null
+        _photo.value = null
         _signedIn.value = false
         _importState.value = ImportState.Idle
         store.edit { remove(KEY_ACCOUNT) }
@@ -83,7 +96,11 @@ class YouTubeAccount(
 
     private fun save() {
         val current = cookie ?: return
-        val json = JSONObject().put("cookie", current).put("name", _name.value.orEmpty()).toString()
+        val json = JSONObject()
+            .put("cookie", current)
+            .put("name", _name.value.orEmpty())
+            .put("photo", _photo.value.orEmpty())
+            .toString()
         store.edit { putString(KEY_ACCOUNT, cipher.seal(json)) }
     }
 

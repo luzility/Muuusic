@@ -1,5 +1,6 @@
 package me.luzility.muuusic.ui.library
 
+import me.luzility.muuusic.ui.components.ProfileButton
 import me.luzility.muuusic.ui.components.downloadStatuses
 import me.luzility.muuusic.data.download.DownloadStatus
 import androidx.compose.material.icons.rounded.DownloadDone
@@ -113,11 +114,14 @@ fun LibraryScreen(
     LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(bottom = 16.dp + LocalMiniPlayerInset.current)) {
         item { Spacer(Modifier.windowInsetsTopHeight(WindowInsets.statusBars)) }
         item {
-            Text(
-                stringResource(R.string.nav_library),
-                style = MaterialTheme.typography.displaySmallEmphasized,
-                modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 24.dp, bottom = 16.dp),
-            )
+            Row(Modifier.padding(start = 20.dp, end = 12.dp, top = 24.dp, bottom = 16.dp), verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    stringResource(R.string.nav_library),
+                    style = MaterialTheme.typography.displaySmallEmphasized,
+                    modifier = Modifier.weight(1f),
+                )
+                ProfileButton()
+            }
         }
         item {
             Row(

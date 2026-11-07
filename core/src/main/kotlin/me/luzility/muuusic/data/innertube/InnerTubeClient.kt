@@ -39,8 +39,8 @@ class InnerTubeClient(private val client: OkHttpClient) {
         InnerTubeParser.artist(browse(JSONObject().put("browseId", channelId)), url)
     }
 
-    suspend fun accountName(cookie: String): String? = withContext(Dispatchers.IO) {
-        InnerTubeParser.accountName(post("account/account_menu", JSONObject(), cookie))
+    suspend fun account(cookie: String): AccountInfo? = withContext(Dispatchers.IO) {
+        InnerTubeParser.account(post("account/account_menu", JSONObject(), cookie))
     }
 
     suspend fun likedSongs(cookie: String): List<Song> = withContext(Dispatchers.IO) {

@@ -72,6 +72,7 @@ class AppNavigator(
     val openPlaylist: (id: Long) -> Unit,
     val openDownloads: () -> Unit,
     val openRecognition: () -> Unit,
+    val openSettings: () -> Unit,
 )
 
 val LocalNavigator = staticCompositionLocalOf<AppNavigator> { error("AppNavigator not provided") }

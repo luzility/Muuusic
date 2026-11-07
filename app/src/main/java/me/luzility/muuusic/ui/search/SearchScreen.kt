@@ -1,6 +1,7 @@
 package me.luzility.muuusic.ui.search
 
 import me.luzility.muuusic.data.settings.Hint
+import me.luzility.muuusic.ui.components.ProfileButton
 import me.luzility.muuusic.ui.components.HintAnchor
 import me.luzility.muuusic.ui.components.playfulShapes
 import kotlinx.coroutines.flow.map
@@ -209,55 +210,58 @@ fun SearchScreen(
     }
 
     Column(Modifier.fillMaxSize().statusBarsPadding()) {
-        TextField(
-            value = query,
-            onValueChange = vm::onQueryChange,
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp).testTag("search_field"),
-            placeholder = { Text(stringResource(R.string.search_hint)) },
-            leadingIcon = { Icon(Icons.Rounded.Search, null) },
-            trailingIcon = {
-                AnimatedContent(targetState = query.isNotEmpty(), label = "searchTrailing") { hasText ->
-                    if (hasText) {
-                        IconButton(onClick = { vm.onQueryChange("") }, shapes = IconButtonDefaults.shapes()) {
-                            Icon(Icons.Rounded.Close, stringResource(R.string.clear))
-                        }
-                    } else {
-                        Row(Modifier.padding(end = 4.dp)) {
-                            IconButton(onClick = ::startVoiceSearch, shapes = IconButtonDefaults.shapes()) {
-                                Icon(Icons.Rounded.Mic, stringResource(R.string.voice_search))
+        Row(Modifier.padding(start = 16.dp, end = 8.dp, top = 12.dp, bottom = 12.dp), verticalAlignment = Alignment.CenterVertically) {
+            TextField(
+                value = query,
+                onValueChange = vm::onQueryChange,
+                modifier = Modifier.weight(1f).testTag("search_field"),
+                placeholder = { Text(stringResource(R.string.search_hint)) },
+                leadingIcon = { Icon(Icons.Rounded.Search, null) },
+                trailingIcon = {
+                    AnimatedContent(targetState = query.isNotEmpty(), label = "searchTrailing") { hasText ->
+                        if (hasText) {
+                            IconButton(onClick = { vm.onQueryChange("") }, shapes = IconButtonDefaults.shapes()) {
+                                Icon(Icons.Rounded.Close, stringResource(R.string.clear))
                             }
-                            if (recognitionEnabled) {
-                                HintAnchor(Hint.Recognition, R.string.hint_recognition_title, R.string.hint_recognition, above = false) {
-                                    IconButton(
-                                        onClick = onRecognize,
-                                        shapes = IconButtonDefaults.shapes(),
-                                        modifier = Modifier.testTag("recognize_button"),
-                                    ) {
-                                        BadgedBox(badge = {
-                                            Badge(containerColor = MaterialTheme.colorScheme.tertiary) {
-                                                Icon(Icons.Rounded.Science, null, Modifier.size(10.dp))
+                        } else {
+                            Row(Modifier.padding(end = 4.dp)) {
+                                IconButton(onClick = ::startVoiceSearch, shapes = IconButtonDefaults.shapes()) {
+                                    Icon(Icons.Rounded.Mic, stringResource(R.string.voice_search))
+                                }
+                                if (recognitionEnabled) {
+                                    HintAnchor(Hint.Recognition, R.string.hint_recognition_title, R.string.hint_recognition, above = false) {
+                                        IconButton(
+                                            onClick = onRecognize,
+                                            shapes = IconButtonDefaults.shapes(),
+                                            modifier = Modifier.testTag("recognize_button"),
+                                        ) {
+                                            BadgedBox(badge = {
+                                                Badge(containerColor = MaterialTheme.colorScheme.tertiary) {
+                                                    Icon(Icons.Rounded.Science, null, Modifier.size(10.dp))
+                                                }
+                                            }) {
+                                                Icon(Icons.Rounded.GraphicEq, stringResource(R.string.recognize_song))
                                             }
-                                        }) {
-                                            Icon(Icons.Rounded.GraphicEq, stringResource(R.string.recognize_song))
                                         }
                                     }
                                 }
                             }
                         }
                     }
-                }
-            },
-            singleLine = true,
-            shape = CircleShape,
-            colors = TextFieldDefaults.colors(
-                focusedIndicatorColor = Color.Transparent,
-                unfocusedIndicatorColor = Color.Transparent,
-                focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-                unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-            ),
-            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-            keyboardActions = KeyboardActions(onSearch = { vm.search(); focus.clearFocus() }),
-        )
+                },
+                singleLine = true,
+                shape = CircleShape,
+                colors = TextFieldDefaults.colors(
+                    focusedIndicatorColor = Color.Transparent,
+                    unfocusedIndicatorColor = Color.Transparent,
+                    focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                    unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                ),
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                keyboardActions = KeyboardActions(onSearch = { vm.search(); focus.clearFocus() }),
+            )
+            ProfileButton()
+        }
 
         FilterButtons(selected = filter, onSelect = vm::setFilter)
 

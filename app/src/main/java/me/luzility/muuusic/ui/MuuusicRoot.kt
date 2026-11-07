@@ -7,6 +7,7 @@ import kotlinx.coroutines.flow.drop
 import androidx.compose.runtime.snapshotFlow
 import me.luzility.muuusic.ui.components.Haptic
 import me.luzility.muuusic.ui.components.LocalHaptics
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.ui.semantics.Role
 import androidx.compose.foundation.selection.selectable
@@ -23,6 +24,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.animation.core.VisibilityThreshold
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateDp
 import androidx.compose.animation.EnterExitState
 import androidx.compose.animation.AnimatedContentScope
@@ -40,6 +43,8 @@ import androidx.compose.material.icons.rounded.CloudOff
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.windowInsetsBottomHeight
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Column
@@ -64,6 +69,7 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.Box
 import me.luzility.muuusic.ui.playlist.PlaylistScreen
 import me.luzility.muuusic.ui.settings.EqualizerScreen
@@ -169,6 +175,7 @@ fun MuuusicRoot(player: PlayerViewModel) {
                     openPlaylist = { id -> go("playlist/$id", collapsePlayer = true) },
                     openDownloads = { go("downloads") },
                     openRecognition = { go("recognize") },
+                    openSettings = { go("settings") },
                 )
             }
 
@@ -188,6 +195,7 @@ fun MuuusicRoot(player: PlayerViewModel) {
                 Box(Modifier.fillMaxSize().tapHaptics().semantics { testTagsAsResourceId = true }) {
                     val stack by nav.currentBackStack.collectAsStateWithLifecycle()
                     val currentTab = stack.lastOrNull { entry -> Tab.entries.any { it.route == entry.destination.route } }?.destination?.route
+                    val showNav = stack.lastOrNull()?.destination?.route.let { route -> Tab.entries.any { it.route == route } }
                     val selectTab: (Tab) -> Unit = selectTab@{ tab ->
                         if (nav.currentBackStackEntry?.lifecycle?.currentState != Lifecycle.State.RESUMED) return@selectTab
                         if (currentTab == tab.route) {
@@ -209,17 +217,24 @@ fun MuuusicRoot(player: PlayerViewModel) {
                             if (!floating) {
                                 Column(Modifier.onSizeChanged { navBarHeight = with(density) { it.height.toDp() } }) {
                                     OfflineStrip()
-                                    ShortNavigationBar {
-                                        Tab.entries.forEach { tab ->
-                                            ShortNavigationBarItem(
-                                                modifier = Modifier.testTag("nav_${tab.route}"),
-                                                selected = currentTab == tab.route,
-                                                onClick = { selectTab(tab) },
-                                                icon = { Icon(tab.icon, null) },
-                                                label = { Text(stringResource(tab.label)) },
-                                            )
+                                    AnimatedVisibility(
+                                        visible = showNav,
+                                        enter = expandVertically(navMotion(), expandFrom = Alignment.Top) + fadeIn(),
+                                        exit = shrinkVertically(navMotion(), shrinkTowards = Alignment.Top) + fadeOut(),
+                                    ) {
+                                        ShortNavigationBar {
+                                            Tab.entries.forEach { tab ->
+                                                ShortNavigationBarItem(
+                                                    modifier = Modifier.testTag("nav_${tab.route}"),
+                                                    selected = currentTab == tab.route,
+                                                    onClick = { selectTab(tab) },
+                                                    icon = { Icon(tab.icon, null) },
+                                                    label = { Text(stringResource(tab.label)) },
+                                                )
+                                            }
                                         }
                                     }
+                                    if (!showNav) Spacer(Modifier.windowInsetsBottomHeight(WindowInsets.navigationBars))
                                 }
                             }
                         },
@@ -237,7 +252,7 @@ fun MuuusicRoot(player: PlayerViewModel) {
                             popEnterTransition = transitions.popEnter,
                             popExitTransition = transitions.popExit,
                         ) {
-                            page(Tab.Home.route) { HomeScreen(onOpenSettings = { go("settings") }) }
+                            page(Tab.Home.route) { HomeScreen() }
                             page("settings") {
                                 SettingsScreen(
                                     onBack = dropUnlessResumed { nav.popBackStack() },
@@ -321,7 +336,7 @@ fun MuuusicRoot(player: PlayerViewModel) {
                     // Content fades out under the floating bar: transparent at the top, the nav bar's
                     // colour at the bottom, so the bar never sits on a hard cut of list items.
                     AnimatedVisibility(
-                        visible = hasSong || floating,
+                        visible = hasSong || (floating && showNav),
                         modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = if (floating) 0.dp else navBarHeight),
                         enter = fadeIn(),
                         exit = fadeOut(),
@@ -347,7 +362,13 @@ fun MuuusicRoot(player: PlayerViewModel) {
                             horizontalAlignment = Alignment.CenterHorizontally,
                         ) {
                             OfflineStrip(pill = true)
-                            FloatingNavBar(currentTab, selectTab)
+                            AnimatedVisibility(
+                                visible = showNav,
+                                enter = expandVertically(navMotion(), expandFrom = Alignment.Top) + slideInVertically(navMotion()) { it } + fadeIn(),
+                                exit = shrinkVertically(navMotion(), shrinkTowards = Alignment.Top) + slideOutVertically(navMotion()) { it } + fadeOut(),
+                            ) {
+                                FloatingNavBar(currentTab, selectTab)
+                            }
                         }
                     }
 
@@ -379,6 +400,10 @@ fun MuuusicRoot(player: PlayerViewModel) {
         }
     }
 }
+
+private fun <T> navMotion() = tween<T>(NAV_MOTION_MS, easing = FastOutSlowInEasing)
+
+private const val NAV_MOTION_MS = 300
 
 private val SheetProgressSaver = Saver<Animatable<Float, AnimationVector1D>, Float>(
     save = { if (it.targetValue > 0.5f) 1f else 0f },
