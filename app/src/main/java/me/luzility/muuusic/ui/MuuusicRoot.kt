@@ -70,6 +70,7 @@ import me.luzility.muuusic.ui.settings.EqualizerScreen
 import me.luzility.muuusic.ui.settings.SettingsScreen
 import me.luzility.muuusic.ui.components.LocalMiniPlayerInset
 import me.luzility.muuusic.container
+import me.luzility.muuusic.ui.account.GoogleLoginScreen
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Brush
@@ -242,6 +243,7 @@ fun MuuusicRoot(player: PlayerViewModel) {
                                     onBack = dropUnlessResumed { nav.popBackStack() },
                                     onOpenEqualizer = { go("equalizer") },
                                     onOpenCategory = { go("settings/${it.name}") },
+                                    onOpenGoogleLogin = { go("google_login") },
                                 )
                             }
                             page("settings/{category}") { entry ->
@@ -249,7 +251,18 @@ fun MuuusicRoot(player: PlayerViewModel) {
                                     onBack = dropUnlessResumed { nav.popBackStack() },
                                     onOpenEqualizer = { go("equalizer") },
                                     onOpenCategory = { go("settings/${it.name}") },
+                                    onOpenGoogleLogin = { go("google_login") },
                                     category = entry.arguments?.getString("category")?.let { name -> SettingsCategory.entries.firstOrNull { it.name == name } },
+                                )
+                            }
+                            page("google_login") {
+                                val account = LocalContext.current.container.youtubeAccount
+                                GoogleLoginScreen(
+                                    onBack = dropUnlessResumed { nav.popBackStack() },
+                                    onSignedIn = { cookie ->
+                                        account.signIn(cookie)
+                                        nav.popBackStack()
+                                    },
                                 )
                             }
                             page("equalizer") { EqualizerScreen(onBack = dropUnlessResumed { nav.popBackStack() }) }

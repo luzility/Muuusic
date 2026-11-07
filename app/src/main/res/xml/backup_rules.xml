@@ -2,4 +2,6 @@
 <full-backup-content>
     <exclude domain="file" path="downloads/" />
     <exclude domain="database" path="exoplayer_internal.db" />
+    <exclude domain="sharedpref" path="youtube_account.xml" />
+    <exclude domain="sharedpref" path="discord.xml" />
 </full-backup-content>

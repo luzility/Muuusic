@@ -97,6 +97,8 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import me.luzility.muuusic.BuildConfig
 import me.luzility.muuusic.R
+import me.luzility.muuusic.data.account.YouTubeAccount
+import me.luzility.muuusic.data.account.YouTubeImport
 import me.luzility.muuusic.ui.components.LocalMiniPlayerInset
 import me.luzility.muuusic.container
 import me.luzility.muuusic.data.settings.AppPrefs
@@ -193,6 +195,7 @@ fun SettingsScreen(
     onBack: () -> Unit,
     onOpenEqualizer: () -> Unit,
     onOpenCategory: (SettingsCategory) -> Unit,
+    onOpenGoogleLogin: () -> Unit = {},
     category: SettingsCategory? = null,
     vm: SettingsViewModel = viewModel(),
 ) {
@@ -569,6 +572,9 @@ fun SettingsScreen(
             }
             SettingsCategory.Integrations -> {
             item {
+                YouTubeAccountSettings(onSignIn = onOpenGoogleLogin)
+            }
+            item {
                 DiscordSettings(prefs.discordPresence, onEnabledChange = { on -> vm.update { it.copy(discordPresence = on) } })
             }
             }
@@ -750,6 +756,42 @@ private val CategoryShapes = listOf(
     MaterialShapes.Cookie7Sided,
     MaterialShapes.SoftBurst,
 )
+
+@Composable
+private fun YouTubeAccountSettings(onSignIn: () -> Unit) {
+    val account = LocalContext.current.container.youtubeAccount
+    val signedIn by account.signedIn.collectAsStateWithLifecycle()
+    val name by account.name.collectAsStateWithLifecycle()
+    val importState by account.importState.collectAsStateWithLifecycle()
+    val signIn: @Composable () -> Unit = {
+        if (signedIn) {
+            ActionSetting(
+                title = name?.let { stringResource(R.string.youtube_signed_in, it) } ?: stringResource(R.string.youtube_signed_in_unknown),
+                summary = stringResource(R.string.youtube_sign_out),
+                onClick = account::signOut,
+            )
+        } else {
+            ActionSetting(
+                title = stringResource(R.string.youtube_sign_in),
+                summary = stringResource(R.string.youtube_sign_in_summary),
+                onClick = onSignIn,
+            )
+        }
+    }
+    val import: @Composable () -> Unit = {
+        val summary = when (val state = importState) {
+            YouTubeAccount.ImportState.Idle -> stringResource(R.string.youtube_import_summary)
+            YouTubeAccount.ImportState.Failed -> stringResource(R.string.youtube_import_failed)
+            is YouTubeAccount.ImportState.Done -> stringResource(R.string.youtube_import_done, state.result.likes, state.result.playlists)
+            is YouTubeAccount.ImportState.Running -> when (val progress = state.progress) {
+                YouTubeImport.Progress.Likes -> stringResource(R.string.youtube_import_likes)
+                is YouTubeImport.Progress.Playlist -> stringResource(R.string.youtube_import_playlists, progress.index, progress.total)
+            }
+        }
+        ActionSetting(title = stringResource(R.string.youtube_import), summary = summary, onClick = account::importNow)
+    }
+    if (signedIn) SettingsGroup(signIn, import) else SettingsGroup(signIn)
+}
 
 @Composable
 private fun DiscordSettings(enabled: Boolean, onEnabledChange: (Boolean) -> Unit) {

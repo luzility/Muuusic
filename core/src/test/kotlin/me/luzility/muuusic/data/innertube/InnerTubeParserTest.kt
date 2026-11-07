@@ -63,4 +63,41 @@ class InnerTubeParserTest {
         assertEquals(3723L, InnerTubeParser.parseDuration("1:02:03"))
         assertEquals(null, InnerTubeParser.parseDuration("3 dk"))
     }
+
+    @Test fun librarySongsAndNextPageAreFoundAnywhere() {
+        val json = JSONObject(
+            """
+            {"contents":{"shelf":{"contents":[
+              {"musicResponsiveListItemRenderer":{
+                "playlistItemData":{"videoId":"abcdefghijk"},
+                "flexColumns":[
+                  {"musicResponsiveListItemFlexColumnRenderer":{"text":{"runs":[{"text":"Song"}]}}},
+                  {"musicResponsiveListItemFlexColumnRenderer":{"text":{"runs":[{"text":"Artist","navigationEndpoint":{"browseEndpoint":{"browseId":"UCartist"}}}]}}}
+                ],
+                "fixedColumns":[{"musicResponsiveListItemFixedColumnRenderer":{"text":{"runs":[{"text":"3:05"}]}}}]
+              }},
+              {"continuationItemRenderer":{"continuationEndpoint":{"continuationCommand":{"token":"next-page"}}}}
+            ]}}}
+            """,
+        )
+        val song = InnerTubeParser.librarySongs(json).single()
+        assertEquals("abcdefghijk", song.id)
+        assertEquals("Song", song.title)
+        assertEquals("Artist", song.artist)
+        assertEquals(185L, song.durationSec)
+        assertEquals("next-page", InnerTubeParser.nextPage(json))
+    }
+
+    @Test fun libraryPlaylistsSkipLikedMusic() {
+        val json = JSONObject(
+            """
+            {"items":[
+              {"musicTwoRowItemRenderer":{"title":{"runs":[{"text":"Liked music"}]},"navigationEndpoint":{"browseEndpoint":{"browseId":"VLLM"}}}},
+              {"musicTwoRowItemRenderer":{"title":{"runs":[{"text":"Road trip"}]},"navigationEndpoint":{"browseEndpoint":{"browseId":"VLPL123"}}}},
+              {"musicTwoRowItemRenderer":{"title":{"runs":[{"text":"An album"}]},"navigationEndpoint":{"browseEndpoint":{"browseId":"MPREb_1"}}}}
+            ]}
+            """,
+        )
+        assertEquals(listOf(LibraryPlaylist("VLPL123", "Road trip")), InnerTubeParser.libraryPlaylists(json))
+    }
 }

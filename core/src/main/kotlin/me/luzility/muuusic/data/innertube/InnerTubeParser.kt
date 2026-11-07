@@ -11,7 +11,10 @@ import me.luzility.muuusic.data.model.Song
 import org.json.JSONArray
 import org.json.JSONObject
 
+data class LibraryPlaylist(val browseId: String, val title: String)
+
 object InnerTubeParser {
+    const val LIKED_PLAYLIST = "VLLM"
 
     fun home(json: JSONObject): HomeFeed {
         val list = sectionList(json)
@@ -70,6 +73,50 @@ object InnerTubeParser {
         if (items.isEmpty()) return@mapNotNull null
         val moreId = shelf?.path("bottomEndpoint", "browseEndpoint")?.string("browseId")
         BrowseSection(title, items, more = moreId?.let { playlistOf(it, title) })
+    }
+
+    fun librarySongs(json: JSONObject): List<Song> = buildList {
+        walk(json) { node ->
+            val item = node.optJSONObject("musicResponsiveListItemRenderer") ?: return@walk
+            (responsiveItem(item) as? BrowseItem.SongItem)?.let { add(it.song) }
+        }
+    }
+
+    fun libraryPlaylists(json: JSONObject): List<LibraryPlaylist> = buildList {
+        walk(json) { node ->
+            val item = node.optJSONObject("musicTwoRowItemRenderer") ?: return@walk
+            val title = item.array("title", "runs").firstText() ?: return@walk
+            val browseId = item.path("navigationEndpoint", "browseEndpoint")?.string("browseId") ?: return@walk
+            if (browseId.startsWith("VL") && browseId != LIKED_PLAYLIST) add(LibraryPlaylist(browseId, title))
+        }
+    }.distinctBy { it.browseId }
+
+    fun nextPage(json: JSONObject): String? {
+        var token: String? = null
+        walk(json) { node ->
+            if (token != null) return@walk
+            token = node.path("continuationCommand")?.string("token")
+                ?: node.path("nextContinuationData")?.string("continuation")
+        }
+        return token
+    }
+
+    fun accountName(json: JSONObject): String? {
+        var name: String? = null
+        walk(json) { node ->
+            if (name == null) name = node.path("activeAccountHeaderRenderer")?.array("accountName", "runs").firstText()
+        }
+        return name
+    }
+
+    private fun walk(node: Any?, visit: (JSONObject) -> Unit) {
+        when (node) {
+            is JSONObject -> {
+                visit(node)
+                node.keys().forEach { walk(node.opt(it), visit) }
+            }
+            is JSONArray -> for (i in 0 until node.length()) walk(node.opt(i), visit)
+        }
     }
 
     private fun item(entry: JSONObject): BrowseItem? =

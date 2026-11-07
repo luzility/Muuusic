@@ -1,5 +1,7 @@
 package me.luzility.muuusic
 
+import me.luzility.muuusic.data.account.YouTubeAccount
+import me.luzility.muuusic.data.account.YouTubeImport
 import me.luzility.muuusic.data.discord.DiscordPresence
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -120,6 +122,8 @@ class AppContainer(context: Context) {
     val playlists = PlaylistRepository(database, database.playlistDao(), database.songDao())
 
     val backup by lazy { Backup(stores, database, playlists) }
+
+    val youtubeAccount by lazy { YouTubeAccount(appContext, innerTube, YouTubeImport(innerTube, library, playlists), appScope) }
 
     // One index DB shared by the play cache, download cache and download index.
     private val mediaDatabase by lazy { StandaloneDatabaseProvider(appContext) }
