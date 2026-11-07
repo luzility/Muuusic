@@ -9,6 +9,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import me.luzility.muuusic.data.LibraryRepository
 import me.luzility.muuusic.data.PlaylistRepository
+import me.luzility.muuusic.data.account.YouTubeAccount
+import me.luzility.muuusic.data.account.YouTubeImport
 import me.luzility.muuusic.data.backup.Backup
 import me.luzility.muuusic.data.db.MuuusicDatabase
 import me.luzility.muuusic.data.innertube.InnerTubeClient
@@ -48,6 +50,9 @@ class DesktopServices(val dataDir: File) {
     val updates by lazy { Updates(stores, okHttp) }
     val loudness by lazy { LoudnessStore(stores) }
     val playerStore by lazy { stores.open("player") }
+    val youtubeAccount by lazy {
+        YouTubeAccount(FileSecretStore(File(dataDir, "account")), innerTube, YouTubeImport(innerTube, library, playlists), scope)
+    }
     val sponsorBlock by lazy { SponsorBlock(okHttp) }
     val recognizer by lazy { SongRecognizer(ShazamClient(okHttp)) }
     val updater by lazy { DesktopUpdater(okHttp, File(dataDir, "cache")) }

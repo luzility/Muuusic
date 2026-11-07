@@ -101,6 +101,7 @@ import me.luzility.muuusic.data.update.Versions
 import me.luzility.muuusic.desktop.playback.DesktopEqualizer
 import me.luzility.muuusic.desktop.ui.Credits
 import me.luzility.muuusic.desktop.ui.CreditsDialog
+import me.luzility.muuusic.desktop.ui.LocalNavigator
 import me.luzility.muuusic.desktop.ui.LocalServices
 import me.luzility.muuusic.desktop.ui.LocalSnackbar
 import me.luzility.muuusic.desktop.ui.LocalUpdates
@@ -197,6 +198,12 @@ private sealed interface Pane {
 @Composable
 fun SettingsPage() {
     var pane by remember { mutableStateOf<Pane>(Pane.Section(Category.Appearance)) }
+    val navigator = LocalNavigator.current
+    LaunchedEffect(navigator.settingsTarget) {
+        val target = navigator.settingsTarget ?: return@LaunchedEffect
+        Category.entries.firstOrNull { it.name == target }?.let { pane = Pane.Section(it) }
+        navigator.settingsTarget = null
+    }
     var query by remember { mutableStateOf("") }
     val selected = when (val current = pane) {
         is Pane.Section -> current.category

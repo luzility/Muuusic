@@ -55,19 +55,27 @@ dependencies {
     implementation(libs.jna)
     implementation(libs.dbus.java.core)
     implementation(libs.dbus.java.transport)
+    implementation(libs.zxing.core)
+    implementation(libs.kcef)
 }
 
 compose.desktop {
     application {
         mainClass = "me.luzility.muuusic.desktop.MainKt"
-        jvmArgs += listOf("-Dmuuusic.version=$appVersion", "--enable-native-access=ALL-UNNAMED")
+        jvmArgs += listOf(
+            "-Dmuuusic.version=$appVersion",
+            "--enable-native-access=ALL-UNNAMED",
+            "--add-opens=java.desktop/sun.awt=ALL-UNNAMED",
+            "--add-opens=java.desktop/java.awt.peer=ALL-UNNAMED",
+            "--add-opens=java.desktop/sun.awt.X11=ALL-UNNAMED",
+        )
         nativeDistributions {
             targetFormats(TargetFormat.Deb, TargetFormat.Msi)
             packageName = "Muuusic"
             description = "Ad-free YouTube Music client"
             vendor = "Luzi"
             packageVersion = appVersion.substringBefore("-")
-            modules("java.sql", "jdk.httpserver", "jdk.unsupported")
+            modules("java.instrument", "java.management", "java.net.http", "java.sql", "jdk.dynalink", "jdk.httpserver", "jdk.security.auth", "jdk.unsupported")
             linux {
                 packageName = "muuusic"
                 iconFile = project.file("packaging/muuusic.png")

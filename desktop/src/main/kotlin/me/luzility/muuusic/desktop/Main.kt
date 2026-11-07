@@ -37,6 +37,7 @@ import me.luzility.muuusic.AppInfo
 import me.luzility.muuusic.data.youtube.NewPipeDownloader
 import me.luzility.muuusic.desktop.playback.DesktopPlayer
 import me.luzility.muuusic.desktop.ui.App
+import me.luzility.muuusic.desktop.ui.Chromium
 import me.luzility.muuusic.desktop.ui.MiniPlayer
 import me.luzility.muuusic.desktop.ui.Navigator
 import me.luzility.muuusic.desktop.ui.PlayerWindowTheme
@@ -80,6 +81,7 @@ fun main() {
                 if (restart) runCatching { services.updater.relaunch() }
                 services.streamCache.stop()
                 player.destroy()
+                Chromium.dispose()
                 exitProcess(0)
             }.start()
         }

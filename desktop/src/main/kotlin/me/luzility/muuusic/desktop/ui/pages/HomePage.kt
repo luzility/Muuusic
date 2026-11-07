@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
@@ -64,6 +65,7 @@ import me.luzility.muuusic.desktop.ui.FlexFont
 import me.luzility.muuusic.desktop.ui.Loadable
 import me.luzility.muuusic.desktop.ui.LoadingBox
 import me.luzility.muuusic.desktop.ui.LocalPlayer
+import me.luzility.muuusic.desktop.ui.ProfileButton
 import me.luzility.muuusic.desktop.ui.ScrollArrow
 import me.luzility.muuusic.desktop.ui.ShelfHeader
 import me.luzility.muuusic.desktop.ui.playfulShape
@@ -334,13 +336,16 @@ private fun Greeting() {
     val weight = remember { Animatable(400f) }
     LaunchedEffect(Unit) { weight.animateTo(GREETING_WEIGHT, spring(dampingRatio = 0.6f, stiffness = 120f)) }
     val step = FlexFont.quantize(weight.value)
-    Column(Modifier.padding(start = 32.dp, top = 32.dp, bottom = 20.dp)) {
-        Text(
-            str(greetingKey()),
-            style = MaterialTheme.typography.displayMedium.copy(fontFamily = FlexFont.family(step), fontWeight = FontWeight(step)),
-            color = MaterialTheme.colorScheme.primary,
-        )
-        Text(str("home_subtitle"), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    Row(Modifier.padding(start = 32.dp, end = 24.dp, top = 32.dp, bottom = 20.dp), verticalAlignment = Alignment.Top) {
+        Column(Modifier.weight(1f)) {
+            Text(
+                str(greetingKey()),
+                style = MaterialTheme.typography.displayMedium.copy(fontFamily = FlexFont.family(step), fontWeight = FontWeight(step)),
+                color = MaterialTheme.colorScheme.primary,
+            )
+            Text(str("home_subtitle"), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+        ProfileButton()
     }
 }
 

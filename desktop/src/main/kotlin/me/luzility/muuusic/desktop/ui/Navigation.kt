@@ -25,6 +25,7 @@ class Navigator {
     val stack = mutableStateListOf<Route>(Route.Home)
     var panel by mutableStateOf<Panel?>(null)
     var nowPlaying by mutableStateOf(false)
+    var settingsTarget by mutableStateOf<String?>(null)
 
     fun togglePanel(target: Panel) {
         panel = if (panel == target) null else target
@@ -53,6 +54,13 @@ class Navigator {
     }
 
     fun openArtist(name: String, url: String?) = open(Route.Artist(name, url))
+
+    fun openSettings(target: String? = null) {
+        nowPlaying = false
+        settingsTarget = target
+        stack.clear()
+        stack.add(Route.Settings)
+    }
 
     fun openCollection(collection: MusicCollection) = open(Route.Collection(collection))
 }

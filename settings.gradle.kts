@@ -14,6 +14,9 @@ dependencyResolutionManagement {
         maven("https://jitpack.io") {
             content { includeGroupByRegex("com\\.github\\..*") }
         }
+        maven("https://jogamp.org/deployment/maven") {
+            content { includeGroup("org.jogamp.gluegen"); includeGroup("org.jogamp.jogl") }
+        }
     }
 }
 

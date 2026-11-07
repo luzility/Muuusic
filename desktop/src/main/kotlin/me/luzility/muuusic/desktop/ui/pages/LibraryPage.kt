@@ -50,6 +50,7 @@ import me.luzility.muuusic.desktop.ui.LocalNavigator
 import me.luzility.muuusic.desktop.ui.LocalPlayer
 import me.luzility.muuusic.desktop.ui.LocalServices
 import me.luzility.muuusic.desktop.ui.PlayButtons
+import me.luzility.muuusic.desktop.ui.ProfileButton
 import me.luzility.muuusic.desktop.ui.Route
 import me.luzility.muuusic.desktop.ui.ShelfCard
 import me.luzility.muuusic.desktop.ui.SongRow
@@ -81,7 +82,10 @@ fun LibraryPage() {
     }
 
     Column(Modifier.fillMaxSize()) {
-        Text(str("nav_library"), style = MaterialTheme.typography.displaySmallEmphasized, modifier = Modifier.padding(start = 32.dp, top = 32.dp, bottom = 16.dp))
+        Row(Modifier.padding(start = 32.dp, end = 24.dp, top = 32.dp, bottom = 16.dp), verticalAlignment = Alignment.CenterVertically) {
+            Text(str("nav_library"), style = MaterialTheme.typography.displaySmallEmphasized, modifier = Modifier.weight(1f))
+            ProfileButton()
+        }
         Row(Modifier.padding(horizontal = 32.dp), horizontalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween)) {
             tabs.forEachIndexed { index, key ->
                 ToggleButton(
