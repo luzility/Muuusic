@@ -60,6 +60,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import me.luzility.muuusic.data.model.Song
+import java.awt.EventQueue
 import java.awt.FileDialog
 import java.awt.Frame
 import java.awt.Image
@@ -158,11 +159,15 @@ fun LyricCardDialog(song: Song, lines: List<String>, initial: Int, onDismiss: ()
                     Button(
                         onClick = {
                             scope.launch {
-                                val target = chooseFile("${song.title} - ${song.artist}.png") ?: return@launch
                                 val image = render()
-                                withContext(Dispatchers.IO) { ImageIO.write(image, "png", target) }
-                                snackbar.showSnackbar(str("lyrics_card_saved"))
-                                onDismiss()
+                                EventQueue.invokeLater {
+                                    val target = chooseFile("${song.title} - ${song.artist}.png") ?: return@invokeLater
+                                    scope.launch {
+                                        withContext(Dispatchers.IO) { ImageIO.write(image, "png", target) }
+                                        snackbar.showSnackbar(str("lyrics_card_saved"))
+                                        onDismiss()
+                                    }
+                                }
                             }
                         },
                         shapes = ButtonDefaults.shapes(),
