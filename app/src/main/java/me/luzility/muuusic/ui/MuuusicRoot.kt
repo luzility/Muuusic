@@ -176,6 +176,8 @@ fun MuuusicRoot(player: PlayerViewModel) {
                     openDownloads = { go("downloads") },
                     openRecognition = { go("recognize") },
                     openSettings = { go("settings") },
+                    openIntegrations = { go("settings/${SettingsCategory.Integrations.name}") },
+                    openGoogleLogin = { go("google_login") },
                 )
             }
 
@@ -258,7 +260,6 @@ fun MuuusicRoot(player: PlayerViewModel) {
                                     onBack = dropUnlessResumed { nav.popBackStack() },
                                     onOpenEqualizer = { go("equalizer") },
                                     onOpenCategory = { go("settings/${it.name}") },
-                                    onOpenGoogleLogin = { go("google_login") },
                                 )
                             }
                             page("settings/{category}") { entry ->
@@ -266,7 +267,6 @@ fun MuuusicRoot(player: PlayerViewModel) {
                                     onBack = dropUnlessResumed { nav.popBackStack() },
                                     onOpenEqualizer = { go("equalizer") },
                                     onOpenCategory = { go("settings/${it.name}") },
-                                    onOpenGoogleLogin = { go("google_login") },
                                     category = entry.arguments?.getString("category")?.let { name -> SettingsCategory.entries.firstOrNull { it.name == name } },
                                 )
                             }

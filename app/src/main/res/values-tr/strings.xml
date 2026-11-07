@@ -362,10 +362,8 @@
     <string name="about_released">Yayın tarihi: %1$s</string>
     <string name="youtube_login_title">YouTube Music\'e giriş yap</string>
     <string name="youtube_sign_in">YouTube Music\'e giriş yap</string>
-    <string name="youtube_sign_in_summary">Beğenilerini ve çalma listelerini Muuusic\'e taşı. Oturumun bu cihazda şifreli saklanır.</string>
-    <string name="youtube_signed_in">%1$s olarak giriş yapıldı</string>
     <string name="youtube_signed_in_unknown">YouTube Music\'e giriş yapıldı</string>
-    <string name="youtube_sign_out">Çıkış yapmak için dokun</string>
+    <string name="sign_out">Çıkış yap</string>
     <string name="youtube_import">Şimdi içe aktar</string>
     <string name="youtube_import_summary">Beğenilerini ve çalma listelerini Muuusic\'e kopyala</string>
     <string name="youtube_import_likes">Beğenilerin alınıyor…</string>
