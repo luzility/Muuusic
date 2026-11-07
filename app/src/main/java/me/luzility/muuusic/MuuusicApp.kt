@@ -1,5 +1,7 @@
 package me.luzility.muuusic
 
+import android.webkit.CookieManager
+import me.luzility.muuusic.data.account.KeystoreSecretStore
 import me.luzility.muuusic.data.account.YouTubeAccount
 import me.luzility.muuusic.data.account.YouTubeImport
 import me.luzility.muuusic.data.discord.DiscordPresence
@@ -123,7 +125,15 @@ class AppContainer(context: Context) {
 
     val backup by lazy { Backup(stores, database, playlists) }
 
-    val youtubeAccount by lazy { YouTubeAccount(appContext, innerTube, YouTubeImport(innerTube, library, playlists), appScope) }
+    val youtubeAccount by lazy {
+        YouTubeAccount(
+            store = KeystoreSecretStore(appContext, "youtube_account", "muuusic_youtube"),
+            innerTube = innerTube,
+            importer = YouTubeImport(innerTube, library, playlists),
+            scope = appScope,
+            onSignOut = { CookieManager.getInstance().removeAllCookies(null) },
+        )
+    }
 
     // One index DB shared by the play cache, download cache and download index.
     private val mediaDatabase by lazy { StandaloneDatabaseProvider(appContext) }

@@ -166,6 +166,10 @@ dependencies {
     implementation(libs.glance.material3)
     // Installs the bundled baseline profile on devices that don't get it from Play.
     implementation(libs.androidx.profileinstaller)
+    implementation(libs.zxing.core)
+    implementation(libs.camerax.camera2)
+    implementation(libs.camerax.lifecycle)
+    implementation(libs.camerax.view)
     baselineProfile(project(":baselineprofile"))
 
     testImplementation(libs.junit)

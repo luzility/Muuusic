@@ -75,6 +75,7 @@ class AppNavigator(
     val openSettings: () -> Unit,
     val openIntegrations: () -> Unit,
     val openGoogleLogin: () -> Unit,
+    val openLinkScanner: () -> Unit,
 )
 
 val LocalNavigator = staticCompositionLocalOf<AppNavigator> { error("AppNavigator not provided") }

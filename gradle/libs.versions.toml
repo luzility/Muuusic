@@ -30,6 +30,9 @@ composeMultiplatform = "1.12.2"
 desktopMaterial3 = "1.12.0-alpha03"
 jna = "5.16.0"
 dbus-java = "5.2.2"
+zxing = "3.5.3"
+camerax = "1.4.2"
+kcef = "2025.03.23"
 splashscreen = "1.2.0"
 
 [libraries]
@@ -56,6 +59,11 @@ kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-c
 kotlinx-coroutines-swing = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-swing", version.ref = "coroutines" }
 desktop-material3 = { module = "org.jetbrains.compose.material3:material3", version.ref = "desktopMaterial3" }
 jna = { module = "net.java.dev.jna:jna", version.ref = "jna" }
+zxing-core = { module = "com.google.zxing:core", version.ref = "zxing" }
+kcef = { module = "dev.datlag:kcef", version.ref = "kcef" }
+camerax-camera2 = { module = "androidx.camera:camera-camera2", version.ref = "camerax" }
+camerax-lifecycle = { module = "androidx.camera:camera-lifecycle", version.ref = "camerax" }
+camerax-view = { module = "androidx.camera:camera-view", version.ref = "camerax" }
 dbus-java-core = { module = "com.github.hypfvieh:dbus-java-core", version.ref = "dbus-java" }
 dbus-java-transport = { module = "com.github.hypfvieh:dbus-java-transport-native-unixsocket", version.ref = "dbus-java" }
 coil-compose = { module = "io.coil-kt.coil3:coil-compose", version.ref = "coil" }

@@ -15,6 +15,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.Logout
 import androidx.compose.material.icons.rounded.CloudDownload
+import androidx.compose.material.icons.rounded.Computer
 import androidx.compose.material.icons.rounded.Hub
 import androidx.compose.material.icons.rounded.Login
 import androidx.compose.material.icons.rounded.Person
@@ -87,9 +88,18 @@ fun ProfileButton(modifier: Modifier = Modifier) {
                     DropdownMenuItem(
                         onClick = account::importNow,
                         text = { Text(stringResource(R.string.youtube_import)) },
-                        shape = MenuDefaults.itemShape(0, 2).shape,
+                        shape = MenuDefaults.itemShape(0, 3).shape,
                         leadingIcon = { Icon(Icons.Rounded.CloudDownload, null) },
                         supportingText = { Text(importStatus(importState)) },
+                    )
+                    DropdownMenuItem(
+                        onClick = {
+                            close()
+                            navigator.openLinkScanner()
+                        },
+                        text = { Text(stringResource(R.string.link_desktop)) },
+                        shape = MenuDefaults.itemShape(1, 3).shape,
+                        leadingIcon = { Icon(Icons.Rounded.Computer, null) },
                     )
                     DropdownMenuItem(
                         onClick = {
@@ -97,7 +107,7 @@ fun ProfileButton(modifier: Modifier = Modifier) {
                             account.signOut()
                         },
                         text = { Text(stringResource(R.string.sign_out)) },
-                        shape = MenuDefaults.itemShape(1, 2).shape,
+                        shape = MenuDefaults.itemShape(2, 3).shape,
                         leadingIcon = { Icon(Icons.AutoMirrored.Rounded.Logout, null) },
                     )
                 } else {

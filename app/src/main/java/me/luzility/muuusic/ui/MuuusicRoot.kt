@@ -77,6 +77,7 @@ import me.luzility.muuusic.ui.settings.SettingsScreen
 import me.luzility.muuusic.ui.components.LocalMiniPlayerInset
 import me.luzility.muuusic.container
 import me.luzility.muuusic.ui.account.GoogleLoginScreen
+import me.luzility.muuusic.ui.account.LinkScannerScreen
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Brush
@@ -178,6 +179,7 @@ fun MuuusicRoot(player: PlayerViewModel) {
                     openSettings = { go("settings") },
                     openIntegrations = { go("settings/${SettingsCategory.Integrations.name}") },
                     openGoogleLogin = { go("google_login") },
+                    openLinkScanner = { go("link_scan") },
                 )
             }
 
@@ -278,6 +280,12 @@ fun MuuusicRoot(player: PlayerViewModel) {
                                         account.signIn(cookie)
                                         nav.popBackStack()
                                     },
+                                )
+                            }
+                            page("link_scan") {
+                                LinkScannerScreen(
+                                    cookie = LocalContext.current.container.youtubeAccount.cookie(),
+                                    onBack = dropUnlessResumed { nav.popBackStack() },
                                 )
                             }
                             page("equalizer") { EqualizerScreen(onBack = dropUnlessResumed { nav.popBackStack() }) }
