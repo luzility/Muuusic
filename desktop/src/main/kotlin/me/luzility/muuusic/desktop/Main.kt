@@ -143,6 +143,7 @@ fun main() {
         ) {
             window.minimumSize = Dimension(900, 600)
             frame = window
+            DisposableEffect(window) { onDispose(pauseRenderingWhileMinimized(window)) }
             App(services, player, navigator, onRestart = { quit(true) }, onMiniPlayer = { openMiniPlayer() })
         }
         if (miniPlayer) Window(
