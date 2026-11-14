@@ -14,25 +14,31 @@ import java.io.IOException
 import java.security.MessageDigest
 import java.util.Locale
 
-class InnerTubeClient(private val client: OkHttpClient) {
+class InnerTubeClient(private val client: OkHttpClient, private val session: () -> String? = { null }) {
 
     @Volatile private var clientVersion: String? = null
 
     @Volatile private var visitorData: String? = null
 
     suspend fun home(params: String? = null, extraPages: Int = 2): HomeFeed = withContext(Dispatchers.IO) {
-        val first = browse(JSONObject().put("browseId", HOME).apply { params?.let { put("params", it) } })
-        InnerTubeParser.visitorData(first)?.let { visitorData = it }
+        val cookie = session()
+        cookie?.let { runCatching { home(params, extraPages, it) }.getOrNull()?.takeIf { feed -> feed.sections.isNotEmpty() }?.copy(personalized = true) }
+            ?: home(params, extraPages, null)
+    }
+
+    private fun home(params: String?, extraPages: Int, cookie: String?): HomeFeed {
+        val first = browse(JSONObject().put("browseId", HOME).apply { params?.let { put("params", it) } }, cookie)
+        if (cookie == null) InnerTubeParser.visitorData(first)?.let { visitorData = it }
         val feed = InnerTubeParser.home(first)
         val sections = feed.sections.toMutableList()
         var token = InnerTubeParser.continuation(first)
         var pages = 0
         while (token != null && pages++ < extraPages) {
-            val next = browse(JSONObject().put("continuation", token))
+            val next = browse(JSONObject().put("continuation", token), cookie)
             sections += InnerTubeParser.homeContinuation(next)
             token = InnerTubeParser.continuation(next)
         }
-        feed.copy(sections = sections)
+        return feed.copy(sections = sections)
     }
 
     suspend fun artist(channelId: String, url: String): ArtistPage? = withContext(Dispatchers.IO) {

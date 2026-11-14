@@ -4,6 +4,7 @@ import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.spring
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
+import kotlinx.coroutines.flow.drop
 import me.luzility.muuusic.ui.theme.FlexFont
 import me.luzility.muuusic.ui.browse.BrowseSectionView
 import me.luzility.muuusic.data.model.Mood
@@ -116,6 +117,9 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
     private val _feed = MutableStateFlow<UiState<List<BrowseSection>>>(UiState.Loading)
     val feed = _feed.asStateFlow()
 
+    private val _fromAccount = MutableStateFlow(false)
+    val fromAccount = _fromAccount.asStateFlow()
+
     // Kept on screen while a mood is selected.
     private val _moods = MutableStateFlow<List<Mood>>(emptyList())
     val moods = _moods.asStateFlow()
@@ -131,6 +135,7 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
 
     init {
         load()
+        viewModelScope.launch { app.container.youtubeAccount.signedIn.drop(1).collect { load() } }
     }
 
     fun selectMood(mood: Mood?) {
@@ -148,9 +153,11 @@ class HomeViewModel(app: Application) : AndroidViewModel(app) {
             val home = runCatching { innerTube.home(mood?.params) }.getOrNull()
             if (home != null && home.sections.isNotEmpty()) {
                 if (mood == null) _moods.value = home.moods
+                _fromAccount.value = home.personalized
                 _feed.value = UiState.Success(home.sections)
                 return@launch
             }
+            _fromAccount.value = false
             _feed.value = UiState.of {
                 listOf(BrowseSection(getApplication<Application>().getString(R.string.quick_picks), fallbackQuickPicks().map { BrowseItem.SongItem(it) }))
             }
@@ -233,6 +240,7 @@ fun HomeScreen(vm: HomeViewModel = viewModel()) {
     val recent by vm.recent.collectAsStateWithLifecycle()
     val mostPlayed by vm.mostPlayed.collectAsStateWithLifecycle()
     val feed by vm.feed.collectAsStateWithLifecycle()
+    val fromAccount by vm.fromAccount.collectAsStateWithLifecycle()
     val moods by vm.moods.collectAsStateWithLifecycle()
     val selectedMood by vm.mood.collectAsStateWithLifecycle()
     val personal by vm.personal.collectAsStateWithLifecycle()
@@ -273,7 +281,7 @@ fun HomeScreen(vm: HomeViewModel = viewModel()) {
                 if (index == 0 && selectedMood == null) {
                     personal.forYou?.let { forYou -> item(key = "forYou") { BrowseSectionView(forYou) } }
                 }
-                item(key = "section-$index-${section.title}") { BrowseSectionView(section) }
+                item(key = "section-$index-${section.title}") { BrowseSectionView(section, fromAccount = fromAccount) }
                 // The user's own listening sits between YouTube Music's first shelves.
                 if (index == 0 && recent.isNotEmpty() && selectedMood == null) {
                     item(key = "recent") {

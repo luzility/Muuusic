@@ -236,6 +236,14 @@ private fun importStatus(state: YouTubeAccount.ImportState): String = when (stat
 }
 
 @Composable
+fun AccountAvatar(size: Dp) {
+    val account = LocalServices.current.youtubeAccount
+    val name by account.name.collectAsState()
+    val photo by account.photo.collectAsState()
+    Avatar(name, photo, size)
+}
+
+@Composable
 private fun Avatar(name: String?, photo: String?, size: Dp) {
     val colors = MaterialTheme.colorScheme
     Box(Modifier.size(size).clip(CircleShape).background(colors.secondaryContainer), contentAlignment = Alignment.Center) {

@@ -307,12 +307,14 @@ fun SongMenu(song: Song, open: androidx.compose.runtime.MutableState<Boolean>, s
 }
 
 @Composable
-fun SectionTitle(text: String, modifier: Modifier = Modifier) {
-    Text(
-        text,
-        style = MaterialTheme.typography.headlineSmallEmphasized,
-        modifier = modifier.padding(start = 32.dp, end = 32.dp, top = 28.dp, bottom = 12.dp),
-    )
+fun SectionTitle(text: String, modifier: Modifier = Modifier, fromAccount: Boolean = false) {
+    Row(modifier.padding(start = 32.dp, end = 32.dp, top = 28.dp, bottom = 12.dp), verticalAlignment = Alignment.CenterVertically) {
+        if (fromAccount) {
+            AccountAvatar(24.dp)
+            Spacer(Modifier.width(10.dp))
+        }
+        Text(text, style = MaterialTheme.typography.headlineSmallEmphasized)
+    }
 }
 
 @Composable
@@ -346,12 +348,12 @@ fun ShelfCard(
 }
 
 @Composable
-fun BrowseShelf(section: BrowseSection) {
+fun BrowseShelf(section: BrowseSection, fromAccount: Boolean = false) {
     val player = LocalPlayer.current
     val navigator = LocalNavigator.current
     val songs = section.items.filterIsInstance<BrowseItem.SongItem>().map { it.song }
     val listState = rememberLazyListState()
-    ShelfHeader(section.title, listState)
+    ShelfHeader(section.title, listState, fromAccount = fromAccount)
     LazyRow(state = listState, contentPadding = PaddingValues(horizontal = 24.dp), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
         itemsIndexed(section.items) { _, item ->
             when (item) {
@@ -435,9 +437,14 @@ fun logoPainter(): androidx.compose.ui.graphics.painter.Painter {
 }
 
 @Composable
-fun ShelfHeader(title: String, state: ScrollableState, step: () -> Float = { (state as? LazyListState)?.layoutInfo?.viewportSize?.width?.times(0.8f) ?: 600f }) {
+fun ShelfHeader(
+    title: String,
+    state: ScrollableState,
+    step: () -> Float = { (state as? LazyListState)?.layoutInfo?.viewportSize?.width?.times(0.8f) ?: 600f },
+    fromAccount: Boolean = false,
+) {
     Row(verticalAlignment = Alignment.Bottom) {
-        SectionTitle(title, Modifier.weight(1f))
+        SectionTitle(title, Modifier.weight(1f), fromAccount)
         if (state.canScrollBackward || state.canScrollForward) {
             Row(Modifier.padding(end = 32.dp, bottom = 12.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 ScrollArrow(state, forward = false, step = step)

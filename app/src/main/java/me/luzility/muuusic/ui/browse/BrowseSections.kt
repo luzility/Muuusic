@@ -31,6 +31,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import me.luzility.muuusic.R
 import me.luzility.muuusic.data.model.BrowseItem
 import me.luzility.muuusic.data.model.BrowseSection
+import me.luzility.muuusic.ui.components.AccountAvatar
 import me.luzility.muuusic.ui.components.Artwork
 import me.luzility.muuusic.ui.components.LocalNavigator
 import me.luzility.muuusic.ui.components.LocalPlayer
@@ -42,7 +43,7 @@ private val WideCardWidth = 240.dp
 private const val GridRows = 4
 
 @Composable
-fun BrowseSectionView(section: BrowseSection, songsAsList: Boolean = false, listLimit: Int = 5) {
+fun BrowseSectionView(section: BrowseSection, songsAsList: Boolean = false, listLimit: Int = 5, fromAccount: Boolean = false) {
     val player = LocalPlayer.current
     val navigator = LocalNavigator.current
     val currentId = player.state.collectAsStateWithLifecycle().value.current?.id
@@ -52,7 +53,7 @@ fun BrowseSectionView(section: BrowseSection, songsAsList: Boolean = false, list
     val songShelf = songItems.size == section.items.size && songItems.none { it.wide }
 
     Column {
-        SectionHeader(section.title, onMore = section.more?.let { more -> { navigator.openCollection(more) } })
+        SectionHeader(section.title, onMore = section.more?.let { more -> { navigator.openCollection(more) } }, fromAccount = fromAccount)
         when {
             songShelf && songsAsList -> songs.take(listLimit).forEachIndexed { index, song ->
                 SongListItem(song, isCurrent = song.id == currentId, onClick = { player.play(songs, index) })
@@ -95,11 +96,15 @@ fun BrowseSectionView(section: BrowseSection, songsAsList: Boolean = false, list
 private val SongRowHeight: Dp = 72.dp
 
 @Composable
-fun SectionHeader(title: String, onMore: (() -> Unit)? = null) {
+fun SectionHeader(title: String, onMore: (() -> Unit)? = null, fromAccount: Boolean = false) {
     Row(
         Modifier.fillMaxWidth().padding(start = 20.dp, end = 8.dp, top = 20.dp, bottom = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
+        if (fromAccount) {
+            AccountAvatar(22.dp)
+            Spacer(Modifier.width(10.dp))
+        }
         Text(
             title,
             style = MaterialTheme.typography.titleLargeEmphasized,

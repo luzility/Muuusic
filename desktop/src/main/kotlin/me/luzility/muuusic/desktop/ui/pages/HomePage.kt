@@ -46,6 +46,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
@@ -89,6 +90,8 @@ private const val GLOBAL_CHART_URL = "https://music.youtube.com/playlist?list=PL
 class HomeModel(private val services: DesktopServices, private val scope: CoroutineScope) {
     var feed by mutableStateOf<Loadable<List<BrowseSection>>>(Loadable.Loading)
         private set
+    var fromAccount by mutableStateOf(false)
+        private set
     var moods by mutableStateOf<List<Mood>>(emptyList())
         private set
     var mood by mutableStateOf<Mood?>(null)
@@ -106,6 +109,7 @@ class HomeModel(private val services: DesktopServices, private val scope: Corout
     init {
         scope.launch { services.library.history.collect { recent = it.take(15) } }
         scope.launch { services.library.mostPlayed.collect { mostPlayed = it } }
+        scope.launch { services.youtubeAccount.signedIn.drop(1).collect { load() } }
         load()
     }
 
@@ -123,9 +127,11 @@ class HomeModel(private val services: DesktopServices, private val scope: Corout
             val home = runCatching { services.innerTube.home(selected?.params) }.getOrNull()
             if (home != null && home.sections.isNotEmpty()) {
                 if (selected == null) moods = home.moods
+                fromAccount = home.personalized
                 feed = Loadable.Ready(home.sections)
                 return@launch
             }
+            fromAccount = false
             val picks = runCatching { fallbackQuickPicks() }.getOrDefault(emptyList())
             feed = if (picks.isEmpty()) {
                 Loadable.Failed
@@ -236,7 +242,7 @@ fun HomePage(model: HomeModel) {
                     if (index == 0 && personalOn) {
                         personal.forYou?.let { forYou -> item(key = "forYou") { BrowseShelf(forYou) } }
                     }
-                    item(key = "feed-$index-${section.title}") { BrowseShelf(section) }
+                    item(key = "feed-$index-${section.title}") { BrowseShelf(section, fromAccount = model.fromAccount) }
                     if (index == 0 && recent.isNotEmpty() && personalOn) {
                         item(key = "recent") { RecentCarousel(recent) { i -> player.play(recent, i) } }
                     }

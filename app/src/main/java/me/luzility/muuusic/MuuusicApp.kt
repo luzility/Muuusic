@@ -101,7 +101,7 @@ class AppContainer(context: Context) {
 
     val searchHistory by lazy { SearchHistory(stores) }
 
-    val innerTube by lazy { InnerTubeClient(okHttp) }
+    val innerTube: InnerTubeClient by lazy { InnerTubeClient(okHttp) { youtubeAccount.cookie() } }
 
     val loudness by lazy { LoudnessStore(stores) }
     val sponsorBlock by lazy { SponsorBlock(okHttp) }
@@ -125,7 +125,7 @@ class AppContainer(context: Context) {
 
     val backup by lazy { Backup(stores, database, playlists) }
 
-    val youtubeAccount by lazy {
+    val youtubeAccount: YouTubeAccount by lazy {
         YouTubeAccount(
             store = KeystoreSecretStore(appContext, "youtube_account", "muuusic_youtube"),
             innerTube = innerTube,

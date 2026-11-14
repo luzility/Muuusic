@@ -41,7 +41,7 @@ class DesktopServices(val dataDir: File) {
     val settings = AppSettings(stores)
     val connectivity = DesktopConnectivity(scope)
     val youtube = YouTubeRepository(audioQuality = { settings.prefs.value.audioQuality })
-    val innerTube by lazy { InnerTubeClient(okHttp) }
+    val innerTube: InnerTubeClient by lazy { InnerTubeClient(okHttp) { youtubeAccount.cookie() } }
     val lyrics by lazy { LyricsRepository(okHttp) }
     val lyricsTranslator by lazy { LyricsTranslator(okHttp) }
     val lyricsSettings by lazy { LyricsSettings(stores) }
@@ -50,7 +50,7 @@ class DesktopServices(val dataDir: File) {
     val updates by lazy { Updates(stores, okHttp) }
     val loudness by lazy { LoudnessStore(stores) }
     val playerStore by lazy { stores.open("player") }
-    val youtubeAccount by lazy {
+    val youtubeAccount: YouTubeAccount by lazy {
         YouTubeAccount(FileSecretStore(File(dataDir, "account")), innerTube, YouTubeImport(innerTube, library, playlists), scope)
     }
     val sponsorBlock by lazy { SponsorBlock(okHttp) }

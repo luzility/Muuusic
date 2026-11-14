@@ -57,7 +57,7 @@ data class BrowseSection(val title: String, val items: List<BrowseItem>, val mor
 
 data class Mood(val title: String, val params: String)
 
-data class HomeFeed(val moods: List<Mood>, val sections: List<BrowseSection>)
+data class HomeFeed(val moods: List<Mood>, val sections: List<BrowseSection>, val personalized: Boolean = false)
 
 data class ArtistPage(
     val name: String,
