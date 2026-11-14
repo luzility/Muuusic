@@ -2,11 +2,13 @@ package me.luzility.muuusic.data.account
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import me.luzility.muuusic.data.innertube.InnerTubeClient
+import org.json.JSONArray
 import org.json.JSONObject
 
 interface SecretStore {
@@ -14,6 +16,8 @@ interface SecretStore {
     fun save(value: String)
     fun clear()
 }
+
+private const val SYNC_INTERVAL_MS = 60 * 60 * 1000L
 
 class YouTubeAccount(
     private val store: SecretStore,
@@ -31,6 +35,8 @@ class YouTubeAccount(
 
     private var cookie: String? = null
     private var importJob: Job? = null
+    private var syncedLikes: Set<String>? = null
+    private var lastSync = 0L
 
     private val _name = MutableStateFlow<String?>(null)
     val name: StateFlow<String?> = _name.asStateFlow()
@@ -50,9 +56,17 @@ class YouTubeAccount(
             cookie = saved.optString("cookie").takeIf { it.isNotBlank() }
             _name.value = saved.optString("name").takeIf { it.isNotBlank() }
             _photo.value = saved.optString("photo").takeIf { it.isNotBlank() }
+            syncedLikes = saved.optJSONArray("likes")?.let { array -> List(array.length()) { array.getString(it) }.toSet() }
+            lastSync = saved.optLong("lastSync")
             _signedIn.value = cookie != null
         }
         if (_signedIn.value && _photo.value == null) refreshInfo()
+        scope.launch {
+            while (true) {
+                if (_signedIn.value && System.currentTimeMillis() - lastSync > SYNC_INTERVAL_MS) syncLikes()
+                delay(SYNC_INTERVAL_MS)
+            }
+        }
     }
 
     fun cookie(): String? = cookie
@@ -72,13 +86,39 @@ class YouTubeAccount(
             _importState.value = ImportState.Running(YouTubeImport.Progress.Likes)
             _importState.value = runCatching {
                 importer.run(current) { progress -> _importState.value = ImportState.Running(progress) }
-            }.fold(onSuccess = { ImportState.Done(it) }, onFailure = { ImportState.Failed })
+            }.fold(
+                onSuccess = {
+                    remember(it.likedIds)
+                    ImportState.Done(it)
+                },
+                onFailure = { ImportState.Failed },
+            )
         }
+    }
+
+    private fun syncLikes() {
+        val current = cookie ?: return
+        if (importJob?.isActive == true) return
+        val known = syncedLikes
+        importJob = scope.launch {
+            val ids = runCatching {
+                if (known == null) importer.likedIds(current) else importer.syncLikes(current, known).likedIds
+            }.getOrNull()
+            ids?.let(::remember)
+        }
+    }
+
+    private fun remember(likedIds: Set<String>) {
+        syncedLikes = likedIds
+        lastSync = System.currentTimeMillis()
+        save()
     }
 
     fun signOut() {
         importJob?.cancel()
         cookie = null
+        syncedLikes = null
+        lastSync = 0
         _name.value = null
         _photo.value = null
         _signedIn.value = false
@@ -104,6 +144,8 @@ class YouTubeAccount(
                 .put("cookie", current)
                 .put("name", _name.value.orEmpty())
                 .put("photo", _photo.value.orEmpty())
+                .put("likes", JSONArray(syncedLikes.orEmpty().toList()))
+                .put("lastSync", lastSync)
                 .toString(),
         )
     }

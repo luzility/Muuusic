@@ -15,14 +15,23 @@ class YouTubeImport(
         data class Playlist(val index: Int, val total: Int, val name: String) : Progress
     }
 
-    data class Result(val likes: Int, val playlists: Int)
+    data class Result(val likes: Int, val playlists: Int, val likedIds: Set<String>)
+
+    class LikeSync(val likedIds: Set<String>, val added: Int)
+
+    suspend fun likedIds(cookie: String): Set<String> = innerTube.likedSongs(cookie).map { it.id }.toSet()
+
+    suspend fun syncLikes(cookie: String, known: Set<String>?): LikeSync {
+        val remote = innerTube.likedSongs(cookie)
+        val alreadyLiked = library.liked.first().map { it.id }.toSet()
+        val fresh = remote.filter { it.id !in alreadyLiked && (known == null || it.id !in known) }
+        fresh.asReversed().forEach { library.setLiked(it, true) }
+        return LikeSync(remote.map { it.id }.toSet(), fresh.size)
+    }
 
     suspend fun run(cookie: String, onProgress: (Progress) -> Unit = {}): Result {
         onProgress(Progress.Likes)
-        val liked = innerTube.likedSongs(cookie)
-        val alreadyLiked = library.liked.first().map { it.id }.toSet()
-        val newLikes = liked.filter { it.id !in alreadyLiked }
-        newLikes.asReversed().forEach { library.setLiked(it, true) }
+        val likes = syncLikes(cookie, known = null)
 
         val existing = playlists.playlists.first().map { it.name.trim().lowercase() }.toSet()
         val remote = innerTube.libraryPlaylists(cookie).filter { it.title.trim().lowercase() !in existing }
@@ -35,6 +44,6 @@ class YouTubeImport(
                 created++
             }
         }
-        return Result(newLikes.size, created)
+        return Result(likes.added, created, likes.likedIds)
     }
 }
