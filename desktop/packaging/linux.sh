@@ -14,7 +14,7 @@ dpkg-deb -R "$deb" "$work/deb"
 control="$work/deb/DEBIAN/control"
 sed -i -e '/^\s*$/d' -e "s/^Version: .*/Version: ${version/-/\~}/" -e 's/^Depends: \(.*[^ ]\) *$/Depends: \1, libmpv2 | libmpv1/' "$control"
 echo "Recommends: pulseaudio-utils | pipewire-bin" >> "$control"
-find "$work/deb" -name '*.desktop' -exec sed -i 's|^Exec=/opt/muuusic/bin/Muuusic|Exec=env MALLOC_ARENA_MAX=2 /opt/muuusic/bin/Muuusic|' {} +
+find "$work/deb" -type f -name '*.desktop' -exec sed -i 's|^Exec=/opt/muuusic/bin/Muuusic|Exec=env MALLOC_ARENA_MAX=2 /opt/muuusic/bin/Muuusic|' {} +
 fakeroot dpkg-deb --build "$work/deb" "$out/Muuusic-$version-amd64.deb"
 
 appdir="$work/AppDir"
