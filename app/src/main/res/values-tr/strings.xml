@@ -381,6 +381,8 @@
     <string name="browser_downloading">Tarayıcı indiriliyor: %%%1$d</string>
     <string name="browser_once">Bu yalnızca bir kez olur.</string>
     <string name="browser_failed">Tarayıcı açılamadı. Bunun yerine telefonla giriş yapmayı dene.</string>
+    <string name="playback_skipped">“%1$s” çalınamadı, sonrakine geçildi</string>
+    <string name="playback_stopped">Art arda birkaç şarkı çalınamadı, çalma durduruldu</string>
     <string name="sign_out">Çıkış yap</string>
     <string name="youtube_import">Şimdi içe aktar</string>
     <string name="youtube_import_summary">Beğenilerini ve çalma listelerini Muuusic\'e kopyala</string>

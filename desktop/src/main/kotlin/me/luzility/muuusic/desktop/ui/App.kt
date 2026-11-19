@@ -49,6 +49,7 @@ import androidx.compose.material3.WideNavigationRailValue
 import androidx.compose.material3.rememberWideNavigationRailState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -90,6 +91,11 @@ fun App(services: DesktopServices, player: DesktopPlayer, navigator: Navigator, 
     val home = remember { HomeModel(services, scope) }
     val search = remember { SearchModel(services, scope) }
     val updates = remember { UpdateModel(services, scope, onRestart) }
+    LaunchedEffect(player) {
+        player.failures.collect { failure ->
+            snackbar.showSnackbar(if (failure.stopped) str("playback_stopped") else str("playback_skipped", failure.song.title))
+        }
+    }
 
     MuuusicDesktopTheme(artworkUrl = state.current?.thumbnailUrl, prefs = prefs) {
         CompositionLocalProvider(

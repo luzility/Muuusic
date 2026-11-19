@@ -1,6 +1,7 @@
 package me.luzility.muuusic.desktop.playback
 
 import java.io.File
+import java.time.Instant
 import java.util.Locale
 import kotlin.math.pow
 import kotlinx.coroutines.CoroutineScope
@@ -32,6 +33,8 @@ import me.luzility.muuusic.playback.audio.Karaoke
 enum class RepeatMode { Off, All, One }
 
 enum class QueueResult { Added, Moved, AlreadyPlaying }
+
+data class PlaybackFailure(val song: Song, val stopped: Boolean)
 
 data class PlayerState(
     val current: Song? = null,
@@ -89,6 +92,9 @@ class DesktopPlayer(
     private val _seeks = MutableSharedFlow<Long>(extraBufferCapacity = 1)
     val seeks: SharedFlow<Long> = _seeks.asSharedFlow()
 
+    private val _failures = MutableSharedFlow<PlaybackFailure>(extraBufferCapacity = 4)
+    val failures: SharedFlow<PlaybackFailure> = _failures.asSharedFlow()
+
     private val _volume = MutableStateFlow(services.playerStore.getFloat(KEY_VOLUME, 1f).coerceIn(0f, 1f))
     val volume: StateFlow<Float> = _volume.asStateFlow()
 
@@ -105,6 +111,7 @@ class DesktopPlayer(
     private var sleepFactor = 1.0
     private var pauseAtEnd = false
     private var failuresInRow = 0
+    private var retriedId: String? = null
     private var segments: List<Segment> = emptyList()
     private var segmentJob: Job? = null
     private var normalizeJob: Job? = null
@@ -409,6 +416,7 @@ class DesktopPlayer(
                 if (deck === active) {
                     loading = false
                     failuresInRow = 0
+                    retriedId = null
                 }
             }
             is MpvEvent.EndFile -> {
@@ -528,11 +536,34 @@ class DesktopPlayer(
     }
 
     private fun onError() {
+        val song = active.song
+        song?.let { services.youtube.invalidateStreamUrl(it.id) }
+        val reason = song?.let { services.streamCache.failureReason(it.id) }
+        if (song != null && retriedId != song.id && services.connectivity.online.value) {
+            retriedId = song.id
+            loading = true
+            active.hasFile = false
+            startOn(active, song, paused = active.paused)
+            publish()
+            return
+        }
         loading = false
-        active.song?.let { services.youtube.invalidateStreamUrl(it.id) }
         publish()
-        if (++failuresInRow > MAX_SKIPS_IN_ROW) return
-        order.getOrNull(order.indexOf(current) + 1)?.let(::load)
+        if (song != null) logFailure(song, reason)
+        if (active.paused) return
+        val stopped = ++failuresInRow > MAX_SKIPS_IN_ROW
+        song?.let { _failures.tryEmit(PlaybackFailure(it, stopped)) }
+        if (!stopped) order.getOrNull(order.indexOf(current) + 1)?.let(::load)
+    }
+
+    private fun logFailure(song: Song, reason: String?) {
+        scope.launch(Dispatchers.IO) {
+            runCatching {
+                val log = File(services.dataDir, "playback-errors.log")
+                if (log.length() > MAX_LOG_BYTES) log.writeText(log.readText().takeLast((MAX_LOG_BYTES / 2).toInt()))
+                log.appendText("${Instant.now()} ${song.id} ${song.title} - ${reason ?: "unknown"}\n")
+            }
+        }
     }
 
     private fun nextIndex(): Int? {
@@ -677,5 +708,6 @@ class DesktopPlayer(
         const val SAVE_INTERVAL_MS = 10_000L
         const val SAVE_DEBOUNCE_MS = 1_000L
         const val KEY_VOLUME = "volume"
+        const val MAX_LOG_BYTES = 256L * 1024
     }
 }

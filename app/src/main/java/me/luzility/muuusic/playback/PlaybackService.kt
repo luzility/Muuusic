@@ -31,7 +31,6 @@ import androidx.media3.common.ForwardingPlayer
 import androidx.media3.common.MediaItem
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
-import androidx.media3.datasource.HttpDataSource
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.exoplayer.source.ShuffleOrder
@@ -394,9 +393,7 @@ class PlaybackService : MediaLibraryService() {
 
         override fun onPlayerError(error: PlaybackException) {
             val id = player.currentMediaItem?.mediaId ?: return
-            val httpError = generateSequence(error as Throwable) { it.cause }
-                .filterIsInstance<HttpDataSource.InvalidResponseCodeException>()
-                .firstOrNull()
+            val title = player.currentMediaItem?.mediaMetadata?.title?.toString()
 
             if (!container.connectivity.online.value) {
                 skipToDownloaded()
@@ -409,7 +406,7 @@ class PlaybackService : MediaLibraryService() {
                 retryId = id
                 retryCount = 0
             }
-            if (httpError != null && httpError.responseCode == 403 && retryCount < MAX_RETRIES) {
+            if (retryCount < MAX_RETRIES) {
                 retryCount++
                 container.youtube.invalidateStreamUrl(id)
                 player.prepare()
@@ -419,9 +416,12 @@ class PlaybackService : MediaLibraryService() {
             Log.w(TAG, "Playback failed for $id", error)
             failedInRow++
             if (failedInRow < MAX_SKIPS_IN_ROW && player.hasNextMediaItem()) {
+                title?.let { Toast.makeText(this@PlaybackService, getString(R.string.playback_skipped, it), Toast.LENGTH_SHORT).show() }
                 player.seekToNextMediaItem()
                 player.prepare()
                 player.play()
+            } else {
+                Toast.makeText(this@PlaybackService, R.string.playback_stopped, Toast.LENGTH_LONG).show()
             }
         }
     }

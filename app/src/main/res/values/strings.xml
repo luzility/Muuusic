@@ -382,6 +382,8 @@
     <string name="browser_downloading">Downloading the browser: %1$d%%</string>
     <string name="browser_once">This only happens once.</string>
     <string name="browser_failed">The browser couldn\'t be opened. Try signing in with your phone instead.</string>
+    <string name="playback_skipped">Couldn\'t play “%1$s”, skipped to the next song</string>
+    <string name="playback_stopped">Several songs in a row couldn\'t be played, so playback stopped</string>
     <string name="sign_out">Sign out</string>
     <string name="youtube_import">Import now</string>
     <string name="youtube_import_summary">Copy your liked songs and playlists into Muuusic</string>
