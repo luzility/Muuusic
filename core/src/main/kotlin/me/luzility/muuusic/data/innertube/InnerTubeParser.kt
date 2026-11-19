@@ -11,7 +11,15 @@ import me.luzility.muuusic.data.model.Song
 import org.json.JSONArray
 import org.json.JSONObject
 
-data class LibraryPlaylist(val browseId: String, val title: String)
+data class LibraryPlaylist(val browseId: String, val title: String, val subtitle: String = "", val thumbnailUrl: String? = null) {
+    fun toCollection() = MusicCollection(
+        url = "https://www.youtube.com/playlist?list=${browseId.removePrefix("VL")}",
+        title = title,
+        subtitle = subtitle,
+        thumbnailUrl = thumbnailUrl,
+        type = CollectionType.Playlist,
+    )
+}
 
 data class AccountInfo(val name: String?, val photoUrl: String?)
 
@@ -89,7 +97,16 @@ object InnerTubeParser {
             val item = node.optJSONObject("musicTwoRowItemRenderer") ?: return@walk
             val title = item.array("title", "runs").firstText() ?: return@walk
             val browseId = item.path("navigationEndpoint", "browseEndpoint")?.string("browseId") ?: return@walk
-            if (browseId.startsWith("VL") && browseId != LIKED_PLAYLIST) add(LibraryPlaylist(browseId, title))
+            if (browseId.startsWith("VL") && browseId != LIKED_PLAYLIST) {
+                add(
+                    LibraryPlaylist(
+                        browseId = browseId,
+                        title = title,
+                        subtitle = item.array("subtitle", "runs").joinedText().orEmpty(),
+                        thumbnailUrl = item.array("thumbnailRenderer", "musicThumbnailRenderer", "thumbnail", "thumbnails").lastUrl(),
+                    ),
+                )
+            }
         }
     }.distinctBy { it.browseId }
 

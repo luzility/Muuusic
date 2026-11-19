@@ -14,11 +14,16 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.rounded.Link
 import androidx.compose.material3.ButtonGroupDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.ToggleButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -38,6 +43,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.TextButton
 import kotlinx.coroutines.launch
+import me.luzility.muuusic.desktop.ui.ImportPlaylistDialog
 import me.luzility.muuusic.desktop.ui.NameDialog
 import me.luzility.muuusic.desktop.ui.DownloadAllButton
 import androidx.compose.ui.Alignment
@@ -52,6 +58,7 @@ import me.luzility.muuusic.desktop.ui.LocalServices
 import me.luzility.muuusic.desktop.ui.PlayButtons
 import me.luzility.muuusic.desktop.ui.ProfileButton
 import me.luzility.muuusic.desktop.ui.Route
+import me.luzility.muuusic.desktop.ui.SectionTitle
 import me.luzility.muuusic.desktop.ui.ShelfCard
 import me.luzility.muuusic.desktop.ui.SongRow
 import me.luzility.muuusic.desktop.ui.Strings
@@ -69,8 +76,17 @@ fun LibraryPage() {
     val history by services.library.history.collectAsState(initial = emptyList())
     val playlists by services.playlists.playlists.collectAsState(initial = emptyList())
     val downloaded by services.downloads.songs.collectAsState(initial = emptyList())
+    val accountPlaylists by services.youtubeAccount.playlists.collectAsState()
+    LaunchedEffect(tab) { if (tab == 2) services.youtubeAccount.refreshPlaylists() }
     val scope = rememberCoroutineScope()
     var creating by remember { mutableStateOf(false) }
+    var importing by remember { mutableStateOf(false) }
+    if (importing) {
+        ImportPlaylistDialog(onDismiss = { importing = false }) { id ->
+            importing = false
+            navigator.open(Route.Playlist(id))
+        }
+    }
     if (creating) {
         NameDialog(str("new_playlist"), str("create"), "", onDismiss = { creating = false }) { name ->
             scope.launch {
@@ -104,13 +120,20 @@ fun LibraryPage() {
             0 -> SongList(liked, empty = str("empty_liked"))
             1 -> SongList(history, empty = str("empty_history"))
             3 -> SongList(downloaded, empty = str("empty_downloads"))
-            else -> Column {
-                FilledTonalButton(onClick = { creating = true }, shapes = ButtonDefaults.shapes(), modifier = Modifier.padding(start = 32.dp, bottom = 12.dp)) {
-                    Icon(Icons.Rounded.Add, null)
-                    Spacer(Modifier.width(8.dp))
-                    Text(str("new_playlist"))
+            else -> Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(bottom = 24.dp)) {
+                Row(Modifier.padding(start = 32.dp, bottom = 12.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    FilledTonalButton(onClick = { creating = true }, shapes = ButtonDefaults.shapes()) {
+                        Icon(Icons.Rounded.Add, null)
+                        Spacer(Modifier.width(8.dp))
+                        Text(str("new_playlist"))
+                    }
+                    OutlinedButton(onClick = { importing = true }, shapes = ButtonDefaults.shapes()) {
+                        Icon(Icons.Rounded.Link, null)
+                        Spacer(Modifier.width(8.dp))
+                        Text(str("import_action"))
+                    }
                 }
-                if (playlists.isEmpty()) {
+                if (playlists.isEmpty() && accountPlaylists.isEmpty()) {
                     Text(str("empty_playlists"), color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(32.dp))
                 }
                 FlowRow(Modifier.padding(horizontal = 24.dp), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
@@ -121,6 +144,19 @@ fun LibraryPage() {
                             imageUrl = playlist.thumbnailUrl,
                             onClick = { navigator.open(Route.Playlist(playlist.id)) },
                         )
+                    }
+                }
+                if (accountPlaylists.isNotEmpty()) {
+                    SectionTitle("YouTube Music", fromAccount = true)
+                    FlowRow(Modifier.padding(horizontal = 24.dp), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                        accountPlaylists.forEach { playlist ->
+                            ShelfCard(
+                                title = playlist.title,
+                                subtitle = playlist.subtitle,
+                                imageUrl = playlist.thumbnailUrl,
+                                onClick = { navigator.openCollection(playlist.toCollection()) },
+                            )
+                        }
                     }
                 }
             }

@@ -1,5 +1,8 @@
 package me.luzility.muuusic.ui.library
 
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.platform.LocalContext
+import me.luzility.muuusic.ui.browse.SectionHeader
 import me.luzility.muuusic.ui.components.ProfileButton
 import me.luzility.muuusic.ui.components.downloadStatuses
 import me.luzility.muuusic.data.download.DownloadStatus
@@ -105,8 +108,11 @@ fun LibraryScreen(
     val liked by vm.liked.collectAsStateWithLifecycle()
     val history by vm.history.collectAsStateWithLifecycle()
     val playlists by playlistsVm.playlists.collectAsStateWithLifecycle()
+    val account = LocalContext.current.container.youtubeAccount
+    val accountPlaylists by account.playlists.collectAsStateWithLifecycle()
     val currentId = player.state.collectAsStateWithLifecycle().value.current?.id
     var tab by rememberSaveable { mutableIntStateOf(TabLiked) }
+    LaunchedEffect(tab) { if (tab == TabPlaylists) account.refreshPlaylists() }
     var creating by rememberSaveable { mutableStateOf(false) }
     var importing by rememberSaveable { mutableStateOf(false) }
     val songs = if (tab == TabLiked) liked else history
@@ -208,6 +214,18 @@ fun LibraryScreen(
                     headlineContent = { Text(playlist.name, maxLines = 1, overflow = TextOverflow.Ellipsis) },
                     supportingContent = { Text(pluralStringResource(R.plurals.song_count, playlist.songCount, playlist.songCount)) },
                 )
+            }
+            if (accountPlaylists.isNotEmpty()) {
+                item(key = "account-header") { SectionHeader("YouTube Music", fromAccount = true) }
+                items(accountPlaylists, key = { "account-${it.browseId}" }) { playlist ->
+                    ListItem(
+                        modifier = Modifier.clickable { navigator.openCollection(playlist.toCollection()) },
+                        colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+                        leadingContent = { Artwork(playlist.thumbnailUrl, Modifier.size(64.dp), MaterialTheme.shapes.large) },
+                        headlineContent = { Text(playlist.title, maxLines = 1, overflow = TextOverflow.Ellipsis) },
+                        supportingContent = playlist.subtitle.takeIf { it.isNotBlank() }?.let { subtitle -> { Text(subtitle, maxLines = 1, overflow = TextOverflow.Ellipsis) } },
+                    )
+                }
             }
         } else if (songs.isEmpty()) {
             item {

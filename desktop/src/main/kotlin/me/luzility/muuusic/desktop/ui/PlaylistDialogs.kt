@@ -15,6 +15,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -30,7 +31,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
+import kotlin.coroutines.cancellation.CancellationException
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
+import me.luzility.muuusic.data.model.CollectionType
 import me.luzility.muuusic.data.model.Song
 
 @Composable
@@ -112,3 +116,70 @@ fun NameDialog(title: String, confirm: String, initial: String, onDismiss: () ->
         dismissButton = { TextButton(onClick = onDismiss) { Text(str("cancel")) } },
     )
 }
+
+@Composable
+fun ImportPlaylistDialog(onDismiss: () -> Unit, onImported: (Long) -> Unit) {
+    val services = LocalServices.current
+    val snackbar = LocalSnackbar.current
+    val scope = rememberCoroutineScope()
+    var link by remember { mutableStateOf("") }
+    var working by remember { mutableStateOf(false) }
+    var error by remember { mutableStateOf<String?>(null) }
+    var job by remember { mutableStateOf<Job?>(null) }
+    val cancel = {
+        job?.cancel()
+        onDismiss()
+    }
+
+    fun start() {
+        val listId = PlaylistLink.find(link.trim())?.groupValues?.get(1)
+        if (listId == null) {
+            error = str("import_invalid")
+            return
+        }
+        working = true
+        error = null
+        job = scope.launch {
+            try {
+                val detail = services.youtube.collection("https://www.youtube.com/playlist?list=$listId", CollectionType.Playlist)
+                val id = services.playlists.create(detail.collection.title, detail.songs)
+                onImported(id)
+                snackbar.showSnackbar(Strings.plural("imported_playlist", detail.songs.size, detail.collection.title, detail.songs.size))
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                working = false
+                error = str("error_generic")
+            }
+        }
+    }
+
+    AlertDialog(
+        onDismissRequest = cancel,
+        title = { Text(str("import_from_link")) },
+        text = {
+            Column {
+                OutlinedTextField(
+                    value = link,
+                    onValueChange = {
+                        link = it
+                        error = null
+                    },
+                    label = { Text(str("import_link_hint")) },
+                    singleLine = true,
+                    enabled = !working,
+                    isError = error != null,
+                    supportingText = error?.let { message -> { Text(message) } },
+                    modifier = Modifier.typingField(),
+                )
+                if (working) LoadingIndicator(Modifier.padding(top = 8.dp).size(40.dp))
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = ::start, enabled = link.isNotBlank() && !working) { Text(str("import_action")) }
+        },
+        dismissButton = { TextButton(onClick = cancel) { Text(str("cancel")) } },
+    )
+}
+
+private val PlaylistLink = Regex("[?&]list=([A-Za-z0-9_-]+)")

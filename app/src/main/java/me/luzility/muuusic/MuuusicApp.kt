@@ -66,7 +66,7 @@ class MuuusicApp : Application() {
         FlexFont.init(this)
         val locale = Locale.getDefault()
         NewPipe.init(
-            NewPipeDownloader(container.okHttp),
+            NewPipeDownloader(container.okHttp) { container.youtubeAccount.cookie() },
             Localization.fromLocale(locale),
             ContentCountry(locale.country.ifEmpty { "US" }),
         )

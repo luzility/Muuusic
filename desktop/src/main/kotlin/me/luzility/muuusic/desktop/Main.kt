@@ -63,7 +63,7 @@ fun main() {
     AppInfo.versionName = System.getProperty("muuusic.version") ?: "0.1.0"
     val services = DesktopServices(DesktopServices.defaultDataDir())
     val locale = Locale.getDefault()
-    NewPipe.init(NewPipeDownloader(services.okHttp), Localization.fromLocale(locale), ContentCountry(locale.country.ifEmpty { "US" }))
+    NewPipe.init(NewPipeDownloader(services.okHttp) { services.youtubeAccount.cookie() }, Localization.fromLocale(locale), ContentCountry(locale.country.ifEmpty { "US" }))
     SingletonImageLoader.setSafe { context ->
         ImageLoader.Builder(context)
             .components { add(OkHttpNetworkFetcherFactory(callFactory = { services.okHttp })) }
